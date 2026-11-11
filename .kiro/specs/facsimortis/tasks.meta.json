@@ -77,6 +77,13 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794395384885
       }
+    ],
+    "0.3.3 Templates: typed and table forms on an unskewed page, word IDs and per-field value word IDs; citation tests. (R8)": [
+      {
+        "executionId": "88eb7ec4-475f-4352-b797-0803ae39f6a1",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794396407492
+      }
     ]
   }
 }
