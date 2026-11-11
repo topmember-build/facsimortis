@@ -21,9 +21,25 @@ Order matters. Runtime proof first, interface second, polish last.
   - [x] 0.4.5 ocr CLI: npm run ocr prints words with boxes and confidence for one fax; README update. (R2.1)
   - [x] 0.4.6 Confidence analysis and merged-word matching: many-to-one OCR/truth word mapping, confidence of misread vs correct field-value words on all three faxes, report at the spec threshold 0.85 without tuning. (R5.1, R2.1)
 - [ ] 0.5 Extract all fields with word IDs from that fax. Print them. (R3)
+  - [-] 0.5.1 Extraction interface, field schema from design.md, and a deterministic rule-based extractor that finds each field by its label in the OCR words and returns value, cited word IDs and confidence, or null plus a flag when absent. Never repairs OCR misreads. (R3.1, R3.2, R3.4)
+  - [ ] 0.5.2 Model extraction adapter: API key from an environment variable, strict JSON validated against the schema, retry once then needs-review, and a recorded-response fallback so it runs offline. (R3.1, R3.2)
 - [ ] 0.6 Reject any field whose cited words do not contain its value. (R3.2)
 
-**Gate:** all 3 faxes extract correctly from the command line. Do not start the UI before this passes.
+**Hard gate** (do not start the UI until all are true):
+
+- Every field with a value cites OCR word IDs that exist, and the cited words contain the value.
+- Nothing is invented: every value comes from the cited words on the page.
+- An absent field is null and flagged with a plain-language reason.
+- The `bad-npi` fax is flagged for its NPI.
+- `npm run proof` works from a clean clone.
+
+**Measured and reported in Phase 0, not pass or fail:**
+
+- Field exact-match rate against truth.json.
+- Unflagged misreads (goal: zero; owned by task 1.2). The proof output lists each one by fax and field name.
+- Correct values that were flagged.
+
+Do not tune thresholds or add repairs to reach zero on the three Phase 0 faxes.
 
 ## Phase 1: Core pipeline
 
