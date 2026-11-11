@@ -1,8 +1,10 @@
 import type { OcrResult } from '../ocr/types.js';
-import { allLabelWordIds, allMatches, firstLineValueWords, readTableValue } from './layout-table.js';
+import { readTableValue } from './layout-table.js';
 import { readTypedValue } from './layout-typed.js';
 import { findLabels } from './labels.js';
 import { FIELD_ORDER } from './schema.js';
+import { buildStructure } from './structure.js';
+import type { PageLayout } from './structure.js';
 import type { ExtractionResult, Field, FieldName } from './schema.js';
 import { parseExtractionResult } from './types.js';
 import type { ExtractionAdapter } from './types.js';
@@ -18,7 +20,13 @@ export const PLAIN_FIELD_NAMES: Readonly<Record<FieldName, string>> = {
   callbackPhone: 'callback phone',
 };
 
-export type FieldReason = 'read' | 'label-not-found' | 'label-repeated' | 'label-merged' | 'no-value';
+export type FieldReason =
+  | 'read'
+  | 'label-not-found'
+  | 'label-repeated'
+  | 'label-merged'
+  | 'no-value'
+  | 'layout-unclear';
 
 export interface FieldDetails {
   field: FieldName;
@@ -29,8 +37,12 @@ export interface FieldDetails {
   /** How many times the label was found. */
   matchCount: number;
   reason: FieldReason;
-  /** Layout used to read the value (null when no label was usable). */
+  /** Layout of the reader actually used (null when the field was not read). */
   layout: 'table' | 'typed' | null;
+  /** Layout decided for the whole page. */
+  pageLayout: PageLayout;
+  /** The field's own evidence disagreed with the page layout, so it was not read. */
+  conflict: boolean;
 }
 
 export interface ExtractionDetails {
@@ -51,7 +63,9 @@ function missing(name: FieldName, flag: string): Field {
 export function extractWithDetails(ocr: OcrResult): ExtractionDetails {
   const findings = findLabels(ocr.words);
   const byId = new Map(ocr.words.map((w) => [w.id, w]));
-  const labelIds = allLabelWordIds(findings);
+  const structure = buildStructure(ocr, findings);
+  const pageLayout = structure.layout;
+  const onLabelLines = new Set(structure.fields.flatMap((f) => f.rightWordIds));
   const fields: Field[] = [];
   const details: FieldDetails[] = [];
 
@@ -63,25 +77,57 @@ export function extractWithDetails(ocr: OcrResult): ExtractionDetails {
 
     if (label === undefined || finding === undefined) {
       fields.push(missing(name, `The ${plain} label was not found on the page.`));
-      details.push({ field: name, labelWordIds: [], fuzzy: false, matchCount: 0, reason: 'label-not-found', layout: null });
+      details.push({ field: name, labelWordIds: [], fuzzy: false, matchCount: 0, reason: 'label-not-found', layout: null, pageLayout, conflict: false });
       continue;
     }
     if (count > 1) {
       fields.push(missing(name, `The ${plain} appears more than once on the page. Please check it.`));
-      details.push({ field: name, labelWordIds: [], fuzzy: false, matchCount: count, reason: 'label-repeated', layout: null });
+      details.push({ field: name, labelWordIds: [], fuzzy: false, matchCount: count, reason: 'label-repeated', layout: null, pageLayout, conflict: false });
       continue;
     }
 
-    // Layout choice, per field: if the label's own line has at least one non-label OCR
-    // word to its right, the page is read as a table form (value beside the label).
-    // Otherwise it is read as a typed form (value below the label).
-    const layout: 'table' | 'typed' =
-      firstLineValueWords(ocr.words, label, labelIds, allMatches(findings)).length > 0 ? 'table' : 'typed';
+    const known = { field: name, labelWordIds: label.wordIds, fuzzy: label.fuzzy, matchCount: count, pageLayout };
+
+    if (label.merged) {
+      fields.push(missing(name, `The ${plain} runs into its label on the page. Please check it.`));
+      details.push({ ...known, conflict: false, layout: null, reason: 'label-merged' });
+      continue;
+    }
+
+    // One layout for the whole page (see structure.ts). The per-field choice is gone.
+    // A field is NOT read, and gets a plain flag instead of a guess, when:
+    // - the page layout is 'unknown' (no clear majority among the usable labels), or
+    // - the field's own evidence conflicts with the page layout:
+    //   * page is 'typed' and the field has words to the right of its label on the
+    //     label's line (hasRightWords), even if it also has words below. This catches
+    //     a long value that runs up to the label's line on a skewed page, and a stray
+    //     word (speckle, stamp fragment) on the label's line.
+    //   * page is 'table' and the field has words below its label in the label column
+    //     (hasBelowWords). Brief said "and no right words"; that is widened here
+    //     because a stray word in the label column otherwise cuts a wrapped value
+    //     short without any flag. A table value wraps in the value column, which is
+    //     not counted as "below".
+    const own = structure.fields.find((f) => f.field === name);
+    const conflict =
+      own !== undefined &&
+      ((pageLayout === 'typed' && own.hasRightWords) ||
+        (pageLayout === 'table' && own.hasBelowWords));
+    if (own === undefined || pageLayout === 'unknown' || conflict) {
+      fields.push(missing(name, `The ${plain} could not be read clearly from the page. Please check it.`));
+      details.push({ ...known, conflict, layout: null, reason: 'layout-unclear' });
+      continue;
+    }
+
+    const layout: 'table' | 'typed' = pageLayout;
     const read =
       layout === 'table'
-        ? readTableValue(ocr.words, label, findings)
-        : readTypedValue(ocr.words, label, findings, { width: ocr.width, height: ocr.height });
-    const base = { field: name, labelWordIds: label.wordIds, fuzzy: label.fuzzy, matchCount: count, layout };
+        ? readTableValue(ocr.words, label, findings, { bottom: own.bottom.limit, valueLeft: own.valueLeft })
+        : readTypedValue(ocr.words, label, findings, { width: ocr.width, height: ocr.height }, {
+            right: own.right.limit,
+            bottom: own.bottom.limit,
+            onLabelLines,
+          });
+    const base = { ...known, conflict: false, layout };
 
     if (read.kind === 'merged') {
       fields.push(missing(name, `The ${plain} runs into its label on the page. Please check it.`));

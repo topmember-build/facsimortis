@@ -271,6 +271,18 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794414178304
       }
+    ],
+    "0.5.5 Structure in the readers and ambiguous layout: readers use the page limits; a field whose layout is ambiguous (long typed value near its label line at 3 degrees, or a stray word on a typed label line) is null with a plain flag; clean fixtures stay exact. (R3.1, R3.4)": [
+      {
+        "executionId": "6fc46107-573a-4dff-9f6f-0ad1637ac58d",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794414443633
+      },
+      {
+        "executionId": "6fc46107-573a-4dff-9f6f-0ad1637ac58d",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794415228411
+      }
     ]
   }
 }

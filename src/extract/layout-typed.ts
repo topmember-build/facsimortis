@@ -16,6 +16,12 @@ import type { LabelFinding, LabelMatch } from './labels.js';
  * Reading stops at the first line that contains a label word, at a vertical gap
  * larger than 1.5 median word heights, or at the end of the words.
  *
+ * When the page structure supplies limits, the right limit (next column's left
+ * edge) also bounds the region and the bottom limit (top of the next label below
+ * in the same column) ends reading at the first line centred at or below it.
+ * Whichever comes first wins. Words the structure placed on any label's line
+ * (onLabelLines) are never taken as value words.
+ *
  * Nothing here is page-specific: every size comes from the OCR words themselves.
  * Values are returned as word IDs. The text is never changed.
  */
@@ -68,6 +74,7 @@ export function readTypedValue(
   label: LabelMatch,
   allLabels: readonly LabelFinding[],
   page: { width: number; height: number },
+  limits?: { right: number; bottom: number; onLabelLines?: ReadonlySet<string> },
 ): TypedReadResult {
   if (label.merged) return { kind: 'merged' };
 
@@ -87,15 +94,24 @@ export function readTypedValue(
       m.box[0] >= label.box[2] &&
       Math.abs(centreY(m.box) - labelCentre) <= SAME_ROW_IN_HEIGHTS * medianHeight,
   );
-  const xMax =
+  const nearestOnRow =
     rightNeighbours.length > 0
       ? Math.min(...rightNeighbours.map((m) => m.box[0])) - 0.25 * medianHeight
       : page.width;
+  // The page structure's right limit (left edge of the next column) applies as well;
+  // the smaller of the two wins. The page edge is not a limit and is left alone.
+  const xMax =
+    limits !== undefined && limits.right < page.width
+      ? Math.min(nearestOnRow, limits.right - 0.25 * medianHeight)
+      : nearestOnRow;
   const xMin = label.box[0] - medianHeight;
   const yMin = label.box[3] - 0.25 * medianHeight;
 
   const candidates = words.filter((w) => {
     if (w.text.trim() === '') return false;
+    // A word that sits on some label's line (right of that label) belongs to that
+    // label's box, not to this value, even when skew puts it under this value.
+    if (limits?.onLabelLines?.has(w.id) === true) return false;
     const cx = centreX(w);
     return cx >= xMin && cx < xMax && centreY(w.box) > yMin;
   });
@@ -107,6 +123,8 @@ export function readTypedValue(
     const top = mean(line.words.map((w) => w.box[1]));
     if (top - previousBottom > MAX_GAP_IN_HEIGHTS * medianHeight) break;
     if (line.words.some((w) => labelIds.has(w.id))) break;
+    // Bottom limit from the page structure: top of the next label below in this column.
+    if (limits !== undefined && mean(line.words.map((w) => centreY(w.box))) >= limits.bottom) break;
     previousBottom = mean(line.words.map((w) => w.box[3]));
     taken.push(...[...line.words].sort((a, b) => centreX(a) - centreX(b)));
   }

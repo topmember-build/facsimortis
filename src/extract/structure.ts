@@ -39,7 +39,8 @@ import type { FieldName } from './schema.js';
  *   column (x0 from column left - h up to, not including, the column's labelRight),
  *   and whose centre is above the top of the next usable label below in the column
  *   (or anywhere to the page bottom when there is none).
- * - hasRightWords / hasBelowWords are count > 0.
+ * - hasRightWords / hasBelowWords are count > 0. rightWordIds lists the right words,
+ *   so a reader can tell that a word belongs to some label's line.
  *
  * PAGE LAYOUT (decided from all usable labels together)
  * - A label votes 'table' when it has right words and no below words, and 'typed'
@@ -87,6 +88,8 @@ export interface FieldStructure {
   label: Box;
   rightWords: number;
   belowWords: number;
+  /** IDs of the right words (the words on this label's line, right of it). */
+  rightWordIds: string[];
   hasRightWords: boolean;
   hasBelowWords: boolean;
   right: Side;
@@ -184,10 +187,14 @@ export function buildStructure(ocr: OcrResult, labels: LabelFindings): PageStruc
 
     let rightWords = 0;
     let belowWords = 0;
+    const rightWordIds: string[] = [];
     for (const w of content) {
       const lined = onLine(w, u.box);
       if (lined) {
-        if (w.box[0] >= u.box[2] && w.box[0] < rightEdge) rightWords += 1;
+        if (w.box[0] >= u.box[2] && w.box[0] < rightEdge) {
+          rightWords += 1;
+          rightWordIds.push(w.id);
+        }
       } else if (
         centreY(w.box) > centreY(u.box) &&
         w.box[0] >= col0 - h &&
@@ -197,7 +204,7 @@ export function buildStructure(ocr: OcrResult, labels: LabelFindings): PageStruc
         belowWords += 1;
       }
     }
-    return { u, rightWords, belowWords, nextCol, below };
+    return { u, rightWords, belowWords, rightWordIds, nextCol, below };
   });
 
   // Layout from all usable labels together.
@@ -243,6 +250,7 @@ export function buildStructure(ocr: OcrResult, labels: LabelFindings): PageStruc
       label: m.u.box,
       rightWords: m.rightWords,
       belowWords: m.belowWords,
+      rightWordIds: m.rightWordIds,
       hasRightWords: m.rightWords > 0,
       hasBelowWords: m.belowWords > 0,
       right: { limit: rightLimit, state: state(m.nextCol === undefined, rightLimit - left, typicalH) },

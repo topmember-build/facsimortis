@@ -157,12 +157,14 @@ describe('typed-form layout on a hand-made page', () => {
   });
 
   it('keeps the two columns apart', async () => {
+    // The long text sits on the second line, close to the other column. A long FIRST
+    // line is covered in extract-layout-conflict.test.ts (it is flagged, not read).
     const ocr = typedPage({
-      value: { reason: [['ENT', 'evaluation,', 'recurring', 'sinus', 'congestion', 'and', 'more'], ['words', 'here']] },
+      value: { reason: [['ENT', 'evaluation,', 'recurring', 'sinus'], ['congestion', 'and', 'more', 'words', 'here', 'and', 'there', 'again']] },
     });
     const result = await new RuleExtractor().extract(ocr);
     expect(fieldOf(result, 'reason').value).toBe(
-      'ENT evaluation, recurring sinus congestion and more words here',
+      'ENT evaluation, recurring sinus congestion and more words here and there again',
     );
     expect(fieldOf(result, 'urgency').value).toBe('routine');
     expect(fieldOf(result, 'dob').value).toBe('09/06/1938');
@@ -304,7 +306,18 @@ describe('values are never repaired', () => {
 
 describe('skew', () => {
   it.each([3, -3])('reads all seven fields when the page is rotated %i degrees', async (deg) => {
-    const ocr = typedPage({}, deg);
+    // The provider and reason values are wrapped onto two lines: as one long line each comes within
+    // half a line of its label's line at -3 degrees and is flagged instead of read
+    // (see extract-layout-conflict.test.ts).
+    const ocr = typedPage(
+      {
+        value: {
+          referringProvider: [['Dr', 'Iris', 'Ellery,'], ['Maple', 'Hollow', 'Practice']],
+          reason: [['ENT', 'evaluation,'], ['recurring', 'sinus', 'congestion']],
+        },
+      },
+      deg,
+    );
     const result = await new RuleExtractor().extract(ocr);
     const expected: Record<FieldName, string> = {
       patientName: 'Jasper Hartley',
@@ -354,7 +367,13 @@ describe('truth-words layout', () => {
   it('typed pages are read as typed', () => {
     for (const path of ['fixtures/faxes/L1/fax-0001.truth.json', 'fixtures/faxes/L2/fax-0003.truth.json']) {
       const { ocr } = loadTruth(path);
-      for (const d of extractWithDetails(ocr).details) expect(d.layout).toBe('typed');
+      for (const d of extractWithDetails(ocr).details) {
+        expect(d.layout).toBe('typed');
+        expect(d.pageLayout).toBe('typed');
+        expect(d.conflict).toBe(false);
+      }
+      const { result } = extractWithDetails(ocr);
+      for (const f of result.fields) expect(f.flags).toEqual([]);
     }
   });
 });

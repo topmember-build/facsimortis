@@ -20,6 +20,11 @@ import type { TypedReadResult } from './layout-typed.js';
  *   column), at a line that contains any label word, at a vertical gap larger
  *   than 1.5 median word heights, or when the words run out.
  *
+ * When the page structure supplies limits: first-line words must start at or right
+ * of valueLeft minus one median word height, and reading ends at the first wrapped
+ * line centred at or below the bottom limit (top of the next label below in the
+ * column). Whichever stop comes first wins.
+ *
  * Values are word IDs in reading order. The text is never changed.
  */
 
@@ -95,12 +100,18 @@ export function readTableValue(
   words: readonly OcrWord[],
   label: LabelMatch,
   allLabels: readonly LabelFinding[],
+  limits?: { bottom: number; valueLeft: number | null },
 ): TableReadResult {
   if (label.merged) return { kind: 'merged' };
 
   const medianHeight = medianWordHeight(words);
   const labelIds = allLabelWordIds(allLabels);
-  const first = firstLineValueWords(words, label, labelIds, allMatches(allLabels));
+  // valueLeft (the value column starts right of the widest label) bounds the first
+  // line; one median word height of slack absorbs skew drift, as in the wrap rule below.
+  const valueLeft = limits?.valueLeft ?? null;
+  const first = firstLineValueWords(words, label, labelIds, allMatches(allLabels)).filter(
+    (w) => valueLeft === null || w.box[0] >= valueLeft - medianHeight,
+  );
   const firstWord = first[0];
   if (firstWord === undefined) return { kind: 'empty' };
 
@@ -119,6 +130,8 @@ export function readTableValue(
     if (top - previousBottom > MAX_GAP_IN_HEIGHTS * medianHeight) break;
     if (line.words.some((w) => labelIds.has(w.id))) break;
     if (line.words.some((w) => w.box[0] < xLimit)) break;
+    // Bottom limit from the page structure: top of the next label below in this column.
+    if (limits !== undefined && mean(line.words.map((w) => centreY(w.box))) >= limits.bottom) break;
     previousBottom = mean(line.words.map((w) => w.box[3]));
     taken.push(...[...line.words].sort((a, b) => centreX(a) - centreX(b)));
   }

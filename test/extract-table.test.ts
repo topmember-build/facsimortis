@@ -137,6 +137,9 @@ describe('truth-words layout (table form)', () => {
       expect(f.value).toBe(t.value);
       expect(f.wordIds).toEqual(t.wordIds);
       expect(details.find((d) => d.field === t.name)?.layout).toBe('table');
+      expect(details.find((d) => d.field === t.name)?.pageLayout).toBe('table');
+      expect(details.find((d) => d.field === t.name)?.conflict).toBe(false);
+      expect(f.flags).toEqual([]);
     }
   });
 });
