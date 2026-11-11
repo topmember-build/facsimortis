@@ -26,10 +26,9 @@ Order matters. Runtime proof first, interface second, polish last.
   - [x] 0.5.3 Table-form layout and never-invents property: read table-form values to the right of the label on the same row, wrapped lines included; truth-words layout test for the table form and a fast-check property that no value contains text outside its cited words. (R3.1, R3.2, R3.4)
   - [x] 0.5.4 Page structure: pure module that groups all matched labels into columns, decides the page layout from all labels, derives each field's right and bottom limits from every matched label, and marks each side open or closed; unit tests. No change to extraction output yet. (R3.1)
   - [x] 0.5.5 Structure in the readers and ambiguous layout: readers use the page limits; a field whose layout is ambiguous (long typed value near its label line at 3 degrees, or a stray word on a typed label line) is null with a plain flag; clean fixtures stay exact. (R3.1, R3.4)
-  - [ ] 0.5.6 Missing or garbled labels: flag every neighbouring field whose region is open toward an unusable label's space; test that removes or garbles each label in turn on all fixtures and asserts no unflagged value contains words from that label's area. (R3.1, R3.4)
-  - [ ] 0.5.7 Varied-geometry property: fast-check pages with label-to-value gaps from tight to wide, varied columns, spacing, wrapping and skew; clean pages give no wrong unflagged value, and pages with one label removed give no unflagged value from that label's area. One run with modest case counts; fix only real counterexamples. (R3.1, R3.4)
-  - [ ] 0.5.8 Extract CLI and measurement: npm run extract prints fields with cited word IDs, confidence and flags; OCR plus extraction on all three faxes reports exact matches, nulls and unflagged misreads by name. No thresholds. (R3.1)
-  - [ ] 0.5.9 Model extraction adapter: API key from an environment variable, strict JSON validated against the schema, retry once then needs-review, and a recorded-response fallback so it runs offline. (R3.1, R3.2)
+  - [ ] 0.5.6 Column overflow flag: a field whose candidate value words cross its own right limit is flagged, not cut off at the limit; case A extended to typed values of 9 or more words, so no neighbour reads another field's overflow unflagged. (R3.1, R3.4)
+  - [ ] 0.5.7 Missing or garbled labels: flag every neighbouring field whose region is open toward an unusable label's space; test that removes or garbles each label in turn on all fixtures, including overflowing values, and asserts no unflagged value contains words from that label's area. (R3.1, R3.4)
+  - [ ] 0.5.8 Extract CLI and measurement: npm run extract prints fields with cited word IDs, confidence and flags; OCR plus extraction on all three faxes reports exact matches, nulls, unflagged misreads by name, and correct values that were flagged. No thresholds. (R3.1)
 - [ ] 0.6 Reject any field whose cited words do not contain its value. (R3.2)
 
 **Hard gate** (do not start the UI until all are true):
@@ -48,6 +47,8 @@ Order matters. Runtime proof first, interface second, polish last.
 
 Do not tune thresholds or add repairs to reach zero on the three Phase 0 faxes.
 
+- [ ] 0.7 Model extraction adapter: API key from an environment variable, strict JSON validated against the schema, retry once then needs-review, and a recorded-response fallback so it runs offline. (R3.1, R3.2)
+
 ## Phase 1: Core pipeline
 
 - [ ] 1.1 Validators: NPI, DOB, phone, with property-based tests. (R4)
@@ -55,7 +56,8 @@ Do not tune thresholds or add repairs to reach zero on the three Phase 0 faxes.
 - [ ] 1.3 Deskew and normalisation. (R2.2)
 - [ ] 1.4 Audit trail and data model. (R7.3)
 - [ ] 1.5 Evaluation set across degradation levels, with accuracy report. (R8)
-- [ ] 1.6 Hook: re-run evaluation on extraction changes.
+- [ ] 1.6 Varied-geometry property: fast-check pages with label-to-value gaps from tight to wide, varied columns, spacing, wrapping and skew; clean pages give no wrong unflagged value, and pages with one label removed give no unflagged value from that label's area. One run with modest case counts; fix only real counterexamples. (R3.1, R3.4)
+- [ ] 1.7 Hook: re-run evaluation on extraction changes.
 
 ## Phase 2: Interface (demo-script order)
 
