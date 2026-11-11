@@ -21,7 +21,7 @@ Order matters. Runtime proof first, interface second, polish last.
   - [x] 0.4.5 ocr CLI: npm run ocr prints words with boxes and confidence for one fax; README update. (R2.1)
   - [x] 0.4.6 Confidence analysis and merged-word matching: many-to-one OCR/truth word mapping, confidence of misread vs correct field-value words on all three faxes, report at the spec threshold 0.85 without tuning. (R5.1, R2.1)
 - [ ] 0.5 Extract all fields with word IDs from that fax. Print them. (R3)
-  - [ ] 0.5.1 Extraction schema and interface: Zod Field and ExtractionResult schemas from design.md, ExtractionAdapter and ExtractionError, EXTRACT_PROVIDER selection, .env.example update; tests. (R3.1)
+  - [x] 0.5.1 Extraction schema and interface: Zod Field and ExtractionResult schemas from design.md, ExtractionAdapter and ExtractionError, EXTRACT_PROVIDER selection, .env.example update; tests. (R3.1)
   - [ ] 0.5.2 Rule-based extractor: finds each field by its label in the OCR words (small tolerance on label text only), value regions for both layouts, value is the cited words as read with no repairs, null plus a plain flag when absent; unit, never-invents property and truth-words layout tests. (R3.1, R3.2, R3.4)
   - [ ] 0.5.3 Extract CLI and measurement: npm run extract prints fields with cited word IDs, confidence and flags; OCR plus extraction on all three faxes reports exact matches, nulls and unflagged misreads by name. No thresholds. (R3.1)
   - [ ] 0.5.4 Model extraction adapter: API key from an environment variable, strict JSON validated against the schema, retry once then needs-review, and a recorded-response fallback so it runs offline. (R3.1, R3.2)

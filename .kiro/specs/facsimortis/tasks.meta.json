@@ -216,6 +216,18 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794406689710
       }
+    ],
+    "0.5.1 Extraction schema and interface: Zod Field and ExtractionResult schemas from design.md, ExtractionAdapter and ExtractionError, EXTRACT_PROVIDER selection, .env.example update; tests. (R3.1)": [
+      {
+        "executionId": "ea84a2ce-fec8-4864-89a8-e91a960455e8",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794409819567
+      },
+      {
+        "executionId": "ea84a2ce-fec8-4864-89a8-e91a960455e8",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794410130633
+      }
     ]
   }
 }
