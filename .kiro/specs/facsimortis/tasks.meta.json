@@ -41,6 +41,42 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794394127860
       }
+    ],
+    "0.3.1 Validators and data: pure NPI check-digit module, seeded PRNG, fake referral data; property tests for NPI and DOB. No images. (R4.1, R8)": [
+      {
+        "executionId": "6b054e0d-d964-48e4-b05e-8b139eda60e6",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794394898991
+      },
+      {
+        "executionId": "6b054e0d-d964-48e4-b05e-8b139eda60e6",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794395059248
+      }
+    ],
+    "0.3.2 Font and drawing: Spleen BDF parser, 1-bit page buffer, PNG encoding with SYNTHETIC tag, text drawing with word boxes; tested on one plain page. (R8)": [
+      {
+        "executionId": "6b054e0d-d964-48e4-b05e-8b139eda60e6",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794395059341
+      },
+      {
+        "executionId": "ff79f645-3673-4e9d-88a9-4f7104488109",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794395208766
+      },
+      {
+        "executionId": "ff79f645-3673-4e9d-88a9-4f7104488109",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794395384356
+      }
+    ],
+    "0.3.3 Templates and degradation: typed and table forms, fax header, skew with box mapping, speckle, streaks, stamp; truth.json builder. (R8)": [
+      {
+        "executionId": "ff79f645-3673-4e9d-88a9-4f7104488109",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794395384885
+      }
     ]
   }
 }
