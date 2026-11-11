@@ -259,6 +259,18 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794412423584
       }
+    ],
+    "0.5.4 Page structure: pure module that groups all matched labels into columns, decides the page layout from all labels, derives each field's right and bottom limits from every matched label, and marks each side open or closed; unit tests. No change to extraction output yet. (R3.1)": [
+      {
+        "executionId": "24eb6733-cbd3-4801-bee1-ebafda6ca527",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794413917527
+      },
+      {
+        "executionId": "24eb6733-cbd3-4801-bee1-ebafda6ca527",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794414178304
+      }
     ]
   }
 }
