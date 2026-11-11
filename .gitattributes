@@ -1,0 +1,3 @@
+fixtures/**/*.png binary
+fixtures/**/*.json text eol=lf
+assets/tessdata/*.traineddata binary

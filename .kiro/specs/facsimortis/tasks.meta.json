@@ -21,6 +21,11 @@
         "executionId": "491f2889-491c-4812-b2a8-b572b06a320f",
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794394468184
+      },
+      {
+        "executionId": "88eb7ec4-475f-4352-b797-0803ae39f6a1",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794399002037
       }
     ],
     "0.1 Create repo with open-source license, README stub, and `/.kiro` committed in the first commit. Confirm `.kiro` is not in `.gitignore`. (R9)": [
@@ -76,6 +81,102 @@
         "executionId": "ff79f645-3673-4e9d-88a9-4f7104488109",
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794395384885
+      }
+    ],
+    "0.3.3 Templates: typed and table forms on an unskewed page, word IDs and per-field value word IDs; citation tests. (R8)": [
+      {
+        "executionId": "88eb7ec4-475f-4352-b797-0803ae39f6a1",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794396407492
+      },
+      {
+        "executionId": "88eb7ec4-475f-4352-b797-0803ae39f6a1",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794396700805
+      }
+    ],
+    "0.3.4 Degradation: fax header, mapBox and page rotation, speckle, streaks, stamp that avoids field values; unit tests. (R8)": [
+      {
+        "executionId": "88eb7ec4-475f-4352-b797-0803ae39f6a1",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794396712265
+      },
+      {
+        "executionId": "88eb7ec4-475f-4352-b797-0803ae39f6a1",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794397328197
+      }
+    ],
+    "0.3.5 Fax builder: buildFax, truth.json format, phase0Specs; determinism and trap tests. (R8)": [
+      {
+        "executionId": "88eb7ec4-475f-4352-b797-0803ae39f6a1",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794397335660
+      },
+      {
+        "executionId": "88eb7ec4-475f-4352-b797-0803ae39f6a1",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794398125559
+      }
+    ],
+    "0.3.6 CLI and checks: gen:faxes writes the 3 Phase 0 fixtures; determinism and citation tests; README update; visual check of one PNG. (R8)": [
+      {
+        "executionId": "88eb7ec4-475f-4352-b797-0803ae39f6a1",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794398248224
+      },
+      {
+        "executionId": "88eb7ec4-475f-4352-b797-0803ae39f6a1",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794399001951
+      }
+    ],
+    "0.4.1 OCR adapter interface: OcrWord {id, text, box, confidence}, OcrAdapter, cloud adapter stub, adapter selection from OCR_PROVIDER; unit tests. No Tesseract yet. (R2.1, R2.3)": [
+      {
+        "executionId": "4436457d-1ccf-49b8-9249-32c7dd3dfc90",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794399812148
+      },
+      {
+        "executionId": "4436457d-1ccf-49b8-9249-32c7dd3dfc90",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794400125666
+      }
+    ],
+    "0.4.2 Vendor English language data: tessdata_fast eng.traineddata and its Apache-2.0 LICENSE in assets/tessdata/, with source and checksum recorded. (R2.1)": [
+      {
+        "executionId": "4436457d-1ccf-49b8-9249-32c7dd3dfc90",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794400165323
+      },
+      {
+        "executionId": "4436457d-1ccf-49b8-9249-32c7dd3dfc90",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794400330219
+      }
+    ],
+    "0.4.3 Tesseract.js local adapter: offline (local langPath, no cache writes, no downloads), words mapped to fax pixel coordinates with 0..1 confidence; tested against fax-0001 truth. (R2.1)": [
+      {
+        "executionId": "4e2e086b-4718-4f56-97c9-fb57ad5d187a",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794400706933
+      },
+      {
+        "executionId": "4e2e086b-4718-4f56-97c9-fb57ad5d187a",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794401138075
+      }
+    ],
+    "0.4.4 Plain zero in the generator: save the slashed-zero fax-0001 as an ambiguous-chars trap fixture, override the 0 glyph in font.ts, regenerate fixtures with truth text and boxes unchanged, re-measure OCR on all three faxes. (R2.1, R8)": [
+      {
+        "executionId": "b0520a91-1bee-46f1-9a2c-cd758c61f882",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794401477141
+      },
+      {
+        "executionId": "b0520a91-1bee-46f1-9a2c-cd758c61f882",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794402017526
       }
     ]
   }

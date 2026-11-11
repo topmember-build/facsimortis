@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
 import { crc32 as zcrc32 } from 'node:zlib';
-import { loadSpleen } from '../src/generator/font.js';
+import { readFileSync } from 'node:fs';
+import { loadSpleen, parseBdf } from '../src/generator/font.js';
 import { Page, drawText } from '../src/generator/raster.js';
 import { decodePng, encodePng, readPngText } from '../src/generator/png.js';
 
@@ -21,6 +22,35 @@ describe('font', () => {
     }
     expect(ink(font.glyphs.get(65)?.rows ?? [])).toBeGreaterThan(0);
     expect(ink(font.glyphs.get(32)?.rows ?? [])).toBe(0);
+  });
+
+  it('draws a plain zero: diagonal removed, outline and every other glyph unchanged', () => {
+    const original = parseBdf(
+      readFileSync(new URL('../assets/fonts/spleen-16x32.bdf', import.meta.url), 'utf8'),
+    );
+    const slashed = original.glyphs.get(48)!.rows;
+    const plain = font.glyphs.get(48)!.rows;
+    // Original glyph still has the diagonal, e.g. columns 8-10 inked on row 14 (0x30EC).
+    expect(Array.from(slashed[14]!.slice(8, 11))).toEqual([1, 1, 1]);
+    const rowsWithInk = (rows: Uint8Array[]) => rows.map((r, y) => (r.some((v) => v) ? y : -1)).filter((y) => y >= 0);
+    expect(rowsWithInk(plain)).toEqual(rowsWithInk(slashed));
+    for (const y of rowsWithInk(plain)) {
+      // Outline: the first three and last three oval rows match the original exactly.
+      const rim = y < 9 || y > 22;
+      if (rim) expect(Array.from(plain[y]!)).toEqual(Array.from(slashed[y]!));
+      else {
+        // Interior: only the two side walls (columns 2,3 and 12,13) remain.
+        const cols = Array.from(plain[y]!).flatMap((v, c) => (v ? [c] : []));
+        expect(cols).toEqual([2, 3, 12, 13]);
+      }
+    }
+    // Interior pixels between the walls are white.
+    for (let y = 9; y <= 22; y++) for (let c = 4; c <= 11; c++) expect(plain[y]![c]).toBe(0);
+    for (const [code, g] of original.glyphs) {
+      if (code === 48) continue;
+      expect(font.glyphs.get(code)).toEqual(g);
+    }
+    expect(font.glyphs.size).toBe(original.glyphs.size);
   });
 
   it('throws on unknown characters', () => {

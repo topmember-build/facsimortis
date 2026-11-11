@@ -79,12 +79,50 @@ export function parseBdf(text: string): BitmapFont {
   return { cellWidth: CELL_W, cellHeight: CELL_H, glyphs };
 }
 
+/** Row 0 of the "0" oval inside the 32-row cell (rows above it are blank). */
+const ZERO_TOP = 6;
+/** Oval rows, top to bottom: three rows of rim, 14 interior rows, three rows of rim. */
+const ZERO_ROWS = [
+  0x0ff0, 0x1ff8, 0x381c,
+  ...Array.from({ length: 14 }, () => 0x300c),
+  0x381c, 0x1ff8, 0x0ff0,
+];
+
+function rowFromBits(bits: number): Uint8Array {
+  const row = new Uint8Array(CELL_W);
+  for (let c = 0; c < CELL_W; c++) row[c] = (bits >> (CELL_W - 1 - c)) & 1;
+  return row;
+}
+
+/**
+ * Returns a copy of the font whose "0" (code 48) is a plain oval.
+ *
+ * Spleen draws zero with a diagonal slash. Tesseract reads that slash as part of
+ * an 8, 6 or 9, which turned dates and phone numbers into the wrong digits. The
+ * oval, cell position and baseline stay the same; only the diagonal pixels are
+ * removed. The vendored BDF file is not edited and parseBdf still returns the
+ * original slashed glyph.
+ */
+export function withPlainZero(font: BitmapFont): BitmapFont {
+  const original = font.glyphs.get(48);
+  if (!original) throw new Error('The font has no zero glyph to override.');
+  const first = original.rows.findIndex((r) => r.some((v) => v === 1));
+  if (first !== ZERO_TOP) throw new Error('The zero glyph is not where the override expects it.');
+  const rows: Uint8Array[] = Array.from({ length: CELL_H }, (_, y) => {
+    const bits = ZERO_ROWS[y - ZERO_TOP];
+    return bits === undefined ? new Uint8Array(CELL_W) : rowFromBits(bits);
+  });
+  const glyphs = new Map(font.glyphs);
+  glyphs.set(48, { rows });
+  return { ...font, glyphs };
+}
+
 let cached: BitmapFont | undefined;
 
 export function loadSpleen(): BitmapFont {
   if (!cached) {
     const path = fileURLToPath(new URL('../../assets/fonts/spleen-16x32.bdf', import.meta.url));
-    cached = parseBdf(readFileSync(path, 'utf8'));
+    cached = withPlainZero(parseBdf(readFileSync(path, 'utf8')));
   }
   return cached;
 }
