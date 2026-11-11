@@ -2,8 +2,10 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createOcrAdapter } from '../src/ocr/default.js';
 import { LocalOcrAdapter, TESSDATA_DIR } from '../src/ocr/local.js';
-import { iou, matchWords } from '../src/ocr/match.js';
-import type { TruthWord } from '../src/ocr/match.js';
+import { alignReport, alignWords, crossField, ioMin } from '../src/eval/align.js';
+import type { AlignResult } from '../src/eval/align.js';
+import { matchWords } from '../src/eval/match.js';
+import type { TruthWord } from '../src/eval/match.js';
 import { OcrError } from '../src/ocr/types.js';
 import type { OcrResult, OcrWord } from '../src/ocr/types.js';
 
@@ -21,6 +23,7 @@ const fieldWordIds = truth.fields.flatMap((f) => f.wordIds);
 describe('LocalOcrAdapter on fax-0001', () => {
   const adapter = new LocalOcrAdapter();
   let result: OcrResult;
+  let aligned: AlignResult;
   let rootBefore: string[];
   let rootAfter: string[];
   let tessdataBefore: string[];
@@ -40,6 +43,11 @@ describe('LocalOcrAdapter on fax-0001', () => {
     } finally {
       vi.unstubAllGlobals();
     }
+    const raw = alignWords(result.words, truth.words);
+    aligned = {
+      ...raw,
+      groups: crossField(raw.groups, Object.fromEntries(truth.fields.map((f) => [f.name, f.wordIds]))),
+    };
     rootAfter = readdirSync(process.cwd()).sort();
     tessdataAfter = readdirSync(TESSDATA_DIR).sort();
   }, 120_000);
@@ -87,19 +95,32 @@ describe('LocalOcrAdapter on fax-0001', () => {
   // cells (about 3px at the sides, 7px above, 5px below). The 7 remaining misses are
   // short words whose tight box falls under IoU 0.5 (-, A, name:, of, Dr) and two
   // letter misreads (SYNTHETIC read as SUNTHETIC, Iris read as Tris).
+  //
+  // Task 0.4.6 replaced the best-IoU measure with containment alignment (src/eval/align.ts):
+  // OCR boxes hug the ink, so IoU against padded truth cells is low for short words.
+  // Measured with the alignment on fax-0001, no merges or splits:
+  //   all words 45/47 = 0.957, field values 16/17 = 0.941, mean IoU 0.594, 0 missing, 0 extra
+  // Old floors (best IoU, exact text): all 0.8, field 0.82, boxMatched 38, meanIoU 0.55.
+  // New floors sit 2 to 3 points under the measured values.
   it('puts boxes in fax pixel coordinates', () => {
-    const m = matchWords(result.words, truth.words, fieldWordIds);
-    expect(m.boxMatched).toBeGreaterThanOrEqual(38);
-    expect(m.meanIoU).toBeGreaterThanOrEqual(0.55);
-    // Every text-matched word overlaps its truth box by at least half.
-    const missed = new Set(m.mismatches.map((x) => x.truthId));
-    for (const t of truth.words.filter((w) => !missed.has(w.id))) {
-      const best = Math.max(...result.words.map((o) => iou(o.box, t.box)));
-      expect(best).toBeGreaterThanOrEqual(0.5);
+    const rep = alignReport(aligned, truth.words, fieldWordIds);
+    expect(rep.meanIoU).toBeGreaterThanOrEqual(0.57);
+    expect(rep.counts.missing).toBeLessThanOrEqual(1);
+    // Every read word overlaps its truth box by at least half of the smaller box.
+    for (const g of aligned.groups.filter((x) => x.kind === 'single')) {
+      const t = truth.words.find((w) => w.id === g.truthIds[0]) as TruthWord;
+      const o = result.words.find((w) => w.id === g.ocrIds[0]) as OcrWord;
+      expect(ioMin(o.box, t.box)).toBeGreaterThanOrEqual(0.5);
     }
   });
 
-  it('meets the text match floors', () => {
+  it('meets the alignment text match floors', () => {
+    const rep = alignReport(aligned, truth.words, fieldWordIds);
+    expect(rep.all.rate).toBeGreaterThanOrEqual(0.93);
+    expect(rep.fieldValues.rate).toBeGreaterThanOrEqual(0.91);
+  });
+
+  it('keeps the old best-IoU measure reproducible', () => {
     const m = matchWords(result.words, truth.words, fieldWordIds);
     expect(m.textMatchRate).toBeGreaterThanOrEqual(0.8);
     expect(m.fieldValues.textMatchRate).toBeGreaterThanOrEqual(0.82);

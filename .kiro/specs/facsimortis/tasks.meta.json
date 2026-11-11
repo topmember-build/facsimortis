@@ -190,6 +190,25 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794402652285
       }
+    ],
+    "0.4.6 Confidence analysis and merged-word matching: many-to-one OCR/truth word mapping, confidence of misread vs correct field-value words on all three faxes, report at the spec threshold 0.85 without tuning. (R5.1, R2.1)": [
+      {
+        "executionId": "adaba360-5292-4083-bbda-4186ae7bef80",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794402781876
+      },
+      {
+        "executionId": "adaba360-5292-4083-bbda-4186ae7bef80",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794404678863
+      }
+    ],
+    "0.4 OCR one fax and print words with boxes. (R2)": [
+      {
+        "executionId": "adaba360-5292-4083-bbda-4186ae7bef80",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794404679310
+      }
     ]
   }
 }

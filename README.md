@@ -66,7 +66,7 @@ With no path, it reads `fixtures/faxes/L1/fax-0001.png`. It prints a header (fil
 
 The last line shows the OCR time and the mean confidence. Add `--json` to print the full result as JSON instead.
 
-`OCR_PROVIDER=local` is the default. It runs Tesseract.js offline with the language data in `assets/tessdata`. `OCR_PROVIDER=cloud` is a stub in this demo and only returns an error message. A page takes about 0.4 to 0.7 s on the dev machine.
+`OCR_PROVIDER=local` is the default. It runs Tesseract.js offline with the language data in `assets/tessdata`. `OCR_PROVIDER=cloud` is a stub in this demo and only returns an error message. A cold run of `npm run ocr` takes about 0.7 to 0.8 s on the dev machine (this includes starting the OCR engine), and about 0.4 s per page once the engine is running.
 
 ## Spec
 
