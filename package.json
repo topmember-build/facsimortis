@@ -1,0 +1,30 @@
+{
+  "name": "facsimortis",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Demo that turns synthetic faxed referrals into verified, structured records with source ghosts. Synthetic data only.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "gen:faxes": "tsx src/scripts/gen-faxes.ts",
+    "ocr": "tsx src/scripts/ocr.ts",
+    "extract": "tsx src/scripts/extract.ts",
+    "proof": "tsx src/scripts/proof.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.6.6",
+    "eslint": "10.14.0",
+    "fast-check": "4.10.2",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.2",
+    "vitest": "5.1.0"
+  }
+}
