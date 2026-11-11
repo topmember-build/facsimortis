@@ -283,6 +283,13 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794415228411
       }
+    ],
+    "0.5.6 Column overflow flag: a field whose candidate value words cross its own right limit is flagged, not cut off at the limit; case A extended to typed values of 9 or more words, so no neighbour reads another field's overflow unflagged. (R3.1, R3.4)": [
+      {
+        "executionId": "5ba87858-a3dd-427c-94d5-e72ac86c41de",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794433253610
+      }
     ]
   }
 }
