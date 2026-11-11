@@ -13,16 +13,40 @@ Order matters. Runtime proof first, interface second, polish last.
   - [x] 0.3.4 Degradation: fax header, mapBox and page rotation, speckle, streaks, stamp that avoids field values; unit tests. (R8)
   - [x] 0.3.5 Fax builder: buildFax, truth.json format, phase0Specs; determinism and trap tests. (R8)
   - [x] 0.3.6 CLI and checks: gen:faxes writes the 3 Phase 0 fixtures; determinism and citation tests; README update; visual check of one PNG. (R8)
-- [ ] 0.4 OCR one fax and print words with boxes. (R2)
+- [x] 0.4 OCR one fax and print words with boxes. (R2)
   - [x] 0.4.1 OCR adapter interface: OcrWord {id, text, box, confidence}, OcrAdapter, cloud adapter stub, adapter selection from OCR_PROVIDER; unit tests. No Tesseract yet. (R2.1, R2.3)
   - [x] 0.4.2 Vendor English language data: tessdata_fast eng.traineddata and its Apache-2.0 LICENSE in assets/tessdata/, with source and checksum recorded. (R2.1)
   - [x] 0.4.3 Tesseract.js local adapter: offline (local langPath, no cache writes, no downloads), words mapped to fax pixel coordinates with 0..1 confidence; tested against fax-0001 truth. (R2.1)
   - [x] 0.4.4 Plain zero in the generator: save the slashed-zero fax-0001 as an ambiguous-chars trap fixture, override the 0 glyph in font.ts, regenerate fixtures with truth text and boxes unchanged, re-measure OCR on all three faxes. (R2.1, R8)
-  - [ ] 0.4.5 ocr CLI: npm run ocr prints words with boxes and confidence for one fax; README update. (R2.1)
+  - [x] 0.4.5 ocr CLI: npm run ocr prints words with boxes and confidence for one fax; README update. (R2.1)
+  - [x] 0.4.6 Confidence analysis and merged-word matching: many-to-one OCR/truth word mapping, confidence of misread vs correct field-value words on all three faxes, report at the spec threshold 0.85 without tuning. (R5.1, R2.1)
 - [ ] 0.5 Extract all fields with word IDs from that fax. Print them. (R3)
+  - [x] 0.5.1 Extraction schema and interface: Zod Field and ExtractionResult schemas from design.md, ExtractionAdapter and ExtractionError, EXTRACT_PROVIDER selection, .env.example update; tests. (R3.1)
+  - [x] 0.5.2 Label matching and typed-form layout: find each field by its label in the OCR words (small tolerance on label text only), read typed-form values below the label inside its box, value is the cited words as read with no repairs, null plus a plain flag when absent; unit tests and typed-form truth-words layout test. (R3.1, R3.2, R3.4)
+  - [x] 0.5.3 Table-form layout and never-invents property: read table-form values to the right of the label on the same row, wrapped lines included; truth-words layout test for the table form and a fast-check property that no value contains text outside its cited words. (R3.1, R3.2, R3.4)
+  - [x] 0.5.4 Page structure: pure module that groups all matched labels into columns, decides the page layout from all labels, derives each field's right and bottom limits from every matched label, and marks each side open or closed; unit tests. No change to extraction output yet. (R3.1)
+  - [x] 0.5.5 Structure in the readers and ambiguous layout: readers use the page limits; a field whose layout is ambiguous (long typed value near its label line at 3 degrees, or a stray word on a typed label line) is null with a plain flag; clean fixtures stay exact. (R3.1, R3.4)
+  - [ ] 0.5.6 Missing or garbled labels: flag every neighbouring field whose region is open toward an unusable label's space; test that removes or garbles each label in turn on all fixtures and asserts no unflagged value contains words from that label's area. (R3.1, R3.4)
+  - [ ] 0.5.7 Varied-geometry property: fast-check pages with label-to-value gaps from tight to wide, varied columns, spacing, wrapping and skew; clean pages give no wrong unflagged value, and pages with one label removed give no unflagged value from that label's area. One run with modest case counts; fix only real counterexamples. (R3.1, R3.4)
+  - [ ] 0.5.8 Extract CLI and measurement: npm run extract prints fields with cited word IDs, confidence and flags; OCR plus extraction on all three faxes reports exact matches, nulls and unflagged misreads by name. No thresholds. (R3.1)
+  - [ ] 0.5.9 Model extraction adapter: API key from an environment variable, strict JSON validated against the schema, retry once then needs-review, and a recorded-response fallback so it runs offline. (R3.1, R3.2)
 - [ ] 0.6 Reject any field whose cited words do not contain its value. (R3.2)
 
-**Gate:** all 3 faxes extract correctly from the command line. Do not start the UI before this passes.
+**Hard gate** (do not start the UI until all are true):
+
+- Every field with a value cites OCR word IDs that exist, and the cited words contain the value.
+- Nothing is invented: every value comes from the cited words on the page.
+- An absent field is null and flagged with a plain-language reason.
+- The `bad-npi` fax is flagged for its NPI.
+- `npm run proof` works from a clean clone.
+
+**Measured and reported in Phase 0, not pass or fail:**
+
+- Field exact-match rate against truth.json.
+- Unflagged misreads (goal: zero; owned by task 1.2). The proof output lists each one by fax and field name.
+- Correct values that were flagged.
+
+Do not tune thresholds or add repairs to reach zero on the three Phase 0 faxes.
 
 ## Phase 1: Core pipeline
 

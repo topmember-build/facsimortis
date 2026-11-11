@@ -1,6 +1,9 @@
-import type { Box, OcrWord } from './types.js';
+import type { Box, OcrWord } from '../ocr/types.js';
 
-/** Pure measurement helpers. No I/O. Reusable by the evaluation script. */
+/**
+ * The "old" measure: best IoU per truth word, exact text. Kept unchanged so the
+ * earlier numbers stay reproducible. Evaluation code only; the app never imports it.
+ */
 
 export interface TruthWord {
   id: string;

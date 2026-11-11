@@ -178,6 +178,111 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794402017526
       }
+    ],
+    "0.4.5 ocr CLI: npm run ocr prints words with boxes and confidence for one fax; README update. (R2.1)": [
+      {
+        "executionId": "493e8021-168e-4813-a901-f66463710b6c",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794402251202
+      },
+      {
+        "executionId": "493e8021-168e-4813-a901-f66463710b6c",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794402652285
+      }
+    ],
+    "0.4.6 Confidence analysis and merged-word matching: many-to-one OCR/truth word mapping, confidence of misread vs correct field-value words on all three faxes, report at the spec threshold 0.85 without tuning. (R5.1, R2.1)": [
+      {
+        "executionId": "adaba360-5292-4083-bbda-4186ae7bef80",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794402781876
+      },
+      {
+        "executionId": "adaba360-5292-4083-bbda-4186ae7bef80",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794404678863
+      }
+    ],
+    "0.4 OCR one fax and print words with boxes. (R2)": [
+      {
+        "executionId": "adaba360-5292-4083-bbda-4186ae7bef80",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794404679310
+      }
+    ],
+    "0.5.1 Extraction interface, field schema from design.md, and a deterministic rule-based extractor that finds each field by its label in the OCR words and returns value, cited word IDs and confidence, or null plus a flag when absent. Never repairs OCR misreads. (R3.1, R3.2, R3.4)": [
+      {
+        "executionId": "a0f8119f-9265-4806-ae5f-863e5893fe93",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794406689710
+      }
+    ],
+    "0.5.1 Extraction schema and interface: Zod Field and ExtractionResult schemas from design.md, ExtractionAdapter and ExtractionError, EXTRACT_PROVIDER selection, .env.example update; tests. (R3.1)": [
+      {
+        "executionId": "ea84a2ce-fec8-4864-89a8-e91a960455e8",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794409819567
+      },
+      {
+        "executionId": "ea84a2ce-fec8-4864-89a8-e91a960455e8",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794410130633
+      }
+    ],
+    "0.5.2 Label matching and typed-form layout: find each field by its label in the OCR words (small tolerance on label text only), read typed-form values below the label inside its box, value is the cited words as read with no repairs, null plus a plain flag when absent; unit tests and typed-form truth-words layout test. (R3.1, R3.2, R3.4)": [
+      {
+        "executionId": "d308371a-232c-4344-957b-09ed7255f843",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794410493957
+      },
+      {
+        "executionId": "d308371a-232c-4344-957b-09ed7255f843",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794411216220
+      }
+    ],
+    "0.5.3 Table-form layout and never-invents property: read table-form values to the right of the label on the same row, wrapped lines included; truth-words layout test for the table form and a fast-check property that no value contains text outside its cited words. (R3.1, R3.2, R3.4)": [
+      {
+        "executionId": "97b7b94e-cfc2-44d0-89e8-649dc6bad89b",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794411503537
+      },
+      {
+        "executionId": "97b7b94e-cfc2-44d0-89e8-649dc6bad89b",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794412076555
+      }
+    ],
+    "0.5.4 Region safety: column and row limits from all matched labels on the page; flag every neighbouring field whose region could reach a missing label's space; a test that removes or garbles each label in turn on all fixtures and asserts no unflagged value contains words from that label's area. (R3.1, R3.4)": [
+      {
+        "executionId": "1a632a59-dfdd-4fa3-941a-5b86b8623d74",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794412423584
+      }
+    ],
+    "0.5.4 Page structure: pure module that groups all matched labels into columns, decides the page layout from all labels, derives each field's right and bottom limits from every matched label, and marks each side open or closed; unit tests. No change to extraction output yet. (R3.1)": [
+      {
+        "executionId": "24eb6733-cbd3-4801-bee1-ebafda6ca527",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794413917527
+      },
+      {
+        "executionId": "24eb6733-cbd3-4801-bee1-ebafda6ca527",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794414178304
+      }
+    ],
+    "0.5.5 Structure in the readers and ambiguous layout: readers use the page limits; a field whose layout is ambiguous (long typed value near its label line at 3 degrees, or a stray word on a typed label line) is null with a plain flag; clean fixtures stay exact. (R3.1, R3.4)": [
+      {
+        "executionId": "6fc46107-573a-4dff-9f6f-0ad1637ac58d",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794414443633
+      },
+      {
+        "executionId": "6fc46107-573a-4dff-9f6f-0ad1637ac58d",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794415228411
+      }
     ]
   }
 }
