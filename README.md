@@ -49,6 +49,7 @@ Each `truth.json` holds:
 - the template, the degradation parameters, the seed and the trap (if any)
 
 Every page carries a visible "Synthetic data" notice and a SYNTHETIC marker in the PNG metadata. The bitmap font is Spleen (BSD-2-Clause, see `assets/fonts/LICENSE-spleen`).
+The English OCR language data is `eng.traineddata` from tessdata_fast (Apache-2.0, see `assets/tessdata/LICENSE-tessdata`).
 
 ## Spec
 

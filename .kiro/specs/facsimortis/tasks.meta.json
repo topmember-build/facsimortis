@@ -142,6 +142,18 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794400125666
       }
+    ],
+    "0.4.2 Vendor English language data: tessdata_fast eng.traineddata and its Apache-2.0 LICENSE in assets/tessdata/, with source and checksum recorded. (R2.1)": [
+      {
+        "executionId": "4436457d-1ccf-49b8-9249-32c7dd3dfc90",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794400165323
+      },
+      {
+        "executionId": "4436457d-1ccf-49b8-9249-32c7dd3dfc90",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794400330219
+      }
     ]
   }
 }
