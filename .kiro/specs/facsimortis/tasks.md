@@ -17,7 +17,8 @@ Order matters. Runtime proof first, interface second, polish last.
   - [x] 0.4.1 OCR adapter interface: OcrWord {id, text, box, confidence}, OcrAdapter, cloud adapter stub, adapter selection from OCR_PROVIDER; unit tests. No Tesseract yet. (R2.1, R2.3)
   - [x] 0.4.2 Vendor English language data: tessdata_fast eng.traineddata and its Apache-2.0 LICENSE in assets/tessdata/, with source and checksum recorded. (R2.1)
   - [x] 0.4.3 Tesseract.js local adapter: offline (local langPath, no cache writes, no downloads), words mapped to fax pixel coordinates with 0..1 confidence; tested against fax-0001 truth. (R2.1)
-  - [ ] 0.4.4 ocr CLI: npm run ocr prints words with boxes and confidence for one fax; README update. (R2.1)
+  - [-] 0.4.4 Plain zero in the generator: save the slashed-zero fax-0001 as an ambiguous-chars trap fixture, override the 0 glyph in font.ts, regenerate fixtures with truth text and boxes unchanged, re-measure OCR on all three faxes. (R2.1, R8)
+  - [ ] 0.4.5 ocr CLI: npm run ocr prints words with boxes and confidence for one fax; README update. (R2.1)
 - [ ] 0.5 Extract all fields with word IDs from that fax. Print them. (R3)
 - [ ] 0.6 Reject any field whose cited words do not contain its value. (R3.2)
 
