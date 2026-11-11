@@ -76,12 +76,17 @@ describe('LocalOcrAdapter on fax-0001', () => {
     });
   });
 
-  // Measured with PSM 3 on fax-0001 (47 truth words, 17 field-value words):
-  //   all words:    35/47 text matched = 0.745, 42 boxes matched, mean IoU 0.62
-  //   field values: 13/17 text matched = 0.765
+  // Measured with PSM 3 on fax-0001 (47 truth words, 17 field-value words), drawn with
+  // the plain zero:
+  //   all words:    40/47 text matched = 0.851, 42 boxes matched, mean IoU 0.62
+  //   field values: 15/17 text matched = 0.882
+  // Before the plain-zero override (Spleen's slashed zero, now saved as the trap fixture
+  // fixtures/traps/ambiguous-chars) the same page scored 35/47 = 0.745 and 13/17 = 0.765,
+  // because 0 was read as 8, 6 or 9.
   // Mean IoU is below 1 because OCR boxes hug the ink while truth boxes are padded
-  // cells (about 3px at the sides, 7px above, 5px below). Misses are mostly digit
-  // confusions (0 read as 8, 6 or 9) and short words whose tight box falls under IoU 0.5.
+  // cells (about 3px at the sides, 7px above, 5px below). The 7 remaining misses are
+  // short words whose tight box falls under IoU 0.5 (-, A, name:, of, Dr) and two
+  // letter misreads (SYNTHETIC read as SUNTHETIC, Iris read as Tris).
   it('puts boxes in fax pixel coordinates', () => {
     const m = matchWords(result.words, truth.words, fieldWordIds);
     expect(m.boxMatched).toBeGreaterThanOrEqual(38);
@@ -96,8 +101,8 @@ describe('LocalOcrAdapter on fax-0001', () => {
 
   it('meets the text match floors', () => {
     const m = matchWords(result.words, truth.words, fieldWordIds);
-    expect(m.textMatchRate).toBeGreaterThanOrEqual(0.7);
-    expect(m.fieldValues.textMatchRate).toBeGreaterThanOrEqual(0.7);
+    expect(m.textMatchRate).toBeGreaterThanOrEqual(0.8);
+    expect(m.fieldValues.textMatchRate).toBeGreaterThanOrEqual(0.82);
   });
 });
 
