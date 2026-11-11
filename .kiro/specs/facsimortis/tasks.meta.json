@@ -252,6 +252,13 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794412076555
       }
+    ],
+    "0.5.4 Region safety: column and row limits from all matched labels on the page; flag every neighbouring field whose region could reach a missing label's space; a test that removes or garbles each label in turn on all fixtures and asserts no unflagged value contains words from that label's area. (R3.1, R3.4)": [
+      {
+        "executionId": "1a632a59-dfdd-4fa3-941a-5b86b8623d74",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794412423584
+      }
     ]
   }
 }
