@@ -178,6 +178,18 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794402017526
       }
+    ],
+    "0.4.5 ocr CLI: npm run ocr prints words with boxes and confidence for one fax; README update. (R2.1)": [
+      {
+        "executionId": "493e8021-168e-4813-a901-f66463710b6c",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794402251202
+      },
+      {
+        "executionId": "493e8021-168e-4813-a901-f66463710b6c",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794402652285
+      }
     ]
   }
 }
