@@ -228,6 +228,18 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794410130633
       }
+    ],
+    "0.5.2 Label matching and typed-form layout: find each field by its label in the OCR words (small tolerance on label text only), read typed-form values below the label inside its box, value is the cited words as read with no repairs, null plus a plain flag when absent; unit tests and typed-form truth-words layout test. (R3.1, R3.2, R3.4)": [
+      {
+        "executionId": "d308371a-232c-4344-957b-09ed7255f843",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794410493957
+      },
+      {
+        "executionId": "d308371a-232c-4344-957b-09ed7255f843",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794411216220
+      }
     ]
   }
 }
