@@ -130,6 +130,18 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794399001951
       }
+    ],
+    "0.4.1 OCR adapter interface: OcrWord {id, text, box, confidence}, OcrAdapter, cloud adapter stub, adapter selection from OCR_PROVIDER; unit tests. No Tesseract yet. (R2.1, R2.3)": [
+      {
+        "executionId": "4436457d-1ccf-49b8-9249-32c7dd3dfc90",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794399812148
+      },
+      {
+        "executionId": "4436457d-1ccf-49b8-9249-32c7dd3dfc90",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794400125666
+      }
     ]
   }
 }
