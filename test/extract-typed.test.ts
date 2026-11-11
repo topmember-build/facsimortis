@@ -351,20 +351,11 @@ describe('truth-words layout', () => {
     },
   );
 
-  it('table-form page (fax-0002): every field is the truth value or null with a flag', async () => {
-    const { truth, ocr } = loadTruth('fixtures/faxes/L2/fax-0002.truth.json');
-    const result = await new RuleExtractor().extract(ocr);
-    const nulls: string[] = [];
-    for (const t of truth.fields) {
-      const f = fieldOf(result, t.name);
-      if (f.value === null) {
-        nulls.push(t.name);
-        expect(f.flags.length).toBeGreaterThan(0);
-      } else {
-        expect(f.value).toBe(t.value);
-      }
+  it('typed pages are read as typed', () => {
+    for (const path of ['fixtures/faxes/L1/fax-0001.truth.json', 'fixtures/faxes/L2/fax-0003.truth.json']) {
+      const { ocr } = loadTruth(path);
+      for (const d of extractWithDetails(ocr).details) expect(d.layout).toBe('typed');
     }
-    console.log(`fax-0002 null fields: ${nulls.join(', ') || '(none)'}`);
   });
 });
 

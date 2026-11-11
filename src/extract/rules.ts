@@ -1,4 +1,5 @@
 import type { OcrResult } from '../ocr/types.js';
+import { allLabelWordIds, allMatches, firstLineValueWords, readTableValue } from './layout-table.js';
 import { readTypedValue } from './layout-typed.js';
 import { findLabels } from './labels.js';
 import { FIELD_ORDER } from './schema.js';
@@ -28,6 +29,8 @@ export interface FieldDetails {
   /** How many times the label was found. */
   matchCount: number;
   reason: FieldReason;
+  /** Layout used to read the value (null when no label was usable). */
+  layout: 'table' | 'typed' | null;
 }
 
 export interface ExtractionDetails {
@@ -40,7 +43,7 @@ function missing(name: FieldName, flag: string): Field {
 }
 
 /**
- * Rule-based reader. Finds each label, reads the value below it (typed form).
+ * Rule-based reader. Finds each label, reads the value beside it (table form) or below it (typed form).
  * A value is exactly the cited words' texts joined by single spaces. Nothing is
  * repaired, and nothing is guessed: a field that cannot be read is null and flagged.
  * Confidence is reported (lowest cited word), never used to decide anything here.
@@ -48,6 +51,7 @@ function missing(name: FieldName, flag: string): Field {
 export function extractWithDetails(ocr: OcrResult): ExtractionDetails {
   const findings = findLabels(ocr.words);
   const byId = new Map(ocr.words.map((w) => [w.id, w]));
+  const labelIds = allLabelWordIds(findings);
   const fields: Field[] = [];
   const details: FieldDetails[] = [];
 
@@ -59,17 +63,25 @@ export function extractWithDetails(ocr: OcrResult): ExtractionDetails {
 
     if (label === undefined || finding === undefined) {
       fields.push(missing(name, `The ${plain} label was not found on the page.`));
-      details.push({ field: name, labelWordIds: [], fuzzy: false, matchCount: 0, reason: 'label-not-found' });
+      details.push({ field: name, labelWordIds: [], fuzzy: false, matchCount: 0, reason: 'label-not-found', layout: null });
       continue;
     }
     if (count > 1) {
       fields.push(missing(name, `The ${plain} appears more than once on the page. Please check it.`));
-      details.push({ field: name, labelWordIds: [], fuzzy: false, matchCount: count, reason: 'label-repeated' });
+      details.push({ field: name, labelWordIds: [], fuzzy: false, matchCount: count, reason: 'label-repeated', layout: null });
       continue;
     }
 
-    const read = readTypedValue(ocr.words, label, findings, { width: ocr.width, height: ocr.height });
-    const base = { field: name, labelWordIds: label.wordIds, fuzzy: label.fuzzy, matchCount: count };
+    // Layout choice, per field: if the label's own line has at least one non-label OCR
+    // word to its right, the page is read as a table form (value beside the label).
+    // Otherwise it is read as a typed form (value below the label).
+    const layout: 'table' | 'typed' =
+      firstLineValueWords(ocr.words, label, labelIds, allMatches(findings)).length > 0 ? 'table' : 'typed';
+    const read =
+      layout === 'table'
+        ? readTableValue(ocr.words, label, findings)
+        : readTypedValue(ocr.words, label, findings, { width: ocr.width, height: ocr.height });
+    const base = { field: name, labelWordIds: label.wordIds, fuzzy: label.fuzzy, matchCount: count, layout };
 
     if (read.kind === 'merged') {
       fields.push(missing(name, `The ${plain} runs into its label on the page. Please check it.`));

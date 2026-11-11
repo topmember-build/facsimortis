@@ -240,6 +240,18 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794411216220
       }
+    ],
+    "0.5.3 Table-form layout and never-invents property: read table-form values to the right of the label on the same row, wrapped lines included; truth-words layout test for the table form and a fast-check property that no value contains text outside its cited words. (R3.1, R3.2, R3.4)": [
+      {
+        "executionId": "97b7b94e-cfc2-44d0-89e8-649dc6bad89b",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794411503537
+      },
+      {
+        "executionId": "97b7b94e-cfc2-44d0-89e8-649dc6bad89b",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794412076555
+      }
     ]
   }
 }

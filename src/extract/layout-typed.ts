@@ -28,19 +28,19 @@ export type TypedReadResult =
 const MAX_GAP_IN_HEIGHTS = 1.5;
 const SAME_ROW_IN_HEIGHTS = 2;
 
-interface Line {
+export interface Line {
   words: OcrWord[];
 }
 
-function centreX(w: OcrWord): number {
+export function centreX(w: OcrWord): number {
   return (w.box[0] + w.box[2]) / 2;
 }
 
-function mean(values: number[]): number {
+export function mean(values: number[]): number {
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
-function groupLines(candidates: readonly OcrWord[], medianHeight: number): Line[] {
+export function groupLines(candidates: readonly OcrWord[], medianHeight: number): Line[] {
   const lines: Line[] = [];
   const sorted = [...candidates].sort((a, b) => centreX(a) - centreX(b));
   for (const word of sorted) {
