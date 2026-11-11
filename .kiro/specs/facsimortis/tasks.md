@@ -4,8 +4,8 @@ Order matters. Runtime proof first, interface second, polish last.
 
 ## Phase 0: First hour (runtime proof, no UI)
 
-- [ ] 0.1 Create repo with open-source license, README stub, and `/.kiro` committed in the first commit. Confirm `.kiro` is not in `.gitignore`. (R9)
-- [ ] 0.2 Write steering docs: `product.md`, `tech.md`, `design.md`. (Kiro write-up)
+- [x] 0.1 Create repo with open-source license, README stub, and `/.kiro` committed in the first commit. Confirm `.kiro` is not in `.gitignore`. (R9)
+- [x] 0.2 Write steering docs: `product.md`, `tech.md`, `design.md`. (Kiro write-up)
 - [ ] 0.3 Build the generator for 3 synthetic faxes with one degradation level. (R8)
 - [ ] 0.4 OCR one fax and print words with boxes. (R2)
 - [ ] 0.5 Extract all fields with word IDs from that fax. Print them. (R3)

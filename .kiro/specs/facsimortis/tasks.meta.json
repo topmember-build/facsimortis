@@ -1,0 +1,36 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "0.3 Build the generator for 3 synthetic faxes with one degradation level. (R8)": [
+      {
+        "executionId": "3a35920d-52c2-423f-86e8-47568d43395f",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794393305169
+      },
+      {
+        "executionId": "f6fc659e-eb7b-44d2-bdd4-d0be52768903",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794393955984
+      }
+    ],
+    "0.1 Create repo with open-source license, README stub, and `/.kiro` committed in the first commit. Confirm `.kiro` is not in `.gitignore`. (R9)": [
+      {
+        "executionId": "8dd0f195-3515-458a-b4bf-690cac3ff86e",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794393698162
+      },
+      {
+        "executionId": "f6fc659e-eb7b-44d2-bdd4-d0be52768903",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794393956549
+      }
+    ],
+    "0.2 Write steering docs: `product.md`, `tech.md`, `design.md`. (Kiro write-up)": [
+      {
+        "executionId": "0bcbda14-8e3c-413f-b18c-2cbac656a9f3",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794394127860
+      }
+    ]
+  }
+}
