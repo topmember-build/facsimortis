@@ -1,0 +1,82 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "0.3 Build the generator for 3 synthetic faxes with one degradation level. (R8)": [
+      {
+        "executionId": "3a35920d-52c2-423f-86e8-47568d43395f",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794393305169
+      },
+      {
+        "executionId": "f6fc659e-eb7b-44d2-bdd4-d0be52768903",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794393955984
+      },
+      {
+        "executionId": "e86cd62f-8d48-440d-b251-4ed3083820eb",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794394296840
+      },
+      {
+        "executionId": "491f2889-491c-4812-b2a8-b572b06a320f",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794394468184
+      }
+    ],
+    "0.1 Create repo with open-source license, README stub, and `/.kiro` committed in the first commit. Confirm `.kiro` is not in `.gitignore`. (R9)": [
+      {
+        "executionId": "8dd0f195-3515-458a-b4bf-690cac3ff86e",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794393698162
+      },
+      {
+        "executionId": "f6fc659e-eb7b-44d2-bdd4-d0be52768903",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794393956549
+      }
+    ],
+    "0.2 Write steering docs: `product.md`, `tech.md`, `design.md`. (Kiro write-up)": [
+      {
+        "executionId": "0bcbda14-8e3c-413f-b18c-2cbac656a9f3",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794394127860
+      }
+    ],
+    "0.3.1 Validators and data: pure NPI check-digit module, seeded PRNG, fake referral data; property tests for NPI and DOB. No images. (R4.1, R8)": [
+      {
+        "executionId": "6b054e0d-d964-48e4-b05e-8b139eda60e6",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794394898991
+      },
+      {
+        "executionId": "6b054e0d-d964-48e4-b05e-8b139eda60e6",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794395059248
+      }
+    ],
+    "0.3.2 Font and drawing: Spleen BDF parser, 1-bit page buffer, PNG encoding with SYNTHETIC tag, text drawing with word boxes; tested on one plain page. (R8)": [
+      {
+        "executionId": "6b054e0d-d964-48e4-b05e-8b139eda60e6",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794395059341
+      },
+      {
+        "executionId": "ff79f645-3673-4e9d-88a9-4f7104488109",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794395208766
+      },
+      {
+        "executionId": "ff79f645-3673-4e9d-88a9-4f7104488109",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794395384356
+      }
+    ],
+    "0.3.3 Templates and degradation: typed and table forms, fax header, skew with box mapping, speckle, streaks, stamp; truth.json builder. (R8)": [
+      {
+        "executionId": "ff79f645-3673-4e9d-88a9-4f7104488109",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794395384885
+      }
+    ]
+  }
+}
