@@ -31,7 +31,7 @@ Order matters. Runtime proof first, interface second, polish last.
   - [x] 0.5.8 Overflow tests: case A extended to values of 9 to 12 words at 0 and plus or minus 3 degrees; no wrong unflagged value; counts of overflow flags, neighbour flags and correct values flagged. (R3.1, R3.4)
   - [x] 0.5.9 Extract CLI and measurement: npm run extract prints fields with cited word IDs, confidence and flags; OCR plus extraction on all three faxes reports exact matches, nulls, unflagged misreads by name, and correct values that were flagged. No thresholds. (R3.1)
   - [x] 0.5.10 No silent drops: any OCR word inside a field's value region that is not cited is either included or makes the field flagged; regression test built from fax-0002's recorded real OCR output as a synthetic fixture (referring provider must not come back as an unflagged "Family Clinic"). (R3.1, R3.4)
-- [ ] 0.6 Reject any field whose cited words do not contain its value. (R3.2)
+- [-] 0.6 Reject any field whose cited words do not contain its value. (R3.2)
 
 **Hard gate** (do not start the UI until all are true):
 
@@ -65,7 +65,7 @@ Do not tune thresholds or add repairs to reach zero on the three Phase 0 faxes.
 - [ ] 1.6 Varied-geometry property: fast-check pages with label-to-value gaps from tight to wide, varied columns, spacing, wrapping and skew; clean pages give no wrong unflagged value, and pages with one label removed give no unflagged value from that label's area. One run with modest case counts; fix only real counterexamples. (R3.1, R3.4)
 - [ ] 1.7 Missing or garbled labels: flag every neighbouring field whose region is open toward an unusable label's space; test that removes or garbles each label in turn on all fixtures, including overflowing values, and asserts no unflagged value contains words from that label's area. (R3.1, R3.4)
 - [ ] 1.8 Hook: re-run evaluation on extraction changes.
-- [ ] 1.9 Skewed table pages on real OCR: find a label whose words OCR lists out of order (fax-0002 reason for referral), and resolve the NPI layout conflict on fax-0002, with regression tests from recorded OCR. (R3.1, R3.4)
+- [ ] 1.9 Skewed table pages on real OCR: one problem with three symptoms on fax-0002, fixed together. (1) The table reader starts a value at the word nearest the label's height and reads only rightwards, so on a line that rises to the right it misses the leftmost value words (referring provider read as "Family Clinic"; today flagged by the 0.5.10 rule). (2) A label whose words OCR lists out of order is not found (reason for referral). (3) The NPI field is left empty as a layout conflict. Regression fixture: the recorded real OCR in fixtures/ocr/fax-0002.ocr.json; its test is expected to change on purpose when this is fixed. (R3.1, R3.4)
 
 ## Phase 2: Interface (demo-script order)
 
