@@ -1,7 +1,9 @@
-import type { OcrResult } from '../ocr/types.js';
-import { readTableValue } from './layout-table.js';
-import { detectTypedOverflow, readTypedValue } from './layout-typed.js';
-import { findLabels } from './labels.js';
+import type { OcrResult, OcrWord } from '../ocr/types.js';
+import { allLabelWordIds, readTableValue } from './layout-table.js';
+import { detectTypedOverflow, readTypedValue, typedValueColumn } from './layout-typed.js';
+import { findLabels, medianWordHeight } from './labels.js';
+import { resolveUncited } from './uncited.js';
+import type { ValueColumn } from './uncited.js';
 import { FIELD_ORDER } from './schema.js';
 import { buildStructure } from './structure.js';
 import type { PageLayout } from './structure.js';
@@ -48,13 +50,28 @@ export interface FieldDetails {
   overflow: boolean;
   /** The field whose value ran into this one, or null. */
   overflowFrom: FieldName | null;
+  /** OCR words inside the value region that nobody cited and that were NOT added (the field is flagged). */
+  uncitedWordIds: string[];
+  /** OCR words inside the value region that nobody cited and that WERE added to the value. */
+  includedWordIds: string[];
 }
 
-type BaseDetails = Omit<FieldDetails, 'overflow' | 'overflowFrom'>;
+type BaseDetails = Omit<FieldDetails, 'overflow' | 'overflowFrom' | 'uncitedWordIds' | 'includedWordIds'>;
 
 export interface ExtractionDetails {
   result: ExtractionResult;
   details: FieldDetails[];
+}
+
+function citedField(name: FieldName, cited: readonly OcrWord[], flags: string[]): Field {
+  return {
+    name,
+    value: cited.map((w) => w.text).join(' '),
+    wordIds: cited.map((w) => w.id),
+    confidence: Math.min(...cited.map((w) => w.confidence)),
+    flags,
+    reviewed: false,
+  };
 }
 
 function missing(name: FieldName, flag: string): Field {
@@ -66,17 +83,26 @@ function missing(name: FieldName, flag: string): Field {
  * A value is exactly the cited words' texts joined by single spaces. Nothing is
  * repaired, and nothing is guessed: a field that cannot be read is null and flagged.
  * Confidence is reported (lowest cited word), never used to decide anything here.
+ *
+ * No silent drops (0.5.10, rule in uncited.ts): after every field is read, an OCR word
+ * that sits inside a field's value region but is cited by no field is either added to
+ * that field (when it chains on the same text line with normal word spacing) or the
+ * field is flagged "Some words near the <field> were not read. Please check it."
+ * Words are added all together or not at all, and their text is never changed.
  */
 export function extractWithDetails(ocr: OcrResult): ExtractionDetails {
   const findings = findLabels(ocr.words);
   const byId = new Map(ocr.words.map((w) => [w.id, w]));
   const structure = buildStructure(ocr, findings);
   const pageLayout = structure.layout;
+  const h = medianWordHeight(ocr.words);
   const onLabelLines = new Set(structure.fields.flatMap((f) => f.rightWordIds));
   const fields: Field[] = [];
   const details: BaseDetails[] = [];
   // Overflow runs found on this page, by the field whose value ran on (see below).
   const overflowRuns = new Map<FieldName, string[]>();
+  // Fields that were read, with the words they cited and their value column.
+  const reads: { index: number; cited: OcrWord[]; column: ValueColumn }[] = [];
 
   for (const name of FIELD_ORDER) {
     const plain = PLAIN_FIELD_NAMES[name];
@@ -175,15 +201,42 @@ export function extractWithDetails(ocr: OcrResult): ExtractionDetails {
         const word = byId.get(id);
         return word === undefined ? [] : [word];
       });
-      fields.push({
-        name,
-        value: cited.map((w) => w.text).join(' '),
-        wordIds: cited.map((w) => w.id),
-        confidence: Math.min(...cited.map((w) => w.confidence)),
-        flags: [],
-        reviewed: false,
-      });
+      fields.push(citedField(name, cited, []));
       details.push({ ...base, reason: 'read' });
+      const bottom = own.bottom.limit;
+      const xMax = own.right.limit < page.width ? own.right.limit - 0.25 * h : page.width;
+      const column =
+        layout === 'typed'
+          ? { ...typedValueColumn(ocr.words, label, findings, page, typedLimits), bottom }
+          : {
+              xMin: (own.valueLeft ?? Math.min(...cited.map((w) => w.box[0]))) - h,
+              xMax,
+              bottom,
+            };
+      reads.push({ index: fields.length - 1, cited, column });
+    }
+  }
+
+  // No silent drops (see uncited.ts). Each read field is checked for OCR words inside
+  // its value region that nobody cited. All of them chain on the same text line: they
+  // are included. Otherwise the value stays as read and the field gets a plain flag.
+  const claimed = new Set<string>([...allLabelWordIds(findings), ...reads.flatMap((r) => r.cited.map((w) => w.id))]);
+  const uncitedByField = new Map<FieldName, { uncited: string[]; included: string[] }>();
+  for (const read of reads) {
+    const result = resolveUncited(ocr.words, read.cited, read.column, claimed, h);
+    const field = fields[read.index];
+    if (field === undefined) continue;
+    uncitedByField.set(field.name, { uncited: result.uncitedIds, included: result.includedIds });
+    if (result.includedIds.length > 0) {
+      const all = result.wordIds.flatMap((id) => {
+        const word = byId.get(id);
+        return word === undefined ? [] : [word];
+      });
+      fields[read.index] = citedField(field.name, all, field.flags);
+      for (const id of result.includedIds) claimed.add(id);
+    } else if (result.uncitedIds.length > 0) {
+      const plain = PLAIN_FIELD_NAMES[field.name];
+      fields[read.index] = { ...field, flags: [...field.flags, `Some words near the ${plain} were not read. Please check it.`] };
     }
   }
 
@@ -206,6 +259,8 @@ export function extractWithDetails(ocr: OcrResult): ExtractionDetails {
     ...d,
     overflow: overflowRuns.has(d.field),
     overflowFrom: overflowFrom.get(d.field) ?? null,
+    uncitedWordIds: uncitedByField.get(d.field)?.uncited ?? [],
+    includedWordIds: uncitedByField.get(d.field)?.included ?? [],
   }));
 
   return { result: parseExtractionResult({ engine: 'rules', fields: flagged }), details: allDetails };

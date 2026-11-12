@@ -178,6 +178,18 @@ export function readTypedValue(
   return { kind: 'value', wordIds: taken.map((w) => w.id) };
 }
 
+/** The typed reader's value column (left and right cut), for the no-silent-drops check. */
+export function typedValueColumn(
+  words: readonly OcrWord[],
+  label: LabelMatch,
+  allLabels: readonly LabelFinding[],
+  page: { width: number; height: number },
+  limits: TypedLimits,
+): { xMin: number; xMax: number } {
+  const region = typedRegion(words, label, allLabels, page, limits);
+  return { xMin: region.xMin, xMax: region.xMax };
+}
+
 const NO_OVERFLOW: OverflowResult = { overflow: false, runIds: [], crossingIds: [] };
 
 /**
