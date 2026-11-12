@@ -1,6 +1,8 @@
 import type { OcrWord } from '../ocr/types.js';
 import { centreY, medianWordHeight } from './labels.js';
 import type { LabelFinding, LabelMatch } from './labels.js';
+import { GAP_FACTOR, findOverflow } from './overflow.js';
+import type { OverflowResult } from './overflow.js';
 
 /**
  * Typed-form reader (pure: no I/O).
@@ -22,6 +24,10 @@ import type { LabelFinding, LabelMatch } from './labels.js';
  * Whichever comes first wins. Words the structure placed on any label's line
  * (onLabelLines) are never taken as value words.
  *
+ * detectTypedOverflow (0.5.7) looks at the same rows WITHOUT the right cut, so a
+ * value that runs on past its right limit can be seen and flagged instead of being
+ * silently cut. It never changes what readTypedValue returns.
+ *
  * Nothing here is page-specific: every size comes from the OCR words themselves.
  * Values are returned as word IDs. The text is never changed.
  */
@@ -30,6 +36,12 @@ export type TypedReadResult =
   | { kind: 'value'; wordIds: string[] }
   | { kind: 'empty' }
   | { kind: 'merged' };
+
+export interface TypedLimits {
+  right: number;
+  bottom: number;
+  onLabelLines?: ReadonlySet<string>;
+}
 
 const MAX_GAP_IN_HEIGHTS = 1.5;
 const SAME_ROW_IN_HEIGHTS = 2;
@@ -69,15 +81,21 @@ export function groupLines(candidates: readonly OcrWord[], medianHeight: number)
   );
 }
 
-export function readTypedValue(
+interface TypedRegion {
+  medianHeight: number;
+  labelIds: Set<string>;
+  xMin: number;
+  xMax: number;
+  yMin: number;
+}
+
+function typedRegion(
   words: readonly OcrWord[],
   label: LabelMatch,
   allLabels: readonly LabelFinding[],
   page: { width: number; height: number },
-  limits?: { right: number; bottom: number; onLabelLines?: ReadonlySet<string> },
-): TypedReadResult {
-  if (label.merged) return { kind: 'merged' };
-
+  limits: TypedLimits | undefined,
+): TypedRegion {
   const medianHeight = medianWordHeight(words);
   const labelIds = new Set<string>();
   const otherMatches: LabelMatch[] = [];
@@ -104,31 +122,151 @@ export function readTypedValue(
     limits !== undefined && limits.right < page.width
       ? Math.min(nearestOnRow, limits.right - 0.25 * medianHeight)
       : nearestOnRow;
-  const xMin = label.box[0] - medianHeight;
-  const yMin = label.box[3] - 0.25 * medianHeight;
+  return {
+    medianHeight,
+    labelIds,
+    xMin: label.box[0] - medianHeight,
+    xMax,
+    yMin: label.box[3] - 0.25 * medianHeight,
+  };
+}
 
+/** Accept lines in reading order until a gap, a label line or the bottom limit. */
+function takeLines(
+  lines: readonly Line[],
+  label: LabelMatch,
+  region: TypedRegion,
+  limits: TypedLimits | undefined,
+): Line[] {
+  const accepted: Line[] = [];
+  let previousBottom = label.box[3];
+  for (const line of lines) {
+    const top = mean(line.words.map((w) => w.box[1]));
+    if (top - previousBottom > MAX_GAP_IN_HEIGHTS * region.medianHeight) break;
+    if (line.words.some((w) => region.labelIds.has(w.id))) break;
+    // Bottom limit from the page structure: top of the next label below in this column.
+    if (limits !== undefined && mean(line.words.map((w) => centreY(w.box))) >= limits.bottom) break;
+    previousBottom = mean(line.words.map((w) => w.box[3]));
+    accepted.push(line);
+  }
+  return accepted;
+}
+
+export function readTypedValue(
+  words: readonly OcrWord[],
+  label: LabelMatch,
+  allLabels: readonly LabelFinding[],
+  page: { width: number; height: number },
+  limits?: TypedLimits,
+): TypedReadResult {
+  if (label.merged) return { kind: 'merged' };
+
+  const region = typedRegion(words, label, allLabels, page, limits);
   const candidates = words.filter((w) => {
     if (w.text.trim() === '') return false;
     // A word that sits on some label's line (right of that label) belongs to that
     // label's box, not to this value, even when skew puts it under this value.
     if (limits?.onLabelLines?.has(w.id) === true) return false;
     const cx = centreX(w);
-    return cx >= xMin && cx < xMax && centreY(w.box) > yMin;
+    return cx >= region.xMin && cx < region.xMax && centreY(w.box) > region.yMin;
   });
 
-  const lines = groupLines(candidates, medianHeight);
-  const taken: OcrWord[] = [];
-  let previousBottom = label.box[3];
-  for (const line of lines) {
-    const top = mean(line.words.map((w) => w.box[1]));
-    if (top - previousBottom > MAX_GAP_IN_HEIGHTS * medianHeight) break;
-    if (line.words.some((w) => labelIds.has(w.id))) break;
-    // Bottom limit from the page structure: top of the next label below in this column.
-    if (limits !== undefined && mean(line.words.map((w) => centreY(w.box))) >= limits.bottom) break;
-    previousBottom = mean(line.words.map((w) => w.box[3]));
-    taken.push(...[...line.words].sort((a, b) => centreX(a) - centreX(b)));
-  }
+  const lines = takeLines(groupLines(candidates, region.medianHeight), label, region, limits);
+  const taken = lines.flatMap((line) => [...line.words].sort((a, b) => centreX(a) - centreX(b)));
 
   if (taken.length === 0) return { kind: 'empty' };
   return { kind: 'value', wordIds: taken.map((w) => w.id) };
+}
+
+const NO_OVERFLOW: OverflowResult = { overflow: false, runIds: [], crossingIds: [] };
+
+/**
+ * Does this typed field's value run on past its right limit?
+ *
+ * Looks at the same rows as readTypedValue but with no right cut. Label words and
+ * words on any label's line are left out entirely; with them gone, the gap and
+ * bottom limits end the rows (a label line on the other column would otherwise end
+ * the scan early on a skewed page). Only applies when the right limit is a real
+ * limit (another column), not the page edge.
+ *
+ * A run must START at a word this field itself reads: one whose centre lies inside
+ * the field's region (left of the reader's cut). Words past the cut stay in a row
+ * only while they chain on from such a word with normal word spacing
+ * (GAP_FACTOR * h); anything else is the next column's own value and is dropped
+ * before findOverflow sees the row. Without this, the next column's value, which can
+ * start a pixel left of that column's label edge after rounding or skew, would
+ * itself look like a run crossing the limit and be blamed on this field.
+ *
+ * Each row is then followed to the right along the text line itself: a word is
+ * added while it starts within GAP_FACTOR * h of the previous word and its centre
+ * is within h/2 of the previous word's centre (the same neighbour rule groupLines
+ * uses for skew). This matters on a skewed page, where a long line can climb above
+ * the reader's start line on the right and would otherwise be lost before it
+ * reaches the limit.
+ */
+export function detectTypedOverflow(
+  words: readonly OcrWord[],
+  label: LabelMatch,
+  allLabels: readonly LabelFinding[],
+  page: { width: number; height: number },
+  limits: TypedLimits,
+): OverflowResult {
+  if (label.merged || limits.right >= page.width) return NO_OVERFLOW;
+
+  const region = typedRegion(words, label, allLabels, page, limits);
+  const candidates = words.filter((w) => {
+    if (w.text.trim() === '') return false;
+    if (region.labelIds.has(w.id)) return false;
+    if (limits.onLabelLines?.has(w.id) === true) return false;
+    return centreX(w) >= region.xMin && centreY(w.box) > region.yMin;
+  });
+
+  const lines = takeLines(groupLines(candidates, region.medianHeight), label, region, limits);
+  const maxGap = GAP_FACTOR * region.medianHeight;
+  // Words a row may follow on to: same exclusions as above, but no start line.
+  const followable = words
+    .filter((w) => {
+      if (w.text.trim() === '') return false;
+      if (region.labelIds.has(w.id)) return false;
+      if (limits.onLabelLines?.has(w.id) === true) return false;
+      return centreX(w) >= region.xMin;
+    })
+    .sort((a, b) => a.box[0] - b.box[0]);
+  const follow = (row: OcrWord[]): OcrWord[] => {
+    const out = [...row];
+    const used = new Set(out.map((w) => w.id));
+    let last = out[out.length - 1];
+    while (last !== undefined) {
+      const from: OcrWord = last;
+      const next = followable.find(
+        (w) =>
+          !used.has(w.id) &&
+          w.box[0] > from.box[0] &&
+          w.box[0] - from.box[2] <= maxGap &&
+          Math.abs(centreY(w.box) - centreY(from.box)) <= region.medianHeight / 2,
+      );
+      if (next === undefined) break;
+      out.push(next);
+      used.add(next.id);
+      last = next;
+    }
+    return out;
+  };
+  const ownRows = lines.map((line) => {
+    const sorted = [...line.words].sort((a, b) => a.box[0] - b.box[0]);
+    const kept: OcrWord[] = [];
+    let previous: OcrWord | undefined;
+    for (const word of sorted) {
+      const inside = centreX(word) < region.xMax;
+      const chained = previous !== undefined && word.box[0] - previous.box[2] <= maxGap;
+      if (inside || chained) {
+        kept.push(word);
+        previous = word;
+      } else {
+        previous = undefined;
+      }
+    }
+    return follow(kept);
+  });
+  return findOverflow(ownRows, region.xMin, limits.right, region.medianHeight);
 }

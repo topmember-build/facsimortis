@@ -1,6 +1,6 @@
 import type { OcrResult } from '../ocr/types.js';
 import { readTableValue } from './layout-table.js';
-import { readTypedValue } from './layout-typed.js';
+import { detectTypedOverflow, readTypedValue } from './layout-typed.js';
 import { findLabels } from './labels.js';
 import { FIELD_ORDER } from './schema.js';
 import { buildStructure } from './structure.js';
@@ -26,7 +26,8 @@ export type FieldReason =
   | 'label-repeated'
   | 'label-merged'
   | 'no-value'
-  | 'layout-unclear';
+  | 'layout-unclear'
+  | 'overflow';
 
 export interface FieldDetails {
   field: FieldName;
@@ -43,7 +44,13 @@ export interface FieldDetails {
   pageLayout: PageLayout;
   /** The field's own evidence disagreed with the page layout, so it was not read. */
   conflict: boolean;
+  /** This field's value ran past its right limit into the next box (so it was not read). */
+  overflow: boolean;
+  /** The field whose value ran into this one, or null. */
+  overflowFrom: FieldName | null;
 }
+
+type BaseDetails = Omit<FieldDetails, 'overflow' | 'overflowFrom'>;
 
 export interface ExtractionDetails {
   result: ExtractionResult;
@@ -67,7 +74,9 @@ export function extractWithDetails(ocr: OcrResult): ExtractionDetails {
   const pageLayout = structure.layout;
   const onLabelLines = new Set(structure.fields.flatMap((f) => f.rightWordIds));
   const fields: Field[] = [];
-  const details: FieldDetails[] = [];
+  const details: BaseDetails[] = [];
+  // Overflow runs found on this page, by the field whose value ran on (see below).
+  const overflowRuns = new Map<FieldName, string[]>();
 
   for (const name of FIELD_ORDER) {
     const plain = PLAIN_FIELD_NAMES[name];
@@ -112,21 +121,47 @@ export function extractWithDetails(ocr: OcrResult): ExtractionDetails {
       own !== undefined &&
       ((pageLayout === 'typed' && own.hasRightWords) ||
         (pageLayout === 'table' && own.hasBelowWords));
+    const page = { width: ocr.width, height: ocr.height };
     if (own === undefined || pageLayout === 'unknown' || conflict) {
+      // A long typed value can both reach its label's line (a conflict) and run past
+      // its right limit. The field stays null with the unclear flag, but its run is
+      // still recorded so a neighbour that read the spilled words is flagged too.
+      // The long line is what put words on this label's line, so only OTHER labels'
+      // line words are left out here; this field's own are part of its run.
+      if (own !== undefined && pageLayout === 'typed') {
+        const ownRight = new Set(own.rightWordIds);
+        const othersOnLabelLines = new Set([...onLabelLines].filter((id) => !ownRight.has(id)));
+        const limits = { right: own.right.limit, bottom: own.bottom.limit, onLabelLines: othersOnLabelLines };
+        const over = detectTypedOverflow(ocr.words, label, findings, page, limits);
+        if (over.overflow) overflowRuns.set(name, over.runIds);
+      }
       fields.push(missing(name, `The ${plain} could not be read clearly from the page. Please check it.`));
       details.push({ ...known, conflict, layout: null, reason: 'layout-unclear' });
       continue;
     }
 
     const layout: 'table' | 'typed' = pageLayout;
+    const typedLimits = { right: own.right.limit, bottom: own.bottom.limit, onLabelLines };
+
+    // Overflow (typed pages only). Before the right cut, look at the same rows with no
+    // right limit (detectTypedOverflow in layout-typed.ts). If the value runs on past
+    // its right limit with normal word spacing, it is not cut short and kept: the
+    // field is null with a plain flag, and the run's word IDs are remembered so any
+    // other field that cited one of them is flagged after the loop. Values are never
+    // changed and no words are removed from any field.
+    if (layout === 'typed') {
+      const over = detectTypedOverflow(ocr.words, label, findings, page, typedLimits);
+      if (over.overflow) {
+        overflowRuns.set(name, over.runIds);
+        fields.push(missing(name, `The ${plain} runs into the next box on the page. Please check it.`));
+        details.push({ ...known, conflict: false, layout, reason: 'overflow' });
+        continue;
+      }
+    }
     const read =
       layout === 'table'
         ? readTableValue(ocr.words, label, findings, { bottom: own.bottom.limit, valueLeft: own.valueLeft })
-        : readTypedValue(ocr.words, label, findings, { width: ocr.width, height: ocr.height }, {
-            right: own.right.limit,
-            bottom: own.bottom.limit,
-            onLabelLines,
-          });
+        : readTypedValue(ocr.words, label, findings, page, typedLimits);
     const base = { ...known, conflict: false, layout };
 
     if (read.kind === 'merged') {
@@ -152,7 +187,28 @@ export function extractWithDetails(ocr: OcrResult): ExtractionDetails {
     }
   }
 
-  return { result: parseExtractionResult({ engine: 'rules', fields }), details };
+  // Any OTHER field whose value cites a word from an overflow run is flagged. Its value
+  // stays exactly as read; only a flag is added.
+  const overflowFrom = new Map<FieldName, FieldName>();
+  const flagged = fields.map((f) => {
+    if (f.value === null) return f;
+    for (const [source, runIds] of overflowRuns) {
+      if (source === f.name) continue;
+      if (f.wordIds.some((id) => runIds.includes(id))) {
+        overflowFrom.set(f.name, source);
+        const plain = PLAIN_FIELD_NAMES[f.name];
+        return { ...f, flags: [...f.flags, `Words from a nearby box may have run into the ${plain}. Please check it.`] };
+      }
+    }
+    return f;
+  });
+  const allDetails: FieldDetails[] = details.map((d) => ({
+    ...d,
+    overflow: overflowRuns.has(d.field),
+    overflowFrom: overflowFrom.get(d.field) ?? null,
+  }));
+
+  return { result: parseExtractionResult({ engine: 'rules', fields: flagged }), details: allDetails };
 }
 
 export class RuleExtractor implements ExtractionAdapter {
