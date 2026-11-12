@@ -26,7 +26,7 @@ cp .env.example .env
 | `npm run typecheck` | Type-check with strict TypeScript | working |
 | `npm run gen:faxes` | Generate synthetic faxes | working (3 Phase 0 faxes) |
 | `npm run ocr` | OCR one fax and print words with boxes | working (local Tesseract.js, offline) |
-| `npm run extract` | Extract fields with word IDs | placeholder (task 0.5) |
+| `npm run extract` | Extract fields with word IDs | working (rule-based, offline) |
 | `npm run proof` | Run the command-line runtime proof | placeholder (task 0.6) |
 
 ## Synthetic faxes
@@ -67,6 +67,23 @@ With no path, it reads `fixtures/faxes/L1/fax-0001.png`. It prints a header (fil
 The last line shows the OCR time and the mean confidence. Add `--json` to print the full result as JSON instead.
 
 `OCR_PROVIDER=local` is the default. It runs Tesseract.js offline with the language data in `assets/tessdata`. `OCR_PROVIDER=cloud` is a stub in this demo and only returns an error message. A cold run of `npm run ocr` takes about 0.7 to 0.8 s on the dev machine (this includes starting the OCR engine), and about 0.4 s per page once the engine is running.
+
+## Reading the fields
+
+```
+npm run extract -- fixtures/faxes/L2/fax-0002.png
+```
+
+With no path, it reads `fixtures/faxes/L1/fax-0001.png`. It runs OCR, then the rule-based reader, and prints one row per field:
+
+- the field name, in plain words
+- the value, or `(empty)` when nothing was read
+- the confidence, from 0 to 1
+- the word IDs the value was read from, or `-`
+
+Each flag is printed on its own line under its row. The last lines show the time and how many of the 7 fields are flagged.
+
+An empty field is always flagged. A value is never guessed. Values are exactly what OCR read, with no repairs, so an OCR misread shows up as a misread. Confidence is shown for the reader to judge and is not used to decide anything. Add `--json` to print the full result as JSON instead.
 
 ## Spec
 
