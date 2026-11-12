@@ -392,7 +392,8 @@ describe('default bootstrap', () => {
     expect(() => index.createExtractor({})).toThrow();
     const boot = await import('../src/extract/default.js');
     const rules = await import('../src/extract/rules.js');
-    expect(boot.createExtractor({})).toBeInstanceOf(rules.RuleExtractor);
-    expect(boot.createExtractor({ EXTRACT_PROVIDER: 'rules' })).toBeInstanceOf(rules.RuleExtractor);
+    // Wrapped by the central citation check (0.6): check the name instead of the class.
+    expect(boot.createExtractor({}).name).toBe(new rules.RuleExtractor().name);
+    expect(boot.createExtractor({ EXTRACT_PROVIDER: 'rules' }).name).toBe('rules');
   });
 });

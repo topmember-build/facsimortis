@@ -309,6 +309,83 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794435497463
       }
+    ],
+    "0.5.7 Overflow wiring and flags: call findOverflow in the typed reader; a field whose value runs past its right limit is null with a plain flag, any other field whose value words include a word from that run is flagged; overflow and overflowFrom in details; the three fixtures read exactly as before; existing tests pass unchanged. (R3.1, R3.4)": [
+      {
+        "executionId": "c04e6b84-3f4e-46d1-ad56-149ec3ed6571",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794471307984
+      }
+    ],
+    "0.5.8 Overflow tests: case A extended to values of 9 to 12 words at 0 and plus or minus 3 degrees; no wrong unflagged value; counts of overflow flags, neighbour flags and correct values flagged. (R3.1, R3.4)": [
+      {
+        "executionId": "f46e7e6a-c7cb-4e8a-9558-8035a413b220",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794471577100
+      },
+      {
+        "executionId": "f46e7e6a-c7cb-4e8a-9558-8035a413b220",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794471655590
+      },
+      {
+        "executionId": "f46e7e6a-c7cb-4e8a-9558-8035a413b220",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794471667825
+      },
+      {
+        "executionId": "f46e7e6a-c7cb-4e8a-9558-8035a413b220",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794471891208
+      }
+    ],
+    "0.5.9 Extract CLI and measurement: npm run extract prints fields with cited word IDs, confidence and flags; OCR plus extraction on all three faxes reports exact matches, nulls, unflagged misreads by name, and correct values that were flagged. No thresholds. (R3.1)": [
+      {
+        "executionId": "886b1c18-7dbf-43f7-a7bc-b9aec7f22449",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794472263305
+      },
+      {
+        "executionId": "886b1c18-7dbf-43f7-a7bc-b9aec7f22449",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794472621003
+      }
+    ],
+    "0.5 Extract all fields with word IDs from that fax. Print them. (R3)": [
+      {
+        "executionId": "886b1c18-7dbf-43f7-a7bc-b9aec7f22449",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794472621341
+      },
+      {
+        "executionId": "6a02fccd-3cb7-4c8f-8315-2be434d9768a",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794473779184
+      }
+    ],
+    "0.5.10 No silent drops: any OCR word inside a field's value region that is not cited is either included or makes the field flagged; regression test built from fax-0002's recorded real OCR output as a synthetic fixture (referring provider must not come back as an unflagged \"Family Clinic\"). (R3.1, R3.4)": [
+      {
+        "executionId": "6a02fccd-3cb7-4c8f-8315-2be434d9768a",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794473406191
+      },
+      {
+        "executionId": "6a02fccd-3cb7-4c8f-8315-2be434d9768a",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794473778803
+      }
+    ],
+    "0.6 Reject any field whose cited words do not contain its value. (R3.2)": [
+      {
+        "executionId": "a739560f-2769-4963-b02e-42cabd51f783",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794474295302
+      },
+      {
+        "executionId": "a739560f-2769-4963-b02e-42cabd51f783",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794474585549
+      }
     ]
   }
 }
