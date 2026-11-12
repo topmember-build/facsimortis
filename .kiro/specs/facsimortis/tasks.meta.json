@@ -283,6 +283,32 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794415228411
       }
+    ],
+    "0.5.6 Column overflow flag: a field whose candidate value words cross its own right limit is flagged, not cut off at the limit; case A extended to typed values of 9 or more words, so no neighbour reads another field's overflow unflagged. (R3.1, R3.4)": [
+      {
+        "executionId": "5ba87858-a3dd-427c-94d5-e72ac86c41de",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794433253610
+      }
+    ],
+    "0.5.6 Overflow detection: pure function that, for a typed field, finds a run of value words starting inside the field and continuing across its right limit with normal word spacing; unit tests only, no change to extraction output. (R3.1)": [
+      {
+        "executionId": "89473faa-032f-4bc8-945a-6e35a90c3801",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794435008987
+      },
+      {
+        "executionId": "89473faa-032f-4bc8-945a-6e35a90c3801",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794435194086
+      }
+    ],
+    "0.5.7 Overflow flags: wire findOverflow into the typed reader; a field whose value runs past its right limit is null with a plain flag, and any other field whose value words include a word from that run is flagged; case A extended to values of 9 to 12 words; the three fixtures read exactly as before. (R3.1, R3.4)": [
+      {
+        "executionId": "31c11582-530c-4613-90da-dc207d74394f",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794435497463
+      }
     ]
   }
 }
