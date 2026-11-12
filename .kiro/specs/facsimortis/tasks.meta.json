@@ -357,6 +357,13 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794472621341
       }
+    ],
+    "0.5.10 No silent drops: any OCR word inside a field's value region that is not cited is either included or makes the field flagged; regression test built from fax-0002's recorded real OCR output as a synthetic fixture (referring provider must not come back as an unflagged \"Family Clinic\"). (R3.1, R3.4)": [
+      {
+        "executionId": "6a02fccd-3cb7-4c8f-8315-2be434d9768a",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794473406191
+      }
     ]
   }
 }

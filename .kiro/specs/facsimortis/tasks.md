@@ -20,7 +20,7 @@ Order matters. Runtime proof first, interface second, polish last.
   - [x] 0.4.4 Plain zero in the generator: save the slashed-zero fax-0001 as an ambiguous-chars trap fixture, override the 0 glyph in font.ts, regenerate fixtures with truth text and boxes unchanged, re-measure OCR on all three faxes. (R2.1, R8)
   - [x] 0.4.5 ocr CLI: npm run ocr prints words with boxes and confidence for one fax; README update. (R2.1)
   - [x] 0.4.6 Confidence analysis and merged-word matching: many-to-one OCR/truth word mapping, confidence of misread vs correct field-value words on all three faxes, report at the spec threshold 0.85 without tuning. (R5.1, R2.1)
-- [x] 0.5 Extract all fields with word IDs from that fax. Print them. (R3)
+- [ ] 0.5 Extract all fields with word IDs from that fax. Print them. (R3)
   - [x] 0.5.1 Extraction schema and interface: Zod Field and ExtractionResult schemas from design.md, ExtractionAdapter and ExtractionError, EXTRACT_PROVIDER selection, .env.example update; tests. (R3.1)
   - [x] 0.5.2 Label matching and typed-form layout: find each field by its label in the OCR words (small tolerance on label text only), read typed-form values below the label inside its box, value is the cited words as read with no repairs, null plus a plain flag when absent; unit tests and typed-form truth-words layout test. (R3.1, R3.2, R3.4)
   - [x] 0.5.3 Table-form layout and never-invents property: read table-form values to the right of the label on the same row, wrapped lines included; truth-words layout test for the table form and a fast-check property that no value contains text outside its cited words. (R3.1, R3.2, R3.4)
@@ -30,6 +30,7 @@ Order matters. Runtime proof first, interface second, polish last.
   - [x] 0.5.7 Overflow wiring and flags: call findOverflow in the typed reader; a field whose value runs past its right limit is null with a plain flag, any other field whose value words include a word from that run is flagged; overflow and overflowFrom in details; the three fixtures read exactly as before; existing tests pass unchanged. (R3.1, R3.4)
   - [x] 0.5.8 Overflow tests: case A extended to values of 9 to 12 words at 0 and plus or minus 3 degrees; no wrong unflagged value; counts of overflow flags, neighbour flags and correct values flagged. (R3.1, R3.4)
   - [x] 0.5.9 Extract CLI and measurement: npm run extract prints fields with cited word IDs, confidence and flags; OCR plus extraction on all three faxes reports exact matches, nulls, unflagged misreads by name, and correct values that were flagged. No thresholds. (R3.1)
+  - [-] 0.5.10 No silent drops: any OCR word inside a field's value region that is not cited is either included or makes the field flagged; regression test built from fax-0002's recorded real OCR output as a synthetic fixture (referring provider must not come back as an unflagged "Family Clinic"). (R3.1, R3.4)
 - [ ] 0.6 Reject any field whose cited words do not contain its value. (R3.2)
 
 **Hard gate** (do not start the UI until all are true):
@@ -49,10 +50,10 @@ Order matters. Runtime proof first, interface second, polish last.
 Do not tune thresholds or add repairs to reach zero on the three Phase 0 faxes.
 
 - [ ] 0.7 Model extraction adapter: API key from an environment variable, strict JSON validated against the schema, retry once then needs-review, and a recorded-response fallback so it runs offline. (R3.1, R3.2)
-  - [ ] 0.7.1 Recorded-response cache and client shell: responses stored under a key that is a hash of the OCR words; a Gemini client shell that takes the key and model name from environment variables and never logs the key; tests that make no network call. (R3.1)
+  - [ ] 0.7.1 Recorded-response cache and client shell: responses stored under a key that is a hash of the OCR words; a Gemini client shell over plain REST (built-in fetch, no new package, Interactions API) that reads EXTRACT_API_KEY and EXTRACT_MODEL (default gemini-3.8-flash) only when a live call is made and never logs the key; responses validated with Zod; tests that make no network call. (R3.1)
   - [ ] 0.7.2 Prompt, strict JSON schema and parsing: the prompt asks for word IDs only and text exactly as read, never corrected; response checked against the schema and against the OCR words; one retry on invalid output, then needs-review with every field null and flagged. Tests use recorded responses only. (R3.1, R3.2)
-  - [ ] 0.7.3 Live-call script the user runs: reads the key and model name from the environment, calls Gemini once per fax, saves the recorded responses, prints results and never the key. (R3.1)
-  - [ ] 0.7.4 Wire EXTRACT_PROVIDER=model and recorded into createExtractor; update .env.example and the README. (R3.1)
+  - [ ] 0.7.3 Live-call script the user runs: loads .env with process.loadEnvFile if present, reads EXTRACT_API_KEY and EXTRACT_MODEL, calls Gemini once per fax, saves the recorded responses, prints results and never the key. (R3.1)
+  - [ ] 0.7.4 Wire EXTRACT_PROVIDER=model and recorded into createExtractor; recorded works with no .env at all; update .env.example (EXTRACT_MODEL) and the README. (R3.1)
 
 ## Phase 1: Core pipeline
 
@@ -64,6 +65,7 @@ Do not tune thresholds or add repairs to reach zero on the three Phase 0 faxes.
 - [ ] 1.6 Varied-geometry property: fast-check pages with label-to-value gaps from tight to wide, varied columns, spacing, wrapping and skew; clean pages give no wrong unflagged value, and pages with one label removed give no unflagged value from that label's area. One run with modest case counts; fix only real counterexamples. (R3.1, R3.4)
 - [ ] 1.7 Missing or garbled labels: flag every neighbouring field whose region is open toward an unusable label's space; test that removes or garbles each label in turn on all fixtures, including overflowing values, and asserts no unflagged value contains words from that label's area. (R3.1, R3.4)
 - [ ] 1.8 Hook: re-run evaluation on extraction changes.
+- [ ] 1.9 Skewed table pages on real OCR: find a label whose words OCR lists out of order (fax-0002 reason for referral), and resolve the NPI layout conflict on fax-0002, with regression tests from recorded OCR. (R3.1, R3.4)
 
 ## Phase 2: Interface (demo-script order)
 
