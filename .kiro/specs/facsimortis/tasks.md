@@ -29,7 +29,7 @@ Order matters. Runtime proof first, interface second, polish last.
   - [x] 0.5.6 Overflow detection: pure function that, for a typed field, finds a run of value words starting inside the field and continuing across its right limit with normal word spacing; unit tests only, no change to extraction output. (R3.1)
   - [x] 0.5.7 Overflow wiring and flags: call findOverflow in the typed reader; a field whose value runs past its right limit is null with a plain flag, any other field whose value words include a word from that run is flagged; overflow and overflowFrom in details; the three fixtures read exactly as before; existing tests pass unchanged. (R3.1, R3.4)
   - [x] 0.5.8 Overflow tests: case A extended to values of 9 to 12 words at 0 and plus or minus 3 degrees; no wrong unflagged value; counts of overflow flags, neighbour flags and correct values flagged. (R3.1, R3.4)
-  - [ ] 0.5.9 Extract CLI and measurement: npm run extract prints fields with cited word IDs, confidence and flags; OCR plus extraction on all three faxes reports exact matches, nulls, unflagged misreads by name, and correct values that were flagged. No thresholds. (R3.1)
+  - [-] 0.5.9 Extract CLI and measurement: npm run extract prints fields with cited word IDs, confidence and flags; OCR plus extraction on all three faxes reports exact matches, nulls, unflagged misreads by name, and correct values that were flagged. No thresholds. (R3.1)
 - [ ] 0.6 Reject any field whose cited words do not contain its value. (R3.2)
 
 **Hard gate** (do not start the UI until all are true):
@@ -49,6 +49,10 @@ Order matters. Runtime proof first, interface second, polish last.
 Do not tune thresholds or add repairs to reach zero on the three Phase 0 faxes.
 
 - [ ] 0.7 Model extraction adapter: API key from an environment variable, strict JSON validated against the schema, retry once then needs-review, and a recorded-response fallback so it runs offline. (R3.1, R3.2)
+  - [ ] 0.7.1 Recorded-response cache and client shell: responses stored under a key that is a hash of the OCR words; a Gemini client shell that takes the key and model name from environment variables and never logs the key; tests that make no network call. (R3.1)
+  - [ ] 0.7.2 Prompt, strict JSON schema and parsing: the prompt asks for word IDs only and text exactly as read, never corrected; response checked against the schema and against the OCR words; one retry on invalid output, then needs-review with every field null and flagged. Tests use recorded responses only. (R3.1, R3.2)
+  - [ ] 0.7.3 Live-call script the user runs: reads the key and model name from the environment, calls Gemini once per fax, saves the recorded responses, prints results and never the key. (R3.1)
+  - [ ] 0.7.4 Wire EXTRACT_PROVIDER=model and recorded into createExtractor; update .env.example and the README. (R3.1)
 
 ## Phase 1: Core pipeline
 

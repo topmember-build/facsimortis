@@ -338,6 +338,13 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794471891208
       }
+    ],
+    "0.5.9 Extract CLI and measurement: npm run extract prints fields with cited word IDs, confidence and flags; OCR plus extraction on all three faxes reports exact matches, nulls, unflagged misreads by name, and correct values that were flagged. No thresholds. (R3.1)": [
+      {
+        "executionId": "886b1c18-7dbf-43f7-a7bc-b9aec7f22449",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794472263305
+      }
     ]
   }
 }
