@@ -1,4 +1,5 @@
 import { checkCitations } from './citation.js';
+import { checkNpi } from './checks.js';
 import { ExtractionError } from './types.js';
 import type { ExtractionAdapter } from './types.js';
 
@@ -17,16 +18,18 @@ export function registerRuleExtractor(factory: (() => ExtractionAdapter) | undef
 }
 
 /**
- * Central citation check (0.6). Every adapter that createExtractor returns is wrapped
- * here, so the rule-based reader and any future model or recorded reader get the
- * check without doing anything. Add new providers inside createExtractor, never
- * return a bare adapter. Name and close() are passed through unchanged.
+ * Central checks (0.6, 0.8.1). Every adapter that createExtractor returns is wrapped
+ * here, so the rule-based reader and any future model or recorded reader get both
+ * checks without doing anything. Order: citation check first, then the NPI check
+ * (a field the citation check emptied is null and skipped). Add new providers inside
+ * createExtractor, never return a bare adapter. Name and close() pass through unchanged.
  */
-export function withCitationCheck(inner: ExtractionAdapter): ExtractionAdapter {
+export function withChecks(inner: ExtractionAdapter): ExtractionAdapter {
   const wrapped: ExtractionAdapter = {
     name: inner.name,
     async extract(ocr) {
-      return checkCitations(await inner.extract(ocr), ocr).result;
+      const cited = checkCitations(await inner.extract(ocr), ocr).result;
+      return checkNpi(cited).result;
     },
   };
   if (inner.close !== undefined) {
@@ -34,6 +37,9 @@ export function withCitationCheck(inner: ExtractionAdapter): ExtractionAdapter {
   }
   return wrapped;
 }
+
+/** Kept for callers that used the old name. */
+export const withCitationCheck = withChecks;
 
 export function createExtractor(
   env: Record<string, string | undefined> = process.env,
@@ -43,7 +49,7 @@ export function createExtractor(
     if (ruleFactory === undefined) {
       throw new ExtractionError('The rule-based reader is not available yet.');
     }
-    return withCitationCheck(ruleFactory());
+    return withChecks(ruleFactory());
   }
   if (provider === 'model' || provider === 'recorded') {
     throw new ExtractionError('The model reader is not set up yet. Use the rule-based reader.');

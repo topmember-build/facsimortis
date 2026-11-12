@@ -50,7 +50,7 @@ Order matters. Runtime proof first, interface second, polish last.
 Do not tune thresholds or add repairs to reach zero on the three Phase 0 faxes.
 
 - [ ] 0.8 Gate proof (done before 0.7). (R4.1, R9)
-  - [ ] 0.8.1 NPI flag: run the pure NPI check-digit validator on every extractor's NPI value (applied centrally like the citation check); a failing NPI keeps its value as read and gets the plain flag "The provider number looks wrong: the last digit does not match."; NPI only, phone and DOB stay in 1.1. (R4.1, R4.4)
+  - [x] 0.8.1 NPI flag: run the pure NPI check-digit validator on every extractor's NPI value (applied centrally like the citation check); a failing NPI keeps its value as read and gets the plain flag "The provider number looks wrong: the last digit does not match."; NPI only, phone and DOB stay in 1.1. (R4.1, R4.4)
   - [ ] 0.8.2 npm run proof: runs the three faxes end to end (OCR, extraction, checks); prints per field the value, expected value, cited words, flags and pass or fail against the hard gate; prints the measured tier (exact matches, unflagged misreads by name, correct-but-flagged); exits non-zero on a hard-gate failure. Only the proof script reads truth files, never src/ extraction code. (R9)
 
 - [ ] 0.7 Model extraction adapter: API key from an environment variable, strict JSON validated against the schema, retry once then needs-review, and a recorded-response fallback so it runs offline. (R3.1, R3.2)

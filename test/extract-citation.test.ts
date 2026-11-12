@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import fc from 'fast-check';
 import { afterEach, describe, expect, it } from 'vitest';
 import { checkCitations } from '../src/extract/citation.js';
+import { checkNpi } from '../src/extract/checks.js';
 import { createExtractor } from '../src/extract/default.js';
 import { FIELD_ORDER, registerRuleExtractor } from '../src/extract/index.js';
 import type { ExtractionAdapter, ExtractionResult, Field } from '../src/extract/index.js';
@@ -135,6 +136,8 @@ describe('fixtures: RuleExtractor output is unchanged by the check', () => {
   it.each(cases)('%s', async (_n, ocr) => {
     const raw = await new RuleExtractor().extract(ocr);
     expect(checkCitations(raw, ocr).rejected).toEqual([]);
-    expect(await createExtractor({}).extract(ocr)).toEqual(raw);
+    // The NPI check (0.8.1) is also central now, so fax-0003's bad NPI gains its flag.
+    // Only the citation check is under test here: nothing else may differ from raw.
+    expect(await createExtractor({}).extract(ocr)).toEqual(checkNpi(raw).result);
   });
 });

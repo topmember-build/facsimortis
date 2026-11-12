@@ -386,6 +386,18 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794474585549
       }
+    ],
+    "0.8.1 NPI flag: run the pure NPI check-digit validator on every extractor's NPI value (applied centrally like the citation check); a failing NPI keeps its value as read and gets the plain flag \"The provider number looks wrong: the last digit does not match.\"; NPI only, phone and DOB stay in 1.1. (R4.1, R4.4)": [
+      {
+        "executionId": "c1226286-1fbc-4903-b5c4-9768e45ed263",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794475514536
+      },
+      {
+        "executionId": "c1226286-1fbc-4903-b5c4-9768e45ed263",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794476210712
+      }
     ]
   }
 }
