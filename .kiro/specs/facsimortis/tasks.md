@@ -31,7 +31,7 @@ Order matters. Runtime proof first, interface second, polish last.
   - [x] 0.5.8 Overflow tests: case A extended to values of 9 to 12 words at 0 and plus or minus 3 degrees; no wrong unflagged value; counts of overflow flags, neighbour flags and correct values flagged. (R3.1, R3.4)
   - [x] 0.5.9 Extract CLI and measurement: npm run extract prints fields with cited word IDs, confidence and flags; OCR plus extraction on all three faxes reports exact matches, nulls, unflagged misreads by name, and correct values that were flagged. No thresholds. (R3.1)
   - [x] 0.5.10 No silent drops: any OCR word inside a field's value region that is not cited is either included or makes the field flagged; regression test built from fax-0002's recorded real OCR output as a synthetic fixture (referring provider must not come back as an unflagged "Family Clinic"). (R3.1, R3.4)
-- [-] 0.6 Reject any field whose cited words do not contain its value. (R3.2)
+- [x] 0.6 Reject any field whose cited words do not contain its value. (R3.2)
 
 **Hard gate** (do not start the UI until all are true):
 

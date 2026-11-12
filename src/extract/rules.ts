@@ -11,16 +11,10 @@ import type { ExtractionResult, Field, FieldName } from './schema.js';
 import { parseExtractionResult } from './types.js';
 import type { ExtractionAdapter } from './types.js';
 
-/** Plain names used in messages for a front-desk reader. */
-export const PLAIN_FIELD_NAMES: Readonly<Record<FieldName, string>> = {
-  patientName: 'patient name',
-  dob: 'date of birth',
-  referringProvider: 'referring provider',
-  npi: 'provider number (NPI)',
-  reason: 'reason for referral',
-  urgency: 'urgency',
-  callbackPhone: 'callback phone',
-};
+import { PLAIN_FIELD_NAMES } from './names.js';
+
+/** Plain names now live in names.ts; re-exported so existing imports keep working. */
+export { PLAIN_FIELD_NAMES };
 
 export type FieldReason =
   | 'read'

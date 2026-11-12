@@ -144,9 +144,10 @@ describe('createExtractor', () => {
 
   it('returns the registered extractor', () => {
     registerRuleExtractor(() => fake);
-    expect(createExtractor({})).toBe(fake);
-    expect(createExtractor({ EXTRACT_PROVIDER: 'rules' })).toBe(fake);
-    expect(createExtractor({ EXTRACT_PROVIDER: ' Rules ' })).toBe(fake);
+    // Wrapped by the central citation check (0.6), so not the same object; name is unchanged.
+    expect(createExtractor({}).name).toBe(fake.name);
+    expect(createExtractor({ EXTRACT_PROVIDER: 'rules' }).name).toBe(fake.name);
+    expect(createExtractor({ EXTRACT_PROVIDER: ' Rules ' }).name).toBe(fake.name);
   });
 
   it('does not leak registration between tests', () => {
