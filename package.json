@@ -15,6 +15,7 @@
     "gen:faxes": "tsx src/scripts/gen-faxes.ts",
     "ocr": "tsx src/scripts/ocr.ts",
     "extract": "tsx src/scripts/extract.ts",
+    "record:live": "tsx src/scripts/record-live.ts",
     "proof": "tsx src/scripts/proof.ts"
   },
   "devDependencies": {

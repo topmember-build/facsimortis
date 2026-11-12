@@ -27,6 +27,7 @@ cp .env.example .env
 | `npm run gen:faxes` | Generate synthetic faxes | working (3 Phase 0 faxes) |
 | `npm run ocr` | OCR one fax and print words with boxes | working (local Tesseract.js, offline) |
 | `npm run extract` | Extract fields with word IDs | working (rule-based, offline) |
+| `npm run record:live` | Call the Gemini model once per fax and save the answers | you run it, needs `EXTRACT_API_KEY` |
 | `npm run proof` | Run the command-line runtime proof | placeholder (task 0.6) |
 
 ## Synthetic faxes
@@ -84,6 +85,14 @@ With no path, it reads `fixtures/faxes/L1/fax-0001.png`. It runs OCR, then the r
 Each flag is printed on its own line under its row. The last lines show the time and how many of the 7 fields are flagged.
 
 An empty field is always flagged. A value is never guessed. Values are exactly what OCR read, with no repairs, so an OCR misread shows up as a misread. Confidence is shown for the reader to judge and is not used to decide anything. Add `--json` to print the full result as JSON instead.
+
+## Recording model answers (live call)
+
+```
+npm run record:live
+```
+
+This is the only step that uses the network. Put `EXTRACT_API_KEY` (and optionally `EXTRACT_MODEL`) in `.env`; the script loads `.env` if it exists. It reads each fax in `fixtures/faxes/` (or the PNG paths you pass), calls the model once per fax, prints the fields like `npm run extract`, and saves each usable answer in `fixtures/extract/`, named by a hash of the OCR words. A second call is made only when the first answer fails the checks. An unusable answer is not saved, and the script exits with an error if any fax was not saved. The key is never printed.
 
 ## Spec
 
