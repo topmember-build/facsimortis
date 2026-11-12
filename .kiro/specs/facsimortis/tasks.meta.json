@@ -398,6 +398,312 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794476210712
       }
+    ],
+    "0.8.2 npm run proof: runs the three faxes end to end (OCR, extraction, checks); prints per field the value, expected value, cited words, flags and pass or fail against the hard gate; prints the measured tier (exact matches, unflagged misreads by name, correct-but-flagged); exits non-zero on a hard-gate failure. Only the proof script reads truth files, never src/ extraction code. (R9)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477556258
+      },
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794480879873
+      },
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794481154640
+      },
+      {
+        "executionId": "3d8235a3-c7fc-4747-9f87-1997e365fa1a",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794481882063
+      }
+    ],
+    "0.7.1 Recorded-response cache and client shell: responses stored under a key that is a hash of the OCR words; a Gemini client shell over plain REST (built-in fetch, no new package, Interactions API) that reads EXTRACT_API_KEY and EXTRACT_MODEL (default gemini-3.8-flash) only when a live call is made and never logs the key; responses validated with Zod; tests that make no network call. (R3.1)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477556374
+      },
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477567697
+      },
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794479104153
+      },
+      {
+        "executionId": "3d8235a3-c7fc-4747-9f87-1997e365fa1a",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794481953879
+      }
+    ],
+    "0.7.2 Prompt, strict JSON schema and parsing: the prompt asks for word IDs only and text exactly as read, never corrected; response checked against the schema and against the OCR words; one retry on invalid output, then needs-review with every field null and flagged. Tests use recorded responses only. (R3.1, R3.2)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477556457
+      },
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794479111975
+      },
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794479481641
+      }
+    ],
+    "0.7.3 Live-call script the user runs: loads .env with process.loadEnvFile if present, reads EXTRACT_API_KEY and EXTRACT_MODEL, calls Gemini once per fax, saves the recorded responses, prints results and never the key. (R3.1)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477556525
+      },
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794479486213
+      },
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794479642817
+      },
+      {
+        "executionId": "3d8235a3-c7fc-4747-9f87-1997e365fa1a",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794481987624
+      }
+    ],
+    "0.7.4 Wire EXTRACT_PROVIDER=model and recorded into createExtractor; recorded works with no .env at all; update .env.example (EXTRACT_MODEL) and the README. (R3.1)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477556593
+      },
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794479647232
+      },
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794480867848
+      },
+      {
+        "executionId": "3d8235a3-c7fc-4747-9f87-1997e365fa1a",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794482003971
+      }
+    ],
+    "1.1 Validators: NPI, DOB, phone, with property-based tests. (R4)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477556671
+      },
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794481161480
+      }
+    ],
+    "1.2 Flagging rules and confidence threshold. (R5)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477556817
+      }
+    ],
+    "1.3 Deskew and normalisation. (R2.2)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477556921
+      }
+    ],
+    "1.4 Audit trail and data model. (R7.3)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477556985
+      }
+    ],
+    "1.5 Evaluation set across degradation levels, with accuracy report. (R8)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477557045
+      }
+    ],
+    "1.6 Varied-geometry property: fast-check pages with label-to-value gaps from tight to wide, varied columns, spacing, wrapping and skew; clean pages give no wrong unflagged value, and pages with one label removed give no unflagged value from that label's area. One run with modest case counts; fix only real counterexamples. (R3.1, R3.4)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477557108
+      }
+    ],
+    "1.7 Missing or garbled labels: flag every neighbouring field whose region is open toward an unusable label's space; test that removes or garbles each label in turn on all fixtures, including overflowing values, and asserts no unflagged value contains words from that label's area. (R3.1, R3.4)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477557169
+      }
+    ],
+    "1.8 Hook: re-run evaluation on extraction changes.": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477557240
+      }
+    ],
+    "1.9 Skewed table pages on real OCR: one problem with three symptoms on fax-0002, fixed together. (1) The table reader starts a value at the word nearest the label's height and reads only rightwards, so on a line that rises to the right it misses the leftmost value words (referring provider read as \"Family Clinic\"; today flagged by the 0.5.10 rule). (2) A label whose words OCR lists out of order is not found (reason for referral). (3) The NPI field is left empty as a layout conflict. Regression fixture: the recorded real OCR in fixtures/ocr/fax-0002.ocr.json; its test is expected to change on purpose when this is fixed. (R3.1, R3.4)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477557301
+      }
+    ],
+    "2.1 Inbox with thumbnails, received time, flagged count. (R1, R5.2)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477557364
+      }
+    ],
+    "2.2 Demo mode with 3 preloaded faxes and \"Incoming fax\" button. (R1.2)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477557419
+      }
+    ],
+    "2.3 Viewer with source ghosts. (R3.3)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477557503
+      }
+    ],
+    "2.4 Review panel: flagged-first, accept, edit, single Verify. (R6)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477557574
+      }
+    ],
+    "2.5 Verified state and JSON / FHIR-style export. (R7)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477557634
+      }
+    ],
+    "3.1 Deploy to a public URL, no sign-in. (R9.1)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477557694
+      }
+    ],
+    "3.2 One-command local start, README with run steps. (R9.2)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477557764
+      }
+    ],
+    "3.3 Ghost visual language pass: source ghosts, dial-tone loading, \"laid to rest\". Check AA contrast and keyboard use. (R10)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477557831
+      }
+    ],
+    "3.4 Synthetic-data notice on every fax screen. (R8.2)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477557900
+      }
+    ],
+    "3.5 Mock records MCP server and custom \"fax-qa\" agent, documented. (Kiro write-up)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477557964
+      }
+    ],
+    "4.1 Architecture diagram exported as an image for Devpost.": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477558042
+      }
+    ],
+    "4.2 Record the demo from the script; stay under 3:00; upload public to YouTube; no copyrighted music.": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477558123
+      }
+    ],
+    "4.3 Kiro write-up: IDE/CLI differences, hooks, spec vs vibe coding, steering strategy, MCP, property-based testing, with real observations.": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477558202
+      }
+    ],
+    "4.4 Text description of features and functionality.": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477558267
+      }
+    ],
+    "4.5 Optional bonus posts: blog post (must say it was written for the Kiroween 2026 hackathon) and social post starting with #KiroweenHackathon26.": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477558417
+      }
+    ],
+    "4.6 Submit the draft early, then refine until Dec 4, 2:00 PM PT.": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794477558473
+      }
+    ],
+    "0.7 Model extraction adapter: API key from an environment variable, strict JSON validated against the schema, retry once then needs-review, and a recorded-response fallback so it runs offline. (R3.1, R3.2)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794480868369
+      }
+    ],
+    "0.8 Gate proof (done before 0.7). (R4.1, R9)": [
+      {
+        "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
+        "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
+        "timestamp": 1794481155654
+      }
+    ],
+    "0.7.2 Prompt, strict JSON schema and parsing: the model returns only word IDs and a confidence per field, and our code builds each value by joining those words' OCR text, so the model cannot correct a misread; field confidence is the lowest OCR confidence of the cited words (Option A), with the model's own confidence kept in details only; flag texts are always ours; response checked against the schema and against the OCR words; one retry on invalid output, then needs-review with every field null and flagged. Tests use recorded responses only. (R3.1, R3.2)": [
+      {
+        "executionId": "3d8235a3-c7fc-4747-9f87-1997e365fa1a",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794481970415
+      }
     ]
   }
 }
