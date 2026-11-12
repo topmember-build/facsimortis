@@ -302,6 +302,13 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794435194086
       }
+    ],
+    "0.5.7 Overflow flags: wire findOverflow into the typed reader; a field whose value runs past its right limit is null with a plain flag, and any other field whose value words include a word from that run is flagged; case A extended to values of 9 to 12 words; the three fixtures read exactly as before. (R3.1, R3.4)": [
+      {
+        "executionId": "31c11582-530c-4613-90da-dc207d74394f",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794435497463
+      }
     ]
   }
 }
