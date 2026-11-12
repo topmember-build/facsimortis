@@ -154,12 +154,23 @@ describe('createExtractor', () => {
     expect(() => createExtractor({})).toThrow('not available yet');
   });
 
-  it('throws the not-set-up error for model and recorded', () => {
-    for (const p of ['model', 'recorded']) {
-      expect(() => createExtractor({ EXTRACT_PROVIDER: p })).toThrow(
-        'The model reader is not set up yet. Use the rule-based reader.',
-      );
-    }
+  it('builds model and recorded readers without a key or a .env', () => {
+    expect(createExtractor({ EXTRACT_PROVIDER: 'model' }).name).toBe('model');
+    expect(createExtractor({ EXTRACT_PROVIDER: 'recorded' }).name).toBe('model');
+  });
+
+  it('model without a key fails with a plain message and makes no network call', async () => {
+    const ocr = { engine: 'x', width: 10, height: 10, words: [] };
+    await expect(
+      createExtractor({ EXTRACT_PROVIDER: 'model' }).extract(ocr as never),
+    ).rejects.toThrow('needs a key');
+  });
+
+  it('recorded with no saved answer fails with a plain message', async () => {
+    const ocr = { engine: 'x', width: 10, height: 10, words: [] };
+    await expect(
+      createExtractor({ EXTRACT_PROVIDER: 'recorded' }).extract(ocr as never),
+    ).rejects.toThrow('no saved answer');
   });
 
   it('names the allowed values for an unknown provider', () => {

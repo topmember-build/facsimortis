@@ -1,10 +1,13 @@
 // Reads one fax (OCR), extracts the seven fields, and prints them with cited word IDs, confidence and flags.
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { createExtractor } from '../extract/default.js';
 import { createOcrAdapter } from '../ocr/default.js';
 import { OcrError } from '../ocr/types.js';
 import type { OcrAdapter } from '../ocr/types.js';
 import { formatExtractTable, parseExtractArgs } from './extract-format.js';
+
+// .env is optional: the rule-based and recorded readers need none.
+if (existsSync('.env')) process.loadEnvFile('.env');
 
 function fail(message: string): never {
   console.error(message);

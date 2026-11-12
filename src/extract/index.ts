@@ -1,5 +1,8 @@
 import { checkCitations } from './citation.js';
 import { checkNpi } from './checks.js';
+import { GeminiClient } from './gemini.js';
+import { ModelExtractor } from './model.js';
+import { RecordedResponseCache } from './recorded.js';
 import { ExtractionError } from './types.js';
 import type { ExtractionAdapter } from './types.js';
 
@@ -51,8 +54,25 @@ export function createExtractor(
     }
     return withChecks(ruleFactory());
   }
-  if (provider === 'model' || provider === 'recorded') {
-    throw new ExtractionError('The model reader is not set up yet. Use the rule-based reader.');
+  if (provider === 'model') {
+    // Live call. The key and model are read from env only when a call is made.
+    const client = new GeminiClient({ env });
+    return withChecks(new ModelExtractor((_ocr, request) => client.generate(request)));
+  }
+  if (provider === 'recorded') {
+    // Offline: saved answers only. Needs no .env and no key.
+    const cache = new RecordedResponseCache();
+    return withChecks(
+      new ModelExtractor(async (ocr) => {
+        const saved = await cache.get(ocr);
+        if (saved === undefined) {
+          throw new ExtractionError(
+            'There is no saved answer for this fax. Run "npm run record:live" once, or use the rule-based reader.',
+          );
+        }
+        return { model: saved.model, text: saved.text };
+      }),
+    );
   }
   throw new ExtractionError(
     `EXTRACT_PROVIDER "${provider}" is not recognised. Allowed values are "rules", "model" and "recorded".`,

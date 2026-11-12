@@ -86,6 +86,24 @@ Each flag is printed on its own line under its row. The last lines show the time
 
 An empty field is always flagged. A value is never guessed. Values are exactly what OCR read, with no repairs, so an OCR misread shows up as a misread. Confidence is shown for the reader to judge and is not used to decide anything. Add `--json` to print the full result as JSON instead.
 
+### Choosing the reader
+
+Set `EXTRACT_PROVIDER` (in `.env` or the shell). `.env` is optional.
+
+| Value | What it does |
+| --- | --- |
+| `rules` (default) | Rule-based reader. Offline, no key. |
+| `recorded` | Saved model answers from `fixtures/extract/`. Offline, no key, works with no `.env` at all. A fax with no saved answer gives an error that says so. |
+| `model` | Live Gemini call. Needs `EXTRACT_API_KEY`; `EXTRACT_MODEL` is optional (default `gemini-3.8-flash`). |
+
+Every reader goes through the same citation and provider number checks. Model answers must be strict JSON; one retry, then the fax is marked as needing review.
+
+```
+EXTRACT_PROVIDER=recorded npm run extract -- fixtures/faxes/L2/fax-0002.png
+```
+
+On PowerShell: `$env:EXTRACT_PROVIDER='recorded'; npm run extract -- fixtures/faxes/L2/fax-0002.png`
+
 ## Recording model answers (live call)
 
 ```
