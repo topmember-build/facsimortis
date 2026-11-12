@@ -419,6 +419,11 @@
         "executionId": "3d8235a3-c7fc-4747-9f87-1997e365fa1a",
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794481882063
+      },
+      {
+        "executionId": "56ccdf96-a1ae-47f1-9cc6-9bfb569d3704",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794485044012
       }
     ],
     "0.7.1 Recorded-response cache and client shell: responses stored under a key that is a hash of the OCR words; a Gemini client shell over plain REST (built-in fetch, no new package, Interactions API) that reads EXTRACT_API_KEY and EXTRACT_MODEL (default gemini-3.8-flash) only when a live call is made and never logs the key; responses validated with Zod; tests that make no network call. (R3.1)": [
@@ -441,6 +446,11 @@
         "executionId": "3d8235a3-c7fc-4747-9f87-1997e365fa1a",
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794481953879
+      },
+      {
+        "executionId": "56ccdf96-a1ae-47f1-9cc6-9bfb569d3704",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794484984316
       }
     ],
     "0.7.2 Prompt, strict JSON schema and parsing: the prompt asks for word IDs only and text exactly as read, never corrected; response checked against the schema and against the OCR words; one retry on invalid output, then needs-review with every field null and flagged. Tests use recorded responses only. (R3.1, R3.2)": [
@@ -480,6 +490,11 @@
         "executionId": "3d8235a3-c7fc-4747-9f87-1997e365fa1a",
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794481987624
+      },
+      {
+        "executionId": "56ccdf96-a1ae-47f1-9cc6-9bfb569d3704",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794485012464
       }
     ],
     "0.7.4 Wire EXTRACT_PROVIDER=model and recorded into createExtractor; recorded works with no .env at all; update .env.example (EXTRACT_MODEL) and the README. (R3.1)": [
@@ -502,6 +517,11 @@
         "executionId": "3d8235a3-c7fc-4747-9f87-1997e365fa1a",
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794482003971
+      },
+      {
+        "executionId": "56ccdf96-a1ae-47f1-9cc6-9bfb569d3704",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794485026177
       }
     ],
     "1.1 Validators: NPI, DOB, phone, with property-based tests. (R4)": [
@@ -689,6 +709,11 @@
         "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
         "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
         "timestamp": 1794480868369
+      },
+      {
+        "executionId": "56ccdf96-a1ae-47f1-9cc6-9bfb569d3704",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794485026382
       }
     ],
     "0.8 Gate proof (done before 0.7). (R4.1, R9)": [
@@ -696,6 +721,11 @@
         "executionId": "fcfb9e6f-c62a-48bc-b82c-e65316d8ed0d",
         "chatSessionId": "sess_d5fb2cfc-ad55-48a3-9ab0-9d51adfd96b9",
         "timestamp": 1794481155654
+      },
+      {
+        "executionId": "56ccdf96-a1ae-47f1-9cc6-9bfb569d3704",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794485044084
       }
     ],
     "0.7.2 Prompt, strict JSON schema and parsing: the model returns only word IDs and a confidence per field, and our code builds each value by joining those words' OCR text, so the model cannot correct a misread; field confidence is the lowest OCR confidence of the cited words (Option A), with the model's own confidence kept in details only; flag texts are always ours; response checked against the schema and against the OCR words; one retry on invalid output, then needs-review with every field null and flagged. Tests use recorded responses only. (R3.1, R3.2)": [
@@ -703,6 +733,11 @@
         "executionId": "3d8235a3-c7fc-4747-9f87-1997e365fa1a",
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794481970415
+      },
+      {
+        "executionId": "56ccdf96-a1ae-47f1-9cc6-9bfb569d3704",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794484997529
       }
     ]
   }
