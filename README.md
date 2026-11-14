@@ -28,7 +28,7 @@ cp .env.example .env
 | `npm run ocr` | OCR one fax and print words with boxes | working (local Tesseract.js, offline) |
 | `npm run extract` | Extract fields with word IDs | working (rule-based, offline) |
 | `npm run record:live` | Call the Gemini model once per fax and save the answers | you run it, needs `EXTRACT_API_KEY` |
-| `npm run proof` | Run the command-line runtime proof | placeholder (task 0.6) |
+| `npm run proof` | Run the command-line runtime proof on the three fixture faxes; add `-- --reader recorded` to use the saved model answers with the network blocked | working (offline) |
 
 ## Synthetic faxes
 

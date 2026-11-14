@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { OcrResult } from '../src/ocr/types.js';
 import type { ExtractionResult, Field } from '../src/extract/schema.js';
-import { proveFax, proveField, tally } from '../src/scripts/proof-core.js';
+import { parseReader, proveFax, proveField, tally } from '../src/scripts/proof-core.js';
 
 const ocr = {
   engine: 'test',
@@ -56,5 +56,25 @@ describe('proof gate', () => {
     expect(bad.gateFailures.some((g) => g.includes('bad-npi'))).toBe(true);
     const ok = proveFax('fax-y', 'bad-npi', [], { engine: 't', fields: [{ ...npi, flags: ['wrong'] }] } as ExtractionResult, ocr);
     expect(ok.gateFailures.some((g) => g.includes('bad-npi'))).toBe(false);
+  });
+});
+
+describe('proof --reader option', () => {
+  it('defaults to rules', () => {
+    expect(parseReader([])).toEqual({ ok: true, reader: 'rules' });
+  });
+
+  it('accepts both spellings for each reader', () => {
+    expect(parseReader(['--reader', 'recorded'])).toEqual({ ok: true, reader: 'recorded' });
+    expect(parseReader(['--reader=recorded'])).toEqual({ ok: true, reader: 'recorded' });
+    expect(parseReader(['--reader', 'rules'])).toEqual({ ok: true, reader: 'rules' });
+  });
+
+  it('rejects the live model, unknown readers, a missing value and other options', () => {
+    expect(parseReader(['--reader', 'model']).ok).toBe(false);
+    expect(parseReader(['--reader=nope']).ok).toBe(false);
+    expect(parseReader(['--reader']).ok).toBe(false);
+    expect(parseReader(['--reader', '--x']).ok).toBe(false);
+    expect(parseReader(['recorded']).ok).toBe(false);
   });
 });

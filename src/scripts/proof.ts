@@ -1,11 +1,14 @@
 // Gate proof: runs every fixture fax end to end (OCR, extraction, checks) and judges
-// the hard gate. Uses the default offline readers and ignores .env, so it works from a
-// clean clone. This is the only place that reads truth files.
+// the hard gate. Offline readers only, and it ignores .env, so it works from a clean
+// clone. This is the only place that reads truth files.
+//
+//   npm run proof                         rule-based reader (default)
+//   npm run proof -- --reader recorded    saved model answers, network blocked
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createExtractor } from '../extract/default.js';
 import { createOcrAdapter } from '../ocr/default.js';
-import { proveFax, tally } from './proof-core.js';
+import { parseReader, proveFax, tally } from './proof-core.js';
 import type { FaxProof, TruthField } from './proof-core.js';
 
 const ROOT = 'fixtures/faxes';
@@ -25,9 +28,26 @@ for (const level of readdirSync(ROOT).sort()) {
   }
 }
 
+const choice = parseReader(process.argv.slice(2));
+if (!choice.ok) {
+  console.error(choice.message);
+  process.exit(2);
+}
+const reader = choice.reader;
+
+// The recorded reader must never reach the network. Block fetch and count attempts.
+let networkAttempts = 0;
+if (reader === 'recorded') {
+  globalThis.fetch = (() => {
+    networkAttempts++;
+    return Promise.reject(new Error('The proof blocks the network for the recorded reader.'));
+  }) as typeof fetch;
+}
+
 // Offline readers only, whatever the environment says.
 const ocrAdapter = createOcrAdapter({ OCR_PROVIDER: 'local' });
-const extractor = createExtractor({ EXTRACT_PROVIDER: 'rules' });
+const extractor = createExtractor({ EXTRACT_PROVIDER: reader });
+console.log(`reader: ${reader}`);
 const proofs: FaxProof[] = [];
 const gateFailures: string[] = [];
 
@@ -42,7 +62,7 @@ try {
     proofs.push(proof);
     gateFailures.push(...proof.gateFailures);
 
-    console.log(`\n${truth.id}  (${png})  trap: ${truth.trap ?? 'none'}  ocr: ${ocr.engine}  reader: ${extractor.name}`);
+    console.log(`\n${truth.id}  (${png})  trap: ${truth.trap ?? 'none'}  ocr: ${ocr.engine}  reader: ${reader} (${result.engine})`);
     for (const f of proof.fields) {
       console.log(`  ${f.name}: ${f.gateFailures.length === 0 ? 'PASS' : 'FAIL'}  [${f.tier}]`);
       console.log(`    value:    ${show(f.value)}`);
@@ -64,6 +84,11 @@ console.log(`  empty and flagged:         ${t.nullFlagged}`);
 console.log(`  wrong but flagged:         ${t.flaggedMisreads}`);
 console.log(`  unflagged misreads:        ${t.unflaggedMisreads.length}${t.unflaggedMisreads.length > 0 ? `  (${t.unflaggedMisreads.join(', ')})` : ''}`);
 console.log(`  correct but flagged:       ${t.correctButFlagged.length}${t.correctButFlagged.length > 0 ? `  (${t.correctButFlagged.join(', ')})` : ''}`);
+
+if (reader === 'recorded') {
+  console.log(`\nnetwork attempts: ${networkAttempts}`);
+  if (networkAttempts > 0) gateFailures.push(`The recorded reader tried to use the network ${networkAttempts} times.`);
+}
 
 console.log('\nHard gate');
 if (gateFailures.length === 0) {
