@@ -87,7 +87,9 @@ type FaxRecord = {
 
 ## Flagging rules
 
-A field is flagged when any of these hold: value is null; confidence is below the threshold (start at 0.85, tune against the generator); any validator fails; cited word IDs do not exist or do not contain the value.
+A field is flagged when its value is null, when any validator fails, or when its cited word IDs do not exist or do not contain the value.
+
+The 0.85 confidence threshold was an initial guess and is not used yet. The Phase 0 measurements showed that OCR confidence alone cannot separate misreads from correct words. The threshold, and any other flagging signals, are chosen in task 1.2 on the evaluation set, using hold-out seeds. The source highlight plus human review is the final safeguard.
 
 ## UI
 
