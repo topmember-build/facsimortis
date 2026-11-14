@@ -15,6 +15,8 @@ export interface RecordOutcome {
   calls: number;
   /** True when a usable reply was saved. */
   saved: boolean;
+  /** Seconds spent inside each generate() call, in call order. Excludes OCR and checks. */
+  modelSeconds: number[];
 }
 
 /**
@@ -29,9 +31,16 @@ export async function recordFax(
 ): Promise<RecordOutcome> {
   let calls = 0;
   let saved = false;
+  const modelSeconds: number[] = [];
   const extractor = new ModelExtractor(async (page, request) => {
     calls++;
-    const reply = await generate(request);
+    const started = performance.now();
+    let reply: GeminiReply;
+    try {
+      reply = await generate(request);
+    } finally {
+      modelSeconds.push((performance.now() - started) / 1000);
+    }
     if (checkReply(reply.text, page).ok) {
       await cache.put(page, reply);
       saved = true;
@@ -39,7 +48,18 @@ export async function recordFax(
     return reply;
   });
   const result = await extractor.extract(ocr);
-  return { result, calls, saved };
+  return { result, calls, saved, modelSeconds };
+}
+
+/** One line with OCR time and model time, e.g. "OCR 2.1 s. Model 4.3 s (2 calls: 1.9 s, 2.4 s)." Pure. */
+export function formatTimings(ocrSeconds: number, modelSeconds: readonly number[]): string {
+  const s = (x: number): string => `${x.toFixed(1)} s`;
+  const total = modelSeconds.reduce((a, b) => a + b, 0);
+  const model =
+    modelSeconds.length <= 1
+      ? `Model ${s(total)}.`
+      : `Model ${s(total)} (${modelSeconds.length} calls: ${modelSeconds.map(s).join(', ')}).`;
+  return `OCR ${s(ocrSeconds)}. ${model}`;
 }
 
 /** Removes the key from any text before it is printed. Pure. */

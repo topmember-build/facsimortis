@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { RecordedResponseCache } from '../src/extract/recorded.js';
 import { FIELD_ORDER } from '../src/extract/schema.js';
-import { findFaxPngs, recordFax, redactKey } from '../src/scripts/record-live-lib.js';
+import { findFaxPngs, formatTimings, recordFax, redactKey } from '../src/scripts/record-live-lib.js';
 import type { OcrResult } from '../src/ocr/types.js';
 
 const ocr: OcrResult = {
@@ -60,6 +60,36 @@ describe('recordFax', () => {
     );
     expect(out).toMatchObject({ calls: 2, saved: true });
     expect((await cache.get(ocr))?.text).toBe(goodReply);
+  });
+
+  it('times each generate() call on its own, one entry per call', async () => {
+    const cache = new RecordedResponseCache(dir);
+    const one = await recordFax(ocr, async () => ({ model: 'm', text: goodReply }), cache);
+    expect(one.modelSeconds).toHaveLength(1);
+    const two = await recordFax(ocr, async () => ({ model: 'm', text: 'nope' }), cache);
+    expect(two.modelSeconds).toHaveLength(2);
+    expect([...one.modelSeconds, ...two.modelSeconds].every((s) => s >= 0)).toBe(true);
+  });
+
+  it('measures the time spent inside generate()', async () => {
+    const cache = new RecordedResponseCache(dir);
+    const out = await recordFax(
+      ocr,
+      async () => {
+        await new Promise((r) => setTimeout(r, 30));
+        return { model: 'm', text: goodReply };
+      },
+      cache,
+    );
+    expect(out.modelSeconds[0]).toBeGreaterThanOrEqual(0.025);
+  });
+});
+describe('formatTimings', () => {
+  it('prints OCR and model time for one call', () => {
+    expect(formatTimings(2.14, [4.26])).toBe('OCR 2.1 s. Model 4.3 s.');
+  });
+  it('lists each call when there was a retry', () => {
+    expect(formatTimings(1, [1.9, 2.4])).toBe('OCR 1.0 s. Model 4.3 s (2 calls: 1.9 s, 2.4 s).');
   });
 });
 

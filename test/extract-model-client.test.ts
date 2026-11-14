@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import fc from 'fast-check';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_EXTRACT_MODEL, GeminiClient, interactionText } from '../src/extract/gemini.js';
+import { DEFAULT_EXTRACT_MODEL, GeminiClient, interactionText, thinkingLevelFrom } from '../src/extract/gemini.js';
 import { RecordedResponseCache, ocrWordsKey } from '../src/extract/recorded.js';
 import { ExtractionError } from '../src/extract/types.js';
 import type { OcrResult } from '../src/ocr/types.js';
@@ -181,5 +181,42 @@ describe('interactionText', () => {
     expect(() => interactionText({})).toThrow(ExtractionError);
     expect(() => interactionText({ steps: 'x' })).toThrow(ExtractionError);
     expect(() => interactionText({ steps: [{ type: 'thought' }] })).toThrow(ExtractionError);
+  });
+});
+
+describe('EXTRACT_THINKING_LEVEL', () => {
+  const request = { prompt: 'p', schema: { type: 'object' } };
+  const bodyOf = (stub: ReturnType<typeof vi.fn>): Record<string, unknown> =>
+    JSON.parse((stub.mock.calls[0] as [string, RequestInit])[1].body as string) as Record<string, unknown>;
+
+  it('reads low, medium and high in any case; unset or blank gives nothing', () => {
+    expect(thinkingLevelFrom({ EXTRACT_THINKING_LEVEL: 'low' })).toBe('low');
+    expect(thinkingLevelFrom({ EXTRACT_THINKING_LEVEL: ' Medium ' })).toBe('medium');
+    expect(thinkingLevelFrom({ EXTRACT_THINKING_LEVEL: 'HIGH' })).toBe('high');
+    expect(thinkingLevelFrom({})).toBeUndefined();
+    expect(thinkingLevelFrom({ EXTRACT_THINKING_LEVEL: '  ' })).toBeUndefined();
+  });
+
+  it('rejects other values, including minimal, which this model does not support', () => {
+    for (const v of ['minimal', 'xhigh', 'fast', '0']) {
+      expect(() => thinkingLevelFrom({ EXTRACT_THINKING_LEVEL: v })).toThrow(ExtractionError);
+    }
+  });
+
+  it('sends generation_config.thinking_level only when set', async () => {
+    const set = vi.fn().mockResolvedValue(okResponse(reply('x')));
+    await new GeminiClient({ env: { EXTRACT_API_KEY: KEY, EXTRACT_THINKING_LEVEL: 'low' }, fetch: set }).generate(request);
+    expect(bodyOf(set)['generation_config']).toEqual({ thinking_level: 'low' });
+
+    const blank = vi.fn().mockResolvedValue(okResponse(reply('x')));
+    await new GeminiClient({ env: { EXTRACT_API_KEY: KEY, EXTRACT_THINKING_LEVEL: '' }, fetch: blank }).generate(request);
+    expect(bodyOf(blank)).not.toHaveProperty('generation_config');
+  });
+
+  it('fails on a bad level before any network call', async () => {
+    const stub = vi.fn();
+    const client = new GeminiClient({ env: { EXTRACT_API_KEY: KEY, EXTRACT_THINKING_LEVEL: 'minimal' }, fetch: stub });
+    await expect(client.generate(request)).rejects.toThrow(/EXTRACT_THINKING_LEVEL/);
+    expect(stub).not.toHaveBeenCalled();
   });
 });

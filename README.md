@@ -94,7 +94,7 @@ Set `EXTRACT_PROVIDER` (in `.env` or the shell). `.env` is optional.
 | --- | --- |
 | `rules` (default) | Rule-based reader. Offline, no key. |
 | `recorded` | Saved model answers from `fixtures/extract/`. Offline, no key, works with no `.env` at all. A fax with no saved answer gives an error that says so. |
-| `model` | Live Gemini call. Needs `EXTRACT_API_KEY`; `EXTRACT_MODEL` is optional (default `gemini-3.8-flash`). |
+| `model` | Live Gemini call. Needs `EXTRACT_API_KEY`; `EXTRACT_MODEL` is optional (default `gemini-3.8-flash`). `EXTRACT_THINKING_LEVEL` is optional (`low`, `medium` or `high`); when empty nothing is sent and the model uses its default. |
 
 Every reader goes through the same citation and provider number checks. Model answers must be strict JSON; one retry, then the fax is marked as needing review.
 
@@ -110,7 +110,7 @@ On PowerShell: `$env:EXTRACT_PROVIDER='recorded'; npm run extract -- fixtures/fa
 npm run record:live
 ```
 
-This is the only step that uses the network. Put `EXTRACT_API_KEY` (and optionally `EXTRACT_MODEL`) in `.env`; the script loads `.env` if it exists. It reads each fax in `fixtures/faxes/` (or the PNG paths you pass), calls the model once per fax, prints the fields like `npm run extract`, and saves each usable answer in `fixtures/extract/`, named by a hash of the OCR words. A second call is made only when the first answer fails the checks. An unusable answer is not saved, and the script exits with an error if any fax was not saved. The key is never printed.
+This is the only step that uses the network. Put `EXTRACT_API_KEY` (and optionally `EXTRACT_MODEL`) in `.env`; the script loads `.env` if it exists. It reads each fax in `fixtures/faxes/` (or the PNG paths you pass), calls the model once per fax, prints the fields like `npm run extract`, and saves each usable answer in `fixtures/extract/`, named by a hash of the OCR words. A second call is made only when the first answer fails the checks. For each fax it prints the OCR time and the time spent in the model call on its own, plus the thinking level in use. An unusable answer is not saved, and the script exits with an error if any fax was not saved. The key is never printed.
 
 ## Spec
 

@@ -1,12 +1,12 @@
 // Live-call script. YOU run this; it calls the Gemini API once per fax and saves the replies
 // under fixtures/extract/ so the demo can run offline later. It never prints the key.
 import { existsSync, readFileSync } from 'node:fs';
-import { GeminiClient } from '../extract/gemini.js';
+import { GeminiClient, thinkingLevelFrom } from '../extract/gemini.js';
 import { RecordedResponseCache } from '../extract/recorded.js';
 import { createOcrAdapter } from '../ocr/default.js';
 import type { OcrAdapter } from '../ocr/types.js';
 import { formatExtractTable } from './extract-format.js';
-import { findFaxPngs, recordFax, redactKey } from './record-live-lib.js';
+import { findFaxPngs, formatTimings, recordFax, redactKey } from './record-live-lib.js';
 
 if (existsSync('.env')) process.loadEnvFile('.env');
 
@@ -16,11 +16,20 @@ if (!key?.trim()) {
   process.exit(1);
 }
 
+let thinkingLevel: string | undefined;
+try {
+  thinkingLevel = thinkingLevelFrom(process.env);
+} catch (err) {
+  console.error(err instanceof Error ? err.message : String(err));
+  process.exit(1);
+}
+
 const paths = process.argv.slice(2);
 const faxes = paths.length > 0 ? paths : findFaxPngs('fixtures/faxes');
 const client = new GeminiClient();
 const cache = new RecordedResponseCache();
 console.log(`Model: ${process.env['EXTRACT_MODEL']?.trim() || '(default)'}`);
+console.log(`Thinking level: ${thinkingLevel ?? '(model default, not sent)'}`);
 console.log(`Faxes: ${faxes.length}. One live call each (a second only if the first answer is unusable).`);
 
 let adapter: OcrAdapter | undefined;
@@ -31,10 +40,12 @@ try {
     try {
       const started = performance.now();
       const ocr = await adapter.recognize(readFileSync(path));
+      const ocrSeconds = (performance.now() - started) / 1000;
       const outcome = await recordFax(ocr, (req) => client.generate(req), cache);
       const seconds = (performance.now() - started) / 1000;
       console.log('');
       console.log(formatExtractTable(outcome.result, { file: path, ocrEngine: ocr.engine, seconds }));
+      console.log(formatTimings(ocrSeconds, outcome.modelSeconds));
       console.log(`Live calls: ${outcome.calls}. ${outcome.saved ? 'Answer saved.' : 'No usable answer, nothing saved.'}`);
       if (!outcome.saved) failures++;
     } catch (err) {

@@ -30,6 +30,21 @@ export interface GeminiReply {
 
 export type FetchLike = (url: string, init: RequestInit) => Promise<Response>;
 
+/** Thinking levels gemini-3.8-flash accepts (it has no "minimal"). */
+export const THINKING_LEVELS = ['low', 'medium', 'high'] as const;
+export type ThinkingLevel = (typeof THINKING_LEVELS)[number];
+
+/**
+ * Reads EXTRACT_THINKING_LEVEL. Unset or blank gives undefined, so nothing is sent
+ * and the model keeps its own default. Any other value must be low, medium or high.
+ */
+export function thinkingLevelFrom(env: Record<string, string | undefined>): ThinkingLevel | undefined {
+  const raw = env['EXTRACT_THINKING_LEVEL']?.trim().toLowerCase();
+  if (!raw) return undefined;
+  if ((THINKING_LEVELS as readonly string[]).includes(raw)) return raw as ThinkingLevel;
+  throw new ExtractionError('EXTRACT_THINKING_LEVEL must be low, medium or high, or left empty.');
+}
+
 export interface GeminiClientOptions {
   /** Defaults to process.env at call time. */
   env?: Record<string, string | undefined>;
@@ -80,6 +95,7 @@ export class GeminiClient {
       );
     }
     const model = env['EXTRACT_MODEL']?.trim() || DEFAULT_EXTRACT_MODEL;
+    const thinkingLevel = thinkingLevelFrom(env);
     const doFetch: FetchLike = this.#fetch ?? ((url, init) => fetch(url, init));
 
     let response: Response;
@@ -96,6 +112,7 @@ export class GeminiClient {
           input: request.prompt,
           store: false,
           response_format: { type: 'text', mime_type: 'application/json', schema: request.schema },
+          ...(thinkingLevel === undefined ? {} : { generation_config: { thinking_level: thinkingLevel } }),
         }),
       });
     } catch {
