@@ -1,0 +1,5 @@
+{
+  "key": "65fa388260854160acab32099dae08ada9d26e6d369bbc2f917794deffc2c808",
+  "model": "gemini-3.8-flash",
+  "text": "{\"fields\":[{\"name\":\"patientName\",\"value\":\"Jasper Hartley\",\"wordIds\":[\"o0021\",\"o0022\"]},{\"name\":\"dob\",\"value\":\"09/06/1938\",\"wordIds\":[\"o0023\"]},{\"name\":\"referringProvider\",\"value\":\"Dr Tris Ellery, Maple Hollow Practice\",\"wordIds\":[\"o0028\",\"o0029\",\"o0030\",\"o0031\",\"o0032\",\"o0033\"]},{\"name\":\"npi\",\"value\":\"8428731565\",\"wordIds\":[\"o0034\"]},{\"name\":\"reason\",\"value\":\"ENT evaluation, recurring sinus congestion\",\"wordIds\":[\"o0039\",\"o0040\",\"o0041\",\"o0042\",\"o0043\"]},{\"name\":\"urgency\",\"value\":\"routine\",\"wordIds\":[\"o0044\"]},{\"name\":\"callbackPhone\",\"value\":\"555-0147\",\"wordIds\":[\"o0047\"]}]}"
+}
