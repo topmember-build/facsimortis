@@ -78,3 +78,28 @@ describe('proof --reader option', () => {
     expect(parseReader(['recorded']).ok).toBe(false);
   });
 });
+describe('trap fields in the measured tier', () => {
+  const npi = (flags: string[]): Field => f({ name: 'npi', value: 'Nell', wordIds: ['w1'], flags });
+  const truth = [{ name: 'npi', value: 'Nell' }];
+
+  it('counts a flagged trap field as expected, not as correct but flagged', () => {
+    const proof = proveFax('fax-t', 'bad-npi', truth, { engine: 't', fields: [npi(['wrong'])] } as ExtractionResult, ocr);
+    const t = tally([proof]);
+    expect(t.expectedTrapFlags).toEqual(['fax-t npi']);
+    expect(t.correctButFlagged).toEqual([]);
+    expect(proof.fields[0]?.tier).toBe('exact');
+  });
+
+  it('still counts the same flag as correct but flagged on a fax without the trap', () => {
+    const proof = proveFax('fax-u', null, truth, { engine: 't', fields: [npi(['wrong'])] } as ExtractionResult, ocr);
+    const t = tally([proof]);
+    expect(t.expectedTrapFlags).toEqual([]);
+    expect(t.correctButFlagged).toEqual(['fax-u npi']);
+  });
+
+  it('does not mark an unflagged trap field as expected', () => {
+    const proof = proveFax('fax-v', 'bad-npi', truth, { engine: 't', fields: [npi([])] } as ExtractionResult, ocr);
+    expect(tally([proof]).expectedTrapFlags).toEqual([]);
+    expect(proof.gateFailures.some((g) => g.includes('bad-npi'))).toBe(true);
+  });
+});

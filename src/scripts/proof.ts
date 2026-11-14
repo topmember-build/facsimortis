@@ -83,7 +83,7 @@ console.log(`  exact matches:             ${t.exact} of ${t.total}`);
 console.log(`  empty and flagged:         ${t.nullFlagged}`);
 console.log(`  wrong but flagged:         ${t.flaggedMisreads}`);
 console.log(`  unflagged misreads:        ${t.unflaggedMisreads.length}${t.unflaggedMisreads.length > 0 ? `  (${t.unflaggedMisreads.join(', ')})` : ''}`);
-console.log(`  correct but flagged:       ${t.correctButFlagged.length}${t.correctButFlagged.length > 0 ? `  (${t.correctButFlagged.join(', ')})` : ''}`);
+console.log(`  correct but flagged:       ${t.correctButFlagged.length}${t.correctButFlagged.length > 0 ? `  (${t.correctButFlagged.join(', ')})` : ''}`);console.log(`  trap flagged as expected:  ${t.expectedTrapFlags.length}${t.expectedTrapFlags.length > 0 ? `  (${t.expectedTrapFlags.join(', ')})` : ''}`);
 
 if (reader === 'recorded') {
   console.log(`\nnetwork attempts: ${networkAttempts}`);
