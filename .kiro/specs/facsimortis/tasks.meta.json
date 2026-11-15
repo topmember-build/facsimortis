@@ -773,6 +773,18 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794735626816
       }
+    ],
+    "2.3 Inbox: a data loader that reads index.json and the per-fax files with schema validation, and an inbox list with thumbnail, received time and flagged-field count per fax; selecting a fax opens it. A small \"Incoming fax\" button reveals the next sample fax from the precomputed data (no upload, no network). Tests with fixture data, including the button revealing faxes in order and stopping after the last. (R1, R1.2, R5.2)": [
+      {
+        "executionId": "2eb7c8b8-6317-4a09-a199-def3b40f3015",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794736014013
+      },
+      {
+        "executionId": "2eb7c8b8-6317-4a09-a199-def3b40f3015",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794736494204
+      }
     ]
   }
 }
