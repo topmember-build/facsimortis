@@ -8,7 +8,7 @@ This is a demo built on synthetic data only. It makes no compliance or certifica
 
 ## Requirements
 
-- Node.js 22.12 or newer
+- Node.js 22.22.2 or newer on 22, 24.15.0 or newer on 24, or 26 and up (the site tests use jsdom 31, which needs this)
 
 ## Setup
 
@@ -29,6 +29,7 @@ cp .env.example .env
 | `npm run extract` | Extract fields with word IDs | working (rule-based, offline) |
 | `npm run record:live` | Call the Gemini model once per fax and save the answers | you run it, needs `EXTRACT_API_KEY` |
 | `npm run proof` | Run the command-line runtime proof on the three fixture faxes; add `-- --reader recorded` to use the saved model answers with the network blocked | working (offline) |
+| `npm run precompute` | Write the sample data the site loads to `web/public/samples/`; add `-- --check` to verify the committed data is up to date | working (offline) |
 
 ## Synthetic faxes
 
@@ -111,6 +112,26 @@ npm run record:live
 ```
 
 This is the only step that uses the network. Put `EXTRACT_API_KEY` (and optionally `EXTRACT_MODEL`) in `.env`; the script loads `.env` if it exists. It reads each fax in `fixtures/faxes/` (or the PNG paths you pass), calls the model once per fax, prints the fields like `npm run extract`, and saves each usable answer in `fixtures/extract/`, named by a hash of the OCR words. A second call is made only when the first answer fails the checks. For each fax it prints the OCR time and the time spent in the model call on its own, plus the thinking level in use. An unusable answer is not saved, and the script exits with an error if any fax was not saved. If Google refuses a request, the script prints the HTTP status and Google's short error message from the reply, and nothing else from the response. The key is never printed.
+
+## Sample data for the site
+
+```
+npm run precompute
+```
+
+This reads each fax in `fixtures/faxes/`, runs local OCR and both offline readers (rule-based and saved model answers, with the central checks), and writes to `web/public/samples/`: each fax's PNG, one JSON file per fax with its OCR words, boxes and both readers' results, and an `index.json`. It runs offline, never calls the live model and never reads the generator's answer-key files. A fax with no saved model answer gets a plain "no saved answer" entry. The output is the same every run, and the folder is committed. `npm run precompute -- --check` exits with an error if the committed data is out of date.
+
+## Site
+
+```
+npm run dev
+```
+
+Starts the dev server at http://localhost:5173/. `npm run build` writes the static site to `dist/web/` (git-ignored; it holds `index.html`, `assets/` and a copy of `samples/`). `npm run preview` serves that folder at http://localhost:4173/. Run `npm run build` first.
+
+The site is static: there is no server and no network call beyond loading its own files. It reads the sample data in `web/public/samples/`, which `npm run precompute` writes. The build uses relative paths, so the folder works from any subpath; set `SITE_BASE` (for example `/facsimortis/`) to build for a fixed one. Site code in `web/src/` shares the Zod schemas from `src/samples/schema.ts` and `src/extract/schema.ts`; ESLint blocks it from importing anything else in `src/` or any Node module. Site tests run with `npm test` (jsdom, web files only).
+
+For now the site is a placeholder screen with the "Synthetic data" notice.
 
 ## Spec
 

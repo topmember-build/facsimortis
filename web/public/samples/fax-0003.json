@@ -1,0 +1,722 @@
+{
+  "height": 2200,
+  "id": "fax-0003",
+  "image": "fax-0003.png",
+  "level": "L2",
+  "ocr": {
+    "engine": "local",
+    "words": [
+      {
+        "box": [
+          89,
+          10,
+          244,
+          38
+        ],
+        "confidence": 0.14,
+        "id": "o0001",
+        "text": "10/01/2026"
+      },
+      {
+        "box": [
+          265,
+          18,
+          340,
+          42
+        ],
+        "confidence": 0.37,
+        "id": "o0002",
+        "text": "12:19"
+      },
+      {
+        "box": [
+          359,
+          23,
+          431,
+          46
+        ],
+        "confidence": 0.24,
+        "id": "o0003",
+        "text": "FROM:"
+      },
+      {
+        "box": [
+          455,
+          27,
+          580,
+          53
+        ],
+        "confidence": 0.94,
+        "id": "o0004",
+        "text": "555-0193"
+      },
+      {
+        "box": [
+          599,
+          34,
+          660,
+          61
+        ],
+        "confidence": 0.9,
+        "id": "o0005",
+        "text": "Page"
+      },
+      {
+        "box": [
+          680,
+          35,
+          722,
+          61
+        ],
+        "confidence": 0.9,
+        "id": "o0006",
+        "text": "1/1"
+      },
+      {
+        "box": [
+          144,
+          120,
+          392,
+          171
+        ],
+        "confidence": 0.95,
+        "id": "o0007",
+        "text": "REFERRAL"
+      },
+      {
+        "box": [
+          432,
+          133,
+          553,
+          178
+        ],
+        "confidence": 0.89,
+        "id": "o0008",
+        "text": "FORM"
+      },
+      {
+        "box": [
+          139,
+          204,
+          280,
+          230
+        ],
+        "confidence": 0.38,
+        "id": "o0009",
+        "text": "SUNTHETIC"
+      },
+      {
+        "box": [
+          299,
+          211,
+          360,
+          233
+        ],
+        "confidence": 0.85,
+        "id": "o0010",
+        "text": "DATA"
+      },
+      {
+        "box": [
+          380,
+          224,
+          392,
+          227
+        ],
+        "confidence": 0.47,
+        "id": "o0011",
+        "text": "~"
+      },
+      {
+        "box": [
+          411,
+          216,
+          457,
+          237
+        ],
+        "confidence": 0.28,
+        "id": "o0012",
+        "text": "NOT"
+      },
+      {
+        "box": [
+          475,
+          218,
+          488,
+          239
+        ],
+        "confidence": 0.31,
+        "id": "o0013",
+        "text": "fA"
+      },
+      {
+        "box": [
+          507,
+          220,
+          567,
+          250
+        ],
+        "confidence": 0.85,
+        "id": "o0014",
+        "text": "REAL"
+      },
+      {
+        "box": [
+          587,
+          223,
+          697,
+          248
+        ],
+        "confidence": 0.95,
+        "id": "o0015",
+        "text": "PATIENT"
+      },
+      {
+        "box": [
+          160,
+          281,
+          267,
+          305
+        ],
+        "confidence": 0.88,
+        "id": "o0016",
+        "text": "Patient:"
+      },
+      {
+        "box": [
+          288,
+          292,
+          359,
+          309
+        ],
+        "confidence": 0.94,
+        "id": "o0017",
+        "text": "name:"
+      },
+      {
+        "box": [
+          158,
+          321,
+          217,
+          343
+        ],
+        "confidence": 0.8,
+        "id": "o0018",
+        "text": "Nell"
+      },
+      {
+        "box": [
+          238,
+          324,
+          411,
+          352
+        ],
+        "confidence": 0.86,
+        "id": "o0019",
+        "text": "Copperfield"
+      },
+      {
+        "box": [
+          947,
+          315,
+          1008,
+          337
+        ],
+        "confidence": 0.31,
+        "id": "o0020",
+        "text": "Date"
+      },
+      {
+        "box": [
+          1027,
+          319,
+          1055,
+          339
+        ],
+        "confidence": 0.31,
+        "id": "o0021",
+        "text": "of"
+      },
+      {
+        "box": [
+          1075,
+          320,
+          1163,
+          344
+        ],
+        "confidence": 0.96,
+        "id": "o0022",
+        "text": "birth:"
+      },
+      {
+        "box": [
+          947,
+          354,
+          1100,
+          382
+        ],
+        "confidence": 0.96,
+        "id": "o0023",
+        "text": "10/20/2001"
+      },
+      {
+        "box": [
+          154,
+          417,
+          295,
+          449
+        ],
+        "confidence": 0.92,
+        "id": "o0024",
+        "text": "Referring"
+      },
+      {
+        "box": [
+          313,
+          427,
+          449,
+          450
+        ],
+        "confidence": 0.95,
+        "id": "o0025",
+        "text": "provider:"
+      },
+      {
+        "box": [
+          152,
+          457,
+          181,
+          477
+        ],
+        "confidence": 0.79,
+        "id": "o0026",
+        "text": "Dr"
+      },
+      {
+        "box": [
+          200,
+          459,
+          293,
+          482
+        ],
+        "confidence": 0.93,
+        "id": "o0027",
+        "text": "Hollis"
+      },
+      {
+        "box": [
+          941,
+          451,
+          1066,
+          476
+        ],
+        "confidence": 0.89,
+        "id": "o0028",
+        "text": "Provider"
+      },
+      {
+        "box": [
+          1085,
+          457,
+          1141,
+          479
+        ],
+        "confidence": 0.42,
+        "id": "o0029",
+        "text": "NPL:"
+      },
+      {
+        "box": [
+          313,
+          464,
+          431,
+          494
+        ],
+        "confidence": 0.92,
+        "id": "o0030",
+        "text": "Ivesley,"
+      },
+      {
+        "box": [
+          456,
+          470,
+          613,
+          496
+        ],
+        "confidence": 0.95,
+        "id": "o0031",
+        "text": "Northfield"
+      },
+      {
+        "box": [
+          632,
+          477,
+          740,
+          506
+        ],
+        "confidence": 0.96,
+        "id": "o0032",
+        "text": "Example"
+      },
+      {
+        "box": [
+          151,
+          497,
+          243,
+          520
+        ],
+        "confidence": 0.94,
+        "id": "o0033",
+        "text": "Health"
+      },
+      {
+        "box": [
+          940,
+          491,
+          1095,
+          517
+        ],
+        "confidence": 0.94,
+        "id": "o0034",
+        "text": "6720988041"
+      },
+      {
+        "box": [
+          147,
+          592,
+          239,
+          616
+        ],
+        "confidence": 0.96,
+        "id": "o0035",
+        "text": "Reason"
+      },
+      {
+        "box": [
+          260,
+          597,
+          303,
+          619
+        ],
+        "confidence": 0.96,
+        "id": "o0036",
+        "text": "for"
+      },
+      {
+        "box": [
+          322,
+          602,
+          458,
+          626
+        ],
+        "confidence": 0.95,
+        "id": "o0037",
+        "text": "referral:"
+      },
+      {
+        "box": [
+          145,
+          632,
+          191,
+          654
+        ],
+        "confidence": 0.95,
+        "id": "o0038",
+        "text": "ENT"
+      },
+      {
+        "box": [
+          209,
+          637,
+          376,
+          664
+        ],
+        "confidence": 0.94,
+        "id": "o0039",
+        "text": "evaluation,"
+      },
+      {
+        "box": [
+          934,
+          627,
+          1054,
+          657
+        ],
+        "confidence": 0.87,
+        "id": "o0040",
+        "text": "Urgency:"
+      },
+      {
+        "box": [
+          401,
+          648,
+          541,
+          675
+        ],
+        "confidence": 0.95,
+        "id": "o0041",
+        "text": "recurring"
+      },
+      {
+        "box": [
+          560,
+          651,
+          637,
+          674
+        ],
+        "confidence": 0.96,
+        "id": "o0042",
+        "text": "sinus"
+      },
+      {
+        "box": [
+          656,
+          659,
+          813,
+          683
+        ],
+        "confidence": 0.89,
+        "id": "o0043",
+        "text": "congestian"
+      },
+      {
+        "box": [
+          932,
+          670,
+          1023,
+          694
+        ],
+        "confidence": 0.95,
+        "id": "o0044",
+        "text": "urgent"
+      },
+      {
+        "box": [
+          141,
+          728,
+          184,
+          750
+        ],
+        "confidence": 0.58,
+        "id": "o0045",
+        "text": "Cal"
+      },
+      {
+        "box": [
+          192,
+          719,
+          265,
+          754
+        ],
+        "confidence": 0.58,
+        "id": "o0046",
+        "text": "tback"
+      },
+      {
+        "box": [
+          284,
+          735,
+          372,
+          761
+        ],
+        "confidence": 0.96,
+        "id": "o0047",
+        "text": "phone:"
+      },
+      {
+        "box": [
+          139,
+          768,
+          262,
+          794
+        ],
+        "confidence": 0.83,
+        "id": "o0048",
+        "text": "555~0151"
+      }
+    ]
+  },
+  "readers": {
+    "model": {
+      "engine": "model:gemini-3.8-flash",
+      "fields": [
+        {
+          "confidence": 0.8,
+          "flags": [],
+          "name": "patientName",
+          "reviewed": false,
+          "value": "Nell Copperfield",
+          "wordIds": [
+            "o0018",
+            "o0019"
+          ]
+        },
+        {
+          "confidence": 0.96,
+          "flags": [],
+          "name": "dob",
+          "reviewed": false,
+          "value": "10/20/2001",
+          "wordIds": [
+            "o0023"
+          ]
+        },
+        {
+          "confidence": 0.79,
+          "flags": [],
+          "name": "referringProvider",
+          "reviewed": false,
+          "value": "Dr Hollis Ivesley, Northfield Example Health",
+          "wordIds": [
+            "o0026",
+            "o0027",
+            "o0030",
+            "o0031",
+            "o0032",
+            "o0033"
+          ]
+        },
+        {
+          "confidence": 0.94,
+          "flags": [
+            "The provider number looks wrong: the last digit does not match."
+          ],
+          "name": "npi",
+          "reviewed": false,
+          "value": "6720988041",
+          "wordIds": [
+            "o0034"
+          ]
+        },
+        {
+          "confidence": 0.89,
+          "flags": [],
+          "name": "reason",
+          "reviewed": false,
+          "value": "ENT evaluation, recurring sinus congestian",
+          "wordIds": [
+            "o0038",
+            "o0039",
+            "o0041",
+            "o0042",
+            "o0043"
+          ]
+        },
+        {
+          "confidence": 0.95,
+          "flags": [],
+          "name": "urgency",
+          "reviewed": false,
+          "value": "urgent",
+          "wordIds": [
+            "o0044"
+          ]
+        },
+        {
+          "confidence": 0.83,
+          "flags": [
+            "The callback phone number is not in a usual format. Please check it."
+          ],
+          "name": "callbackPhone",
+          "reviewed": false,
+          "value": "555~0151",
+          "wordIds": [
+            "o0048"
+          ]
+        }
+      ],
+      "status": "ok"
+    },
+    "rules": {
+      "engine": "rules",
+      "fields": [
+        {
+          "confidence": 0.8,
+          "flags": [],
+          "name": "patientName",
+          "reviewed": false,
+          "value": "Nell Copperfield",
+          "wordIds": [
+            "o0018",
+            "o0019"
+          ]
+        },
+        {
+          "confidence": 0.96,
+          "flags": [],
+          "name": "dob",
+          "reviewed": false,
+          "value": "10/20/2001",
+          "wordIds": [
+            "o0023"
+          ]
+        },
+        {
+          "confidence": 0.79,
+          "flags": [],
+          "name": "referringProvider",
+          "reviewed": false,
+          "value": "Dr Hollis Ivesley, Northfield Example Health",
+          "wordIds": [
+            "o0026",
+            "o0027",
+            "o0030",
+            "o0031",
+            "o0032",
+            "o0033"
+          ]
+        },
+        {
+          "confidence": 0.94,
+          "flags": [
+            "The provider number looks wrong: the last digit does not match."
+          ],
+          "name": "npi",
+          "reviewed": false,
+          "value": "6720988041",
+          "wordIds": [
+            "o0034"
+          ]
+        },
+        {
+          "confidence": 0.89,
+          "flags": [],
+          "name": "reason",
+          "reviewed": false,
+          "value": "ENT evaluation, recurring sinus congestian",
+          "wordIds": [
+            "o0038",
+            "o0039",
+            "o0041",
+            "o0042",
+            "o0043"
+          ]
+        },
+        {
+          "confidence": 0.95,
+          "flags": [],
+          "name": "urgency",
+          "reviewed": false,
+          "value": "urgent",
+          "wordIds": [
+            "o0044"
+          ]
+        },
+        {
+          "confidence": 0.83,
+          "flags": [
+            "The callback phone number is not in a usual format. Please check it."
+          ],
+          "name": "callbackPhone",
+          "reviewed": false,
+          "value": "555~0151",
+          "wordIds": [
+            "o0048"
+          ]
+        }
+      ],
+      "status": "ok"
+    }
+  },
+  "width": 1728
+}

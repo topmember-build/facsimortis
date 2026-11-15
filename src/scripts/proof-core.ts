@@ -2,6 +2,9 @@
 // and passes them in; nothing under src/ extraction code ever sees truth.
 import type { OcrResult } from '../ocr/types.js';
 import type { ExtractionResult, Field } from '../extract/schema.js';
+import { isValidDob } from '../validators/dob.js';
+import { isValidNpi } from '../validators/npi.js';
+import { isValidPhone } from '../validators/phone.js';
 
 export interface TruthField {
   name: string;
@@ -88,6 +91,7 @@ export function proveFax(
   truthFields: TruthField[],
   result: ExtractionResult,
   ocr: OcrResult,
+  today: Date | string = new Date(),
 ): FaxProof {
   const expectedByName = new Map(truthFields.map((f) => [f.name, f.value]));
   const trapField = trap === null ? undefined : TRAP_FIELD[trap];
@@ -98,6 +102,19 @@ export function proveFax(
   });
   const gateFailures: string[] = [];
   for (const f of fields) for (const g of f.gateFailures) gateFailures.push(`${fax} ${f.name}: ${g}`);
+  // Every value that fails its validator must carry a flag. An unflagged one is a gate failure.
+  const validators: Record<string, (value: string) => boolean> = {
+    dob: (v) => isValidDob(v, today),
+    callbackPhone: isValidPhone,
+    npi: isValidNpi,
+  };
+  for (const f of fields) {
+    const isValid = validators[f.name];
+    if (isValid === undefined || f.value === null || f.flags.length > 0) continue;
+    if (!isValid(f.value)) {
+      gateFailures.push(`${fax} ${f.name}: the value "${f.value}" fails its check but is not flagged`);
+    }
+  }
   if (trap === 'bad-npi') {
     const npi = fields.find((f) => f.name === 'npi');
     if (npi === undefined || npi.flags.length === 0) {

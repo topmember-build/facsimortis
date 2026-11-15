@@ -1,0 +1,153 @@
+import { useEffect } from 'react';
+import type { InboxItem } from './data';
+import { formatReceived } from './format';
+import { NO_MORE_FAXES_MESSAGE } from './inbox-state';
+import { NO_SAVED_ANSWER_LABEL, READER_LABEL, summariseFlags, type ReaderName } from './flags';
+
+function FlagSummaryLine({ item, reader }: { item: InboxItem; reader: ReaderName }) {
+  if (!item.fax.ok) return null;
+  const summary = summariseFlags(item.fax.value.readers[reader]);
+  if (summary.status === 'no-saved-answer') {
+    return (
+      <span className="flag-line flag-none">
+        <span aria-hidden="true">–</span> {NO_SAVED_ANSWER_LABEL}
+      </span>
+    );
+  }
+  if (summary.count === 0) {
+    return (
+      <span className="flag-line flag-none">
+        <span aria-hidden="true">✓</span> No flagged fields
+      </span>
+    );
+  }
+  return (
+    <span className="flag-line flag-on">
+      <span aria-hidden="true">⚑</span> {summary.count} flagged {summary.count === 1 ? 'field' : 'fields'}
+    </span>
+  );
+}
+
+function Thumbnail({ item }: { item: InboxItem }) {
+  const size = item.fax.ok ? { width: item.fax.value.width, height: item.fax.value.height } : {};
+  return (
+    <img
+      className="thumb"
+      src={item.imageUrl}
+      alt={`First page of fax ${item.entry.id}`}
+      loading="lazy"
+      {...size}
+    />
+  );
+}
+
+function RowText({ item, reader }: { item: InboxItem; reader: ReaderName }) {
+  return (
+    <span className="row-text">
+      <span className="row-id">{item.entry.id}</span>
+      <span className="row-time">
+        Received <time dateTime={item.entry.receivedAt}>{formatReceived(item.entry.receivedAt)}</time>
+      </span>
+      {item.fax.ok ? (
+        <FlagSummaryLine item={item} reader={reader} />
+      ) : (
+        <span className="flag-line flag-on">
+          <span aria-hidden="true">⚠</span> Could not be read. {item.fax.error}
+        </span>
+      )}
+    </span>
+  );
+}
+
+interface InboxProps {
+  /** Only the faxes that have arrived. */
+  items: InboxItem[];
+  total: number;
+  reader: ReaderName;
+  /** Fax whose row gets focus when the inbox appears (after coming back from a fax). */
+  focusId: string | null;
+  arrivedId: string | null;
+  onOpen: (id: string) => void;
+  onIncoming: () => void;
+  onRetry: () => void;
+}
+
+export function Inbox({ items, total, reader, focusId, arrivedId, onOpen, onIncoming, onRetry }: InboxProps) {
+  useEffect(() => {
+    if (!focusId) return;
+    const rows = Array.from(document.querySelectorAll<HTMLElement>('[data-fax-id]'));
+    rows.find((row) => row.dataset['faxId'] === focusId)?.focus();
+    // Runs once, when the inbox first appears.
+  }, []);
+
+  const exhausted = items.length >= total;
+  const failed = items.filter((item) => !item.fax.ok).length;
+
+  return (
+    <section aria-labelledby="inbox-title" className="inbox">
+      <h2 id="inbox-title">Inbox</h2>
+      <p className="reader-name">{READER_LABEL[reader]}</p>
+
+      {total === 0 && <p role="status">There are no sample faxes.</p>}
+      {total > 0 && items.length === 0 && (
+        <p role="status">Your inbox is empty. Press “Incoming fax” to receive the next sample.</p>
+      )}
+
+      {failed > 0 && (
+        <div role="alert" className="problem-box">
+          <p>
+            <span aria-hidden="true">⚠</span>{' '}
+            {failed === 1 ? 'One fax could not be loaded.' : `${failed} faxes could not be loaded.`} The others still
+            work.
+          </p>
+          <button type="button" className="button" onClick={onRetry}>
+            Try again
+          </button>
+        </div>
+      )}
+
+      {items.length > 0 && (
+        <ul className="fax-list">
+          {items.map((item) => (
+            <li key={item.entry.id} className="fax-row">
+              {item.fax.ok ? (
+                <button
+                  type="button"
+                  className="row-button"
+                  data-fax-id={item.entry.id}
+                  onClick={() => onOpen(item.entry.id)}
+                >
+                  <Thumbnail item={item} />
+                  <RowText item={item} reader={reader} />
+                </button>
+              ) : (
+                <div className="row-button row-failed">
+                  <Thumbnail item={item} />
+                  <RowText item={item} reader={reader} />
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="incoming">
+        <button
+          type="button"
+          className="button"
+          aria-disabled={exhausted}
+          aria-describedby="incoming-note"
+          onClick={() => {
+            if (!exhausted) onIncoming();
+          }}
+        >
+          Incoming fax
+        </button>
+        <div id="incoming-note" role="status" className="incoming-note">
+          {arrivedId && <p>Fax {arrivedId} arrived.</p>}
+          {exhausted && <p>{NO_MORE_FAXES_MESSAGE}</p>}
+        </div>
+      </div>
+    </section>
+  );
+}

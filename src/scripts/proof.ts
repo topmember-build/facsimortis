@@ -16,6 +16,7 @@ const ROOT = 'fixtures/faxes';
 interface Truth {
   id: string;
   trap: string | null;
+  referenceDate?: string;
   fields: TruthField[];
 }
 
@@ -46,19 +47,31 @@ if (reader === 'recorded') {
 
 // Offline readers only, whatever the environment says.
 const ocrAdapter = createOcrAdapter({ OCR_PROVIDER: 'local' });
-const extractor = createExtractor({ EXTRACT_PROVIDER: reader });
-console.log(`reader: ${reader}`);
 const proofs: FaxProof[] = [];
 const gateFailures: string[] = [];
 
 if (pngs.length < 3) gateFailures.push(`Expected three fixture faxes, found ${pngs.length}.`);
 
+// The date of birth check needs a "today". Every fax is dated the same day, so the
+// proof reads that day from the truth files and hands it to the extractor.
+const truths = pngs.map((png) => JSON.parse(readFileSync(png.replace(/\.png$/, '.truth.json'), 'utf8')) as Truth);
+const referenceDates = [...new Set(truths.map((t) => t.referenceDate))];
+const referenceDate = referenceDates[0];
+if (referenceDates.length !== 1 || referenceDate === undefined) {
+  gateFailures.push(
+    `The fixture faxes do not share one reference date (found: ${referenceDates.join(', ') || 'none'}). Fix the truth files.`,
+  );
+}
+const today = referenceDate ?? '2026-10-01';
+const extractor = createExtractor({ EXTRACT_PROVIDER: reader }, { today });
+console.log(`reader: ${reader}  reference date: ${today}`);
+
 try {
-  for (const png of pngs) {
-    const truth = JSON.parse(readFileSync(png.replace(/\.png$/, '.truth.json'), 'utf8')) as Truth;
+  for (const [i, png] of pngs.entries()) {
+    const truth = truths[i] as Truth;
     const ocr = await ocrAdapter.recognize(readFileSync(png));
     const result = await extractor.extract(ocr);
-    const proof = proveFax(truth.id, truth.trap, truth.fields, result, ocr);
+    const proof = proveFax(truth.id, truth.trap, truth.fields, result, ocr, today);
     proofs.push(proof);
     gateFailures.push(...proof.gateFailures);
 

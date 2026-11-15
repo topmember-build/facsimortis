@@ -61,7 +61,7 @@ Do not tune thresholds or add repairs to reach zero on the three Phase 0 faxes.
 
 ## Phase 1: Core pipeline
 
-- [ ] 1.1 Validators: NPI, DOB, phone, with property-based tests. (R4)
+- [x] 1.1 Validators: NPI, DOB, phone, with property-based tests. (R4)
 - [ ] 1.2 Flagging rules and confidence threshold. (R5)
 - [ ] 1.3 Deskew and normalisation. (R2.2)
 - [ ] 1.4 Audit trail and data model. (R7.3)
@@ -71,24 +71,35 @@ Do not tune thresholds or add repairs to reach zero on the three Phase 0 faxes.
 - [ ] 1.8 Hook: re-run evaluation on extraction changes.
 - [ ] 1.9 Skewed table pages on real OCR: one problem with three symptoms on fax-0002, fixed together. (1) The table reader starts a value at the word nearest the label's height and reads only rightwards, so on a line that rises to the right it misses the leftmost value words (referring provider read as "Family Clinic"; today flagged by the 0.5.10 rule). (2) A label whose words OCR lists out of order is not found (reason for referral). (3) The NPI field is left empty as a layout conflict. Regression fixture: the recorded real OCR in fixtures/ocr/fax-0002.ocr.json; its test is expected to change on purpose when this is fixed. (R3.1, R3.4)
 
-## Phase 2: Interface (demo-script order)
+## Phase 2: Interface (static site, demo-script order)
 
-- [ ] 2.1 Inbox with thumbnails, received time, flagged count. (R1, R5.2)
-- [ ] 2.2 Demo mode with 3 preloaded faxes and "Incoming fax" button. (R1.2)
-- [ ] 2.3 Viewer with source ghosts. (R3.3)
-- [ ] 2.4 Review panel: flagged-first, accept, edit, single Verify. (R6)
-- [ ] 2.5 Verified state and JSON / FHIR-style export. (R7)
+The site is static: it loads precomputed sample data and needs no server. Each step is one module plus its tests. No live API calls in any step.
+
+- [x] 2.1 Precompute script: `npm run precompute` runs, for each sample fax in fixtures/faxes/, local OCR and both offline readers (rules and recorded, with the central checks and a fixed "today" taken from the generator's REFERENCE_DATE constant, not from truth files), and writes one data folder the site loads: web/public/samples/ with each fax's PNG, one JSON file per fax holding its OCR words with boxes and both readers' results, and an index.json listing the faxes. Output is validated with Zod and is byte-for-byte deterministic; `npm run precompute -- --check` exits non-zero if the committed data is out of date. It never reads truth files (an ESLint rule or test enforces it), never uses the network, and never calls the live model; a fax with no saved model answer gets a plain "no saved answer" entry for the recorded reader instead of failing. The data folder is committed. Tests: schema, determinism, no truth reads, missing saved answer. (R2.1, R3.1, R3.2, R8)
+- [x] 2.2 Static React site setup: Vite + React + TypeScript site under web/, built to static files, sharing the Zod schemas from src/. Packages for the user to install (the agent does not run npm install; the task first checks the current versions against TypeScript 6.0.3 and Vitest 5.1.0 and lists exact pins): runtime react, react-dom; dev vite, @vitejs/plugin-react, @types/react, @types/react-dom, @testing-library/react, @testing-library/user-event, @testing-library/jest-dom, jsdom, axe-core. Scripts: `npm run dev`, `npm run build`, `npm run preview`; site tests run in the existing Vitest setup. One placeholder screen with the "Synthetic data" notice and a smoke test. README run steps. (R9.2, R8.2)
+- [ ] 2.3 Inbox: a data loader that reads index.json and the per-fax files with schema validation, and an inbox list with thumbnail, received time and flagged-field count per fax; selecting a fax opens it. A small "Incoming fax" button reveals the next sample fax from the precomputed data (no upload, no network). Tests with fixture data, including the button revealing faxes in order and stopping after the last. (R1, R1.2, R5.2)
+- [ ] 2.4 Viewer with source ghosts: the fax image with a highlight drawn over each field's cited OCR word boxes, looked up by word ID only (never coordinates from a reader); selecting a field pulses its ghost once; a field with no words has no ghost; "Synthetic data" notice on screen. Shows the model answers by default, with a visible toggle to the rules reader; the reader in use is named on screen; a fax with no saved model answer says so plainly and offers the rules reader. Tests: ghosts match cited word boxes, unknown IDs draw nothing, the toggle switches results and the on-screen reader name. (R3.3, R6.1, R8.2)
+- [ ] 2.5 Review panel: flagged fields first, then lowest confidence first within each group (R5.1); confidence is shown as a number or bar, never as a flag; each field shows value, plain flag reasons (colour plus icon plus text) and its ghost link; accept and inline edit clear a field's flag and record the change with a timestamp; a single "Verify record" action is enabled only when no field is flagged and unreviewed. Values are never changed except by the user's edit. Tests for sorting, accept, edit and the Verify rule. (R5.1, R5.3, R6)
+- [ ] 2.6 Verified state and JSON export: Verify saves the record in the browser (localStorage, no server) and shows the calm "laid to rest" state; the edit record is browser-only (original values, edits, timestamps and verifier kept in localStorage, not a server audit trail), and the README says so; the verified record downloads as JSON with that record; reload keeps the state. Tests for save, reload and export contents. (R7.1, R7.3)
+- [ ] 2.7 Accessibility and the five screen states: every screen (inbox, viewer, review) has empty, loading (dial-tone waveform), error, flagged and verified states; WCAG AA contrast, full keyboard use in review-flow order with visible focus, Enter accepts a field, reduced-motion makes pulses and waveforms static, and each ghost has a text equivalent for screen readers. Tests: each state renders, keyboard path through review, axe-core finds no violations. (R10, design steering)
+- [ ] 2.8 Deploy: static build of the site with the precomputed samples, served from a public URL with no sign-in; propose two or three static hosts with trade-offs and let the user choose before deploying; check from a clean browser profile (no cache, no local storage) that the inbox, viewer, review, verify and export work. README gains the public URL. (R9.1)
+
+**Stretch (not in Phase 2):**
+
+- Judge uploads: a visitor uploads their own fax image, which needs live OCR and a reader at run time (a server or in-browser OCR). Out of scope for the static site. (R1.1 upload, R1.3)
+- FHIR-style ServiceRequest export (already first on the cut list; JSON export is in 2.6). (R7.2)
 
 ## Phase 3: Delivery
 
-- [ ] 3.1 Deploy to a public URL, no sign-in. (R9.1)
+- [ ] 3.1 Deploy: covered by 2.8; keep the public URL working through submission. (R9.1)
 - [ ] 3.2 One-command local start, README with run steps. (R9.2)
-- [ ] 3.3 Ghost visual language pass: source ghosts, dial-tone loading, "laid to rest". Check AA contrast and keyboard use. (R10)
-- [ ] 3.4 Synthetic-data notice on every fax screen. (R8.2)
+- [ ] 3.3 Ghost visual language pass on what 2.7 did not cover: polish the source-ghost glow and pulse, the dial-tone waveform and the "laid to rest" state so they carry meaning and nothing else; re-check AA contrast after the polish. (R10)
+- [ ] 3.4 Synthetic-data notice: confirm it appears on every screen that shows a fax after 2.3 to 2.7, including empty and error states; add it where missing. (R8.2)
 - [ ] 3.5 Mock records MCP server and custom "fax-qa" agent, documented. (Kiro write-up)
 
 ## Phase 4: Submission (finish at least 3 days before the deadline)
 
+- [ ] 4.0 Demo script: write the 3-minute demo script in docs/demo-script.md, following Maria's workflow (fax arrives, fields extracted with source ghosts, flagged fields reviewed, record verified and exported), with timings per beat that add up to under 3:00 and the exact on-screen actions; the script is the scope check for Phases 2 and 3. (Kiro write-up)
 - [ ] 4.1 Architecture diagram exported as an image for Devpost.
 - [ ] 4.2 Record the demo from the script; stay under 3:00; upload public to YouTube; no copyrighted music.
 - [ ] 4.3 Kiro write-up: IDE/CLI differences, hooks, spec vs vibe coding, steering strategy, MCP, property-based testing, with real observations.

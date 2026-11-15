@@ -1,5 +1,5 @@
 import { checkCitations } from './citation.js';
-import { checkNpi } from './checks.js';
+import { checkDob, checkNpi, checkPhone } from './checks.js';
 import { GeminiClient } from './gemini.js';
 import { ModelExtractor } from './model.js';
 import { RecordedResponseCache } from './recorded.js';
@@ -23,16 +23,23 @@ export function registerRuleExtractor(factory: (() => ExtractionAdapter) | undef
 /**
  * Central checks (0.6, 0.8.1). Every adapter that createExtractor returns is wrapped
  * here, so the rule-based reader and any future model or recorded reader get both
- * checks without doing anything. Order: citation check first, then the NPI check
- * (a field the citation check emptied is null and skipped). Add new providers inside
+ * checks without doing anything. Order: citation check first, then the NPI, date of
+ * birth and phone checks (a field the citation check emptied is null and skipped). Add new providers inside
  * createExtractor, never return a bare adapter. Name and close() pass through unchanged.
  */
-export function withChecks(inner: ExtractionAdapter): ExtractionAdapter {
+export interface CheckOptions {
+  /** The date the DOB check measures against. Defaults to the current date at extract time. */
+  today?: Date | string;
+}
+
+export function withChecks(inner: ExtractionAdapter, options: CheckOptions = {}): ExtractionAdapter {
   const wrapped: ExtractionAdapter = {
     name: inner.name,
     async extract(ocr) {
       const cited = checkCitations(await inner.extract(ocr), ocr).result;
-      return checkNpi(cited).result;
+      const npiChecked = checkNpi(cited).result;
+      const dobChecked = checkDob(npiChecked, options.today ?? new Date()).result;
+      return checkPhone(dobChecked).result;
     },
   };
   if (inner.close !== undefined) {
@@ -46,18 +53,19 @@ export const withCitationCheck = withChecks;
 
 export function createExtractor(
   env: Record<string, string | undefined> = process.env,
+  options: CheckOptions = {},
 ): ExtractionAdapter {
   const provider = (env['EXTRACT_PROVIDER'] ?? '').trim().toLowerCase() || 'rules';
   if (provider === 'rules') {
     if (ruleFactory === undefined) {
       throw new ExtractionError('The rule-based reader is not available yet.');
     }
-    return withChecks(ruleFactory());
+    return withChecks(ruleFactory(), options);
   }
   if (provider === 'model') {
     // Live call. The key and model are read from env only when a call is made.
     const client = new GeminiClient({ env });
-    return withChecks(new ModelExtractor((_ocr, request) => client.generate(request)));
+    return withChecks(new ModelExtractor((_ocr, request) => client.generate(request)), options);
   }
   if (provider === 'recorded') {
     // Offline: saved answers only. Needs no .env and no key.
@@ -72,6 +80,7 @@ export function createExtractor(
         }
         return { model: saved.model, text: saved.text };
       }),
+      options,
     );
   }
   throw new ExtractionError(

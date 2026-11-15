@@ -1,0 +1,26 @@
+{
+  "faxes": [
+    {
+      "data": "fax-0001.json",
+      "id": "fax-0001",
+      "image": "fax-0001.png",
+      "level": "L1",
+      "receivedAt": "2026-10-01T09:00:00"
+    },
+    {
+      "data": "fax-0002.json",
+      "id": "fax-0002",
+      "image": "fax-0002.png",
+      "level": "L2",
+      "receivedAt": "2026-10-01T09:07:00"
+    },
+    {
+      "data": "fax-0003.json",
+      "id": "fax-0003",
+      "image": "fax-0003.png",
+      "level": "L2",
+      "receivedAt": "2026-10-01T09:14:00"
+    }
+  ],
+  "version": 1
+}

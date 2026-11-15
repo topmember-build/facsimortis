@@ -1,0 +1,703 @@
+{
+  "height": 2200,
+  "id": "fax-0001",
+  "image": "fax-0001.png",
+  "level": "L1",
+  "ocr": {
+    "engine": "local",
+    "words": [
+      {
+        "box": [
+          60,
+          30,
+          215,
+          57
+        ],
+        "confidence": 0.95,
+        "id": "o0001",
+        "text": "10/01/2026"
+      },
+      {
+        "box": [
+          236,
+          36,
+          311,
+          57
+        ],
+        "confidence": 0.95,
+        "id": "o0002",
+        "text": "16:03"
+      },
+      {
+        "box": [
+          331,
+          37,
+          402,
+          58
+        ],
+        "confidence": 0.94,
+        "id": "o0003",
+        "text": "FROM:"
+      },
+      {
+        "box": [
+          427,
+          39,
+          551,
+          61
+        ],
+        "confidence": 0.93,
+        "id": "o0004",
+        "text": "555-0159"
+      },
+      {
+        "box": [
+          571,
+          41,
+          631,
+          68
+        ],
+        "confidence": 0.91,
+        "id": "o0005",
+        "text": "Page"
+      },
+      {
+        "box": [
+          652,
+          40,
+          694,
+          66
+        ],
+        "confidence": 0.52,
+        "id": "o0006",
+        "text": "1/1"
+      },
+      {
+        "box": [
+          119,
+          140,
+          367,
+          184
+        ],
+        "confidence": 0.96,
+        "id": "o0007",
+        "text": "REFERRAL"
+      },
+      {
+        "box": [
+          407,
+          144,
+          528,
+          186
+        ],
+        "confidence": 0.95,
+        "id": "o0008",
+        "text": "FORM"
+      },
+      {
+        "box": [
+          116,
+          224,
+          256,
+          246
+        ],
+        "confidence": 0.53,
+        "id": "o0009",
+        "text": "SUNTHETIC"
+      },
+      {
+        "box": [
+          276,
+          226,
+          336,
+          247
+        ],
+        "confidence": 0.92,
+        "id": "o0010",
+        "text": "DATA"
+      },
+      {
+        "box": [
+          356,
+          238,
+          368,
+          240
+        ],
+        "confidence": 0.91,
+        "id": "o0011",
+        "text": "-"
+      },
+      {
+        "box": [
+          388,
+          228,
+          433,
+          249
+        ],
+        "confidence": 0.96,
+        "id": "o0012",
+        "text": "NOT"
+      },
+      {
+        "box": [
+          452,
+          229,
+          464,
+          249
+        ],
+        "confidence": 0.96,
+        "id": "o0013",
+        "text": "A"
+      },
+      {
+        "box": [
+          484,
+          230,
+          544,
+          251
+        ],
+        "confidence": 0.96,
+        "id": "o0014",
+        "text": "REAL"
+      },
+      {
+        "box": [
+          564,
+          231,
+          673,
+          253
+        ],
+        "confidence": 0.96,
+        "id": "o0015",
+        "text": "PATIENT"
+      },
+      {
+        "box": [
+          139,
+          300,
+          246,
+          322
+        ],
+        "confidence": 0.95,
+        "id": "o0016",
+        "text": "Patient"
+      },
+      {
+        "box": [
+          267,
+          308,
+          338,
+          323
+        ],
+        "confidence": 0.96,
+        "id": "o0017",
+        "text": "name:"
+      },
+      {
+        "box": [
+          927,
+          313,
+          987,
+          334
+        ],
+        "confidence": 0.95,
+        "id": "o0018",
+        "text": "Date"
+      },
+      {
+        "box": [
+          1007,
+          315,
+          1034,
+          335
+        ],
+        "confidence": 0.87,
+        "id": "o0019",
+        "text": "of"
+      },
+      {
+        "box": [
+          1055,
+          315,
+          1142,
+          336
+        ],
+        "confidence": 0.87,
+        "id": "o0020",
+        "text": "birth:"
+      },
+      {
+        "box": [
+          137,
+          340,
+          230,
+          367
+        ],
+        "confidence": 0.95,
+        "id": "o0021",
+        "text": "Jasper"
+      },
+      {
+        "box": [
+          250,
+          342,
+          358,
+          370
+        ],
+        "confidence": 0.93,
+        "id": "o0022",
+        "text": "Hartley"
+      },
+      {
+        "box": [
+          926,
+          351,
+          1082,
+          377
+        ],
+        "confidence": 0.91,
+        "id": "o0023",
+        "text": "09/06/1938"
+      },
+      {
+        "box": [
+          136,
+          436,
+          277,
+          464
+        ],
+        "confidence": 0.88,
+        "id": "o0024",
+        "text": "Referring"
+      },
+      {
+        "box": [
+          296,
+          440,
+          432,
+          465
+        ],
+        "confidence": 0.96,
+        "id": "o0025",
+        "text": "provider:"
+      },
+      {
+        "box": [
+          924,
+          449,
+          1049,
+          471
+        ],
+        "confidence": 0.95,
+        "id": "o0026",
+        "text": "Provider"
+      },
+      {
+        "box": [
+          1068,
+          451,
+          1124,
+          472
+        ],
+        "confidence": 0.95,
+        "id": "o0027",
+        "text": "NPI:"
+      },
+      {
+        "box": [
+          136,
+          476,
+          164,
+          496
+        ],
+        "confidence": 0.94,
+        "id": "o0028",
+        "text": "Dr"
+      },
+      {
+        "box": [
+          185,
+          477,
+          244,
+          498
+        ],
+        "confidence": 0.63,
+        "id": "o0029",
+        "text": "Tris"
+      },
+      {
+        "box": [
+          264,
+          478,
+          367,
+          506
+        ],
+        "confidence": 0.95,
+        "id": "o0030",
+        "text": "Ellery,"
+      },
+      {
+        "box": [
+          392,
+          480,
+          468,
+          507
+        ],
+        "confidence": 0.96,
+        "id": "o0031",
+        "text": "Maple"
+      },
+      {
+        "box": [
+          488,
+          482,
+          580,
+          503
+        ],
+        "confidence": 0.92,
+        "id": "o0032",
+        "text": "Hollow"
+      },
+      {
+        "box": [
+          600,
+          484,
+          724,
+          506
+        ],
+        "confidence": 0.95,
+        "id": "o0033",
+        "text": "Practice"
+      },
+      {
+        "box": [
+          924,
+          489,
+          1080,
+          511
+        ],
+        "confidence": 0.96,
+        "id": "o0034",
+        "text": "8428731565"
+      },
+      {
+        "box": [
+          134,
+          572,
+          226,
+          593
+        ],
+        "confidence": 0.95,
+        "id": "o0035",
+        "text": "Reason"
+      },
+      {
+        "box": [
+          247,
+          574,
+          290,
+          594
+        ],
+        "confidence": 0.96,
+        "id": "o0036",
+        "text": "for"
+      },
+      {
+        "box": [
+          310,
+          574,
+          449,
+          597
+        ],
+        "confidence": 0.94,
+        "id": "o0037",
+        "text": "referral:"
+      },
+      {
+        "box": [
+          922,
+          585,
+          1041,
+          613
+        ],
+        "confidence": 0.77,
+        "id": "o0038",
+        "text": "Urgency:"
+      },
+      {
+        "box": [
+          134,
+          612,
+          179,
+          633
+        ],
+        "confidence": 0.95,
+        "id": "o0039",
+        "text": "ENT"
+      },
+      {
+        "box": [
+          198,
+          614,
+          365,
+          638
+        ],
+        "confidence": 0.95,
+        "id": "o0040",
+        "text": "evaluation,"
+      },
+      {
+        "box": [
+          390,
+          618,
+          530,
+          644
+        ],
+        "confidence": 0.95,
+        "id": "o0041",
+        "text": "recurring"
+      },
+      {
+        "box": [
+          550,
+          619,
+          626,
+          640
+        ],
+        "confidence": 0.96,
+        "id": "o0042",
+        "text": "sinus"
+      },
+      {
+        "box": [
+          646,
+          622,
+          802,
+          647
+        ],
+        "confidence": 0.87,
+        "id": "o0043",
+        "text": "congestion"
+      },
+      {
+        "box": [
+          921,
+          626,
+          1030,
+          647
+        ],
+        "confidence": 0.95,
+        "id": "o0044",
+        "text": "routine"
+      },
+      {
+        "box": [
+          132,
+          708,
+          256,
+          730
+        ],
+        "confidence": 0.92,
+        "id": "o0045",
+        "text": "Callback"
+      },
+      {
+        "box": [
+          276,
+          711,
+          363,
+          736
+        ],
+        "confidence": 0.95,
+        "id": "o0046",
+        "text": "phone:"
+      },
+      {
+        "box": [
+          131,
+          748,
+          256,
+          770
+        ],
+        "confidence": 0.89,
+        "id": "o0047",
+        "text": "555-0147"
+      }
+    ]
+  },
+  "readers": {
+    "model": {
+      "engine": "model:gemini-3.8-flash",
+      "fields": [
+        {
+          "confidence": 0.93,
+          "flags": [],
+          "name": "patientName",
+          "reviewed": false,
+          "value": "Jasper Hartley",
+          "wordIds": [
+            "o0021",
+            "o0022"
+          ]
+        },
+        {
+          "confidence": 0.91,
+          "flags": [],
+          "name": "dob",
+          "reviewed": false,
+          "value": "09/06/1938",
+          "wordIds": [
+            "o0023"
+          ]
+        },
+        {
+          "confidence": 0.63,
+          "flags": [],
+          "name": "referringProvider",
+          "reviewed": false,
+          "value": "Dr Tris Ellery, Maple Hollow Practice",
+          "wordIds": [
+            "o0028",
+            "o0029",
+            "o0030",
+            "o0031",
+            "o0032",
+            "o0033"
+          ]
+        },
+        {
+          "confidence": 0.96,
+          "flags": [],
+          "name": "npi",
+          "reviewed": false,
+          "value": "8428731565",
+          "wordIds": [
+            "o0034"
+          ]
+        },
+        {
+          "confidence": 0.87,
+          "flags": [],
+          "name": "reason",
+          "reviewed": false,
+          "value": "ENT evaluation, recurring sinus congestion",
+          "wordIds": [
+            "o0039",
+            "o0040",
+            "o0041",
+            "o0042",
+            "o0043"
+          ]
+        },
+        {
+          "confidence": 0.95,
+          "flags": [],
+          "name": "urgency",
+          "reviewed": false,
+          "value": "routine",
+          "wordIds": [
+            "o0044"
+          ]
+        },
+        {
+          "confidence": 0.89,
+          "flags": [],
+          "name": "callbackPhone",
+          "reviewed": false,
+          "value": "555-0147",
+          "wordIds": [
+            "o0047"
+          ]
+        }
+      ],
+      "status": "ok"
+    },
+    "rules": {
+      "engine": "rules",
+      "fields": [
+        {
+          "confidence": 0.93,
+          "flags": [],
+          "name": "patientName",
+          "reviewed": false,
+          "value": "Jasper Hartley",
+          "wordIds": [
+            "o0021",
+            "o0022"
+          ]
+        },
+        {
+          "confidence": 0.91,
+          "flags": [],
+          "name": "dob",
+          "reviewed": false,
+          "value": "09/06/1938",
+          "wordIds": [
+            "o0023"
+          ]
+        },
+        {
+          "confidence": 0.63,
+          "flags": [],
+          "name": "referringProvider",
+          "reviewed": false,
+          "value": "Dr Tris Ellery, Maple Hollow Practice",
+          "wordIds": [
+            "o0028",
+            "o0029",
+            "o0030",
+            "o0031",
+            "o0032",
+            "o0033"
+          ]
+        },
+        {
+          "confidence": 0.96,
+          "flags": [],
+          "name": "npi",
+          "reviewed": false,
+          "value": "8428731565",
+          "wordIds": [
+            "o0034"
+          ]
+        },
+        {
+          "confidence": 0.87,
+          "flags": [],
+          "name": "reason",
+          "reviewed": false,
+          "value": "ENT evaluation, recurring sinus congestion",
+          "wordIds": [
+            "o0039",
+            "o0040",
+            "o0041",
+            "o0042",
+            "o0043"
+          ]
+        },
+        {
+          "confidence": 0.95,
+          "flags": [],
+          "name": "urgency",
+          "reviewed": false,
+          "value": "routine",
+          "wordIds": [
+            "o0044"
+          ]
+        },
+        {
+          "confidence": 0.89,
+          "flags": [],
+          "name": "callbackPhone",
+          "reviewed": false,
+          "value": "555-0147",
+          "wordIds": [
+            "o0047"
+          ]
+        }
+      ],
+      "status": "ok"
+    }
+  },
+  "width": 1728
+}
