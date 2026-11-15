@@ -6,7 +6,7 @@ import { RecordedResponseCache } from '../extract/recorded.js';
 import { createOcrAdapter } from '../ocr/default.js';
 import type { OcrAdapter } from '../ocr/types.js';
 import { formatExtractTable } from './extract-format.js';
-import { findFaxPngs, formatTimings, recordFax, redactKey } from './record-live-lib.js';
+import { failureLine, findFaxPngs, formatTimings, recordFax } from './record-live-lib.js';
 
 if (existsSync('.env')) process.loadEnvFile('.env');
 
@@ -50,8 +50,7 @@ try {
       if (!outcome.saved) failures++;
     } catch (err) {
       failures++;
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(`\n${path}: ${redactKey(message, key)}`);
+      console.error(`\n${failureLine(path, err, key)}`);
     }
   }
 } finally {

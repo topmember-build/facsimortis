@@ -62,6 +62,15 @@ export function formatTimings(ocrSeconds: number, modelSeconds: readonly number[
   return `OCR ${s(ocrSeconds)}. ${model}`;
 }
 
+/**
+ * The line printed when a fax fails. Uses the error's message only: never its cause,
+ * stack or any response headers. The key is hidden again here as a second guard. Pure.
+ */
+export function failureLine(path: string, err: unknown, key: string | undefined): string {
+  const message = err instanceof Error ? err.message : String(err);
+  return `${path}: ${redactKey(message, key)}`;
+}
+
 /** Removes the key from any text before it is printed. Pure. */
 export function redactKey(text: string, key: string | undefined): string {
   const k = key?.trim();

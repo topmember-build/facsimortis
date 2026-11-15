@@ -72,6 +72,41 @@ export function interactionText(json: unknown): string {
   return text;
 }
 
+/** Google's documented error body: { error: { code, message } }. Only message is used. */
+const ErrorBodySchema = z.object({ error: z.looseObject({ message: z.string() }) });
+
+/** Longest piece of Google's message we show. */
+const MAX_DETAIL = 300;
+
+/** Anything shaped like a Google API key, hidden even if it is not ours. */
+const GOOGLE_KEY_PATTERN = /AIza[0-9A-Za-z_-]{20,}/g;
+
+/**
+ * The message for a refused request: our plain sentence, the HTTP status, and Google's
+ * short message from the reply body when there is one. Only error.message from a JSON
+ * body is used: never headers, never a raw or non-JSON body. Whitespace is collapsed,
+ * the key (and anything shaped like a Google key) is hidden, then the text is cut to a
+ * short length, so a cut can never expose part of a key. Pure.
+ */
+export function refusedMessage(status: number, bodyText: string, apiKey: string | undefined): string {
+  const base = `The model reader refused the request. HTTP ${status}.`;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(bodyText);
+  } catch {
+    return base;
+  }
+  const body = ErrorBodySchema.safeParse(parsed);
+  if (!body.success) return base;
+  let detail = body.data.error.message.replace(/\s+/g, ' ').trim();
+  const key = apiKey?.trim();
+  if (key) detail = detail.split(key).join('[key hidden]');
+  detail = detail.replace(GOOGLE_KEY_PATTERN, '[key hidden]');
+  if (detail === '') return base;
+  if (detail.length > MAX_DETAIL) detail = `${detail.slice(0, MAX_DETAIL)}...`;
+  return `${base} Google says: ${detail}`;
+}
+
 /**
  * Minimal Gemini client over plain REST. The key and model are read from the
  * environment only when generate() runs, so building a client never needs a key.
@@ -121,7 +156,13 @@ export class GeminiClient {
     }
 
     if (!response.ok) {
-      throw new ExtractionError('The model reader refused the request.', {
+      let bodyText = '';
+      try {
+        bodyText = await response.text();
+      } catch {
+        // No readable body: the status alone is reported.
+      }
+      throw new ExtractionError(refusedMessage(response.status, bodyText, apiKey), {
         cause: new Error(`HTTP ${response.status}`),
       });
     }

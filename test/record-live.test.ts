@@ -4,7 +4,8 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { RecordedResponseCache } from '../src/extract/recorded.js';
 import { FIELD_ORDER } from '../src/extract/schema.js';
-import { findFaxPngs, formatTimings, recordFax, redactKey } from '../src/scripts/record-live-lib.js';
+import { failureLine, findFaxPngs, formatTimings, recordFax, redactKey } from '../src/scripts/record-live-lib.js';
+import { GeminiClient } from '../src/extract/gemini.js';
 import type { OcrResult } from '../src/ocr/types.js';
 
 const ocr: OcrResult = {
@@ -111,5 +112,36 @@ describe('findFaxPngs', () => {
       'fixtures/faxes/L2/fax-0002.png',
       'fixtures/faxes/L2/fax-0003.png',
     ]);
+  });
+});
+
+describe('failureLine', () => {
+  const KEY = 'AIzaFakeKeyForTests_0123456789abcdef';
+
+  it('prints the status and Google message for a refused call, never headers or the key', async () => {
+    const client = new GeminiClient({
+      env: { EXTRACT_API_KEY: KEY },
+      fetch: () =>
+        Promise.resolve(
+          new Response(JSON.stringify({ error: { code: 'rate_limited', message: 'Quota exceeded.' } }), {
+            status: 429,
+            headers: { 'Content-Type': 'application/json', 'x-secret-header': 'header-value-123' },
+          }),
+        ),
+    });
+    const err = await client.generate({ prompt: 'p', schema: {} }).catch((e: unknown) => e);
+    const line = failureLine('fax.png', err, KEY);
+    expect(line).toBe('fax.png: The model reader refused the request. HTTP 429. Google says: Quota exceeded.');
+    expect(line).not.toContain('header-value-123');
+    expect(line).not.toContain(KEY);
+  });
+
+  it('uses the message only, not the cause or stack', () => {
+    const err = new Error('Plain message.', { cause: new Error(`secret ${KEY}`) });
+    expect(failureLine('f', err, KEY)).toBe('f: Plain message.');
+  });
+
+  it('hides the key even if it reached the message', () => {
+    expect(failureLine('f', new Error(`bad ${KEY}`), KEY)).toBe('f: bad [key hidden]');
   });
 });

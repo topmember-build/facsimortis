@@ -110,7 +110,7 @@ On PowerShell: `$env:EXTRACT_PROVIDER='recorded'; npm run extract -- fixtures/fa
 npm run record:live
 ```
 
-This is the only step that uses the network. Put `EXTRACT_API_KEY` (and optionally `EXTRACT_MODEL`) in `.env`; the script loads `.env` if it exists. It reads each fax in `fixtures/faxes/` (or the PNG paths you pass), calls the model once per fax, prints the fields like `npm run extract`, and saves each usable answer in `fixtures/extract/`, named by a hash of the OCR words. A second call is made only when the first answer fails the checks. For each fax it prints the OCR time and the time spent in the model call on its own, plus the thinking level in use. An unusable answer is not saved, and the script exits with an error if any fax was not saved. The key is never printed.
+This is the only step that uses the network. Put `EXTRACT_API_KEY` (and optionally `EXTRACT_MODEL`) in `.env`; the script loads `.env` if it exists. It reads each fax in `fixtures/faxes/` (or the PNG paths you pass), calls the model once per fax, prints the fields like `npm run extract`, and saves each usable answer in `fixtures/extract/`, named by a hash of the OCR words. A second call is made only when the first answer fails the checks. For each fax it prints the OCR time and the time spent in the model call on its own, plus the thinking level in use. An unusable answer is not saved, and the script exits with an error if any fax was not saved. If Google refuses a request, the script prints the HTTP status and Google's short error message from the reply, and nothing else from the response. The key is never printed.
 
 ## Spec
 
