@@ -761,6 +761,18 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794734426128
       }
+    ],
+    "2.2 Static React site setup: Vite + React + TypeScript site under web/, built to static files, sharing the Zod schemas from src/. Packages for the user to install (the agent does not run npm install; the task first checks the current versions against TypeScript 6.0.3 and Vitest 5.1.0 and lists exact pins): runtime react, react-dom; dev vite, @vitejs/plugin-react, @types/react, @types/react-dom, @testing-library/react, @testing-library/user-event, @testing-library/jest-dom, jsdom, axe-core. Scripts: `npm run dev`, `npm run build`, `npm run preview`; site tests run in the existing Vitest setup. One placeholder screen with the \"Synthetic data\" notice and a smoke test. README run steps. (R9.2, R8.2)": [
+      {
+        "executionId": "5376bec9-906b-40a7-b0ed-552835771620",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794735206896
+      },
+      {
+        "executionId": "5376bec9-906b-40a7-b0ed-552835771620",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794735626816
+      }
     ]
   }
 }
