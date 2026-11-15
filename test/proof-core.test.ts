@@ -59,6 +59,46 @@ describe('proof gate', () => {
   });
 });
 
+describe('proof gate: invalid values must be flagged', () => {
+  const TODAY = '2026-10-01';
+  const word = (id: string, text: string) => ({ id, text, box: [0, 0, 1, 1], confidence: 0.9 });
+  const page = {
+    engine: 'test',
+    words: [word('d1', '10/02/2026'), word('p1', '555~0151'), word('n1', '1234567890'), word('d2', '09/06/1938')],
+  } as unknown as OcrResult;
+  const run = (field: Field, trap: string | null = null) =>
+    proveFax('fax-z', trap, [], { engine: 't', fields: [field] } as ExtractionResult, page, TODAY);
+  const dob = (value: string, wordId: string, flags: string[] = []) =>
+    f({ name: 'dob', value, wordIds: [wordId], flags });
+
+  it('fails an unflagged future date of birth, naming fax and field', () => {
+    const p = run(dob('10/02/2026', 'd1'));
+    expect(p.gateFailures).toHaveLength(1);
+    expect(p.gateFailures[0]).toContain('fax-z dob');
+  });
+
+  it('fails an unflagged misread phone and an unflagged bad NPI', () => {
+    expect(run(f({ name: 'callbackPhone', value: '555~0151', wordIds: ['p1'] })).gateFailures[0]).toContain('fax-z callbackPhone');
+    expect(run(f({ name: 'npi', value: '1234567890', wordIds: ['n1'] })).gateFailures[0]).toContain('fax-z npi');
+  });
+
+  it('passes the same values once they carry a flag', () => {
+    expect(run(dob('10/02/2026', 'd1', ['check'])).gateFailures).toEqual([]);
+    expect(run(f({ name: 'callbackPhone', value: '555~0151', wordIds: ['p1'], flags: ['check'] })).gateFailures).toEqual([]);
+    expect(run(f({ name: 'npi', value: '1234567890', wordIds: ['n1'], flags: ['check'] })).gateFailures).toEqual([]);
+  });
+
+  it('passes valid values and empty fields without extra failures', () => {
+    expect(run(dob('09/06/1938', 'd2')).gateFailures).toEqual([]);
+    expect(run(f({ name: 'dob', value: null, wordIds: [], flags: ['Not found.'] })).gateFailures).toEqual([]);
+  });
+
+  it('uses the given today', () => {
+    const p = proveFax('fax-z', null, [], { engine: 't', fields: [dob('10/02/2026', 'd1')] } as ExtractionResult, page, '2030-01-01');
+    expect(p.gateFailures).toEqual([]);
+  });
+});
+
 describe('proof --reader option', () => {
   it('defaults to rules', () => {
     expect(parseReader([])).toEqual({ ok: true, reader: 'rules' });
