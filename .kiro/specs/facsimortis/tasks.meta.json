@@ -797,6 +797,18 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794738321725
       }
+    ],
+    "2.5 Review panel: flagged fields first, then lowest confidence first within each group (R5.1); confidence is shown as a number or bar, never as a flag; each field shows value, plain flag reasons (colour plus icon plus text) and its ghost link; accept and inline edit clear a field's flag and record the change with a timestamp; a single \"Verify record\" action is enabled only when no field is flagged and unreviewed. Values are never changed except by the user's edit. Tests for sorting, accept, edit and the Verify rule. (R5.1, R5.3, R6)": [
+      {
+        "executionId": "0e172c98-a9fd-4496-b71b-4a9426bcb75b",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794738884633
+      },
+      {
+        "executionId": "0e172c98-a9fd-4496-b71b-4a9426bcb75b",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794739614005
+      }
     ]
   }
 }
