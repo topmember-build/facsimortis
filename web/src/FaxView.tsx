@@ -5,13 +5,29 @@ import type { InboxItem } from './data';
 import { FIELD_LABELS, NOT_FOUND_TEXT } from './field-labels';
 import { READER_LABEL, type ReaderName } from './flags';
 import { ghostRects } from './ghost';
-import { reviewLabel } from './review';
+import { ReviewPanel, VerifyBar } from './ReviewPanel';
+import {
+  NO_ANSWER_VERIFY_REASON,
+  fieldReview,
+  reviewStatus,
+  sortForReview,
+  unreviewedFlagged,
+  type ReviewEvent,
+  type ReviewState,
+} from './review-state';
 
 interface FaxViewProps {
   item: InboxItem;
   fax: SampleFax;
   reader: ReaderName;
+  /** This reader's review state for this fax. */
+  review: ReviewState;
   onReaderChange: (reader: ReaderName) => void;
+  onReview: (event: ReviewEvent) => void;
+  /** Called when "Verify record" is pressed while it is enabled. */
+  onVerify: () => void;
+  /** Clock for review timestamps. Tests pass a fixed one. */
+  now: () => Date;
   onBack: () => void;
 }
 
@@ -42,47 +58,17 @@ interface Selection {
   count: number;
 }
 
-function ConfidenceBar({ confidence }: { confidence: number }) {
-  const percent = Math.round(confidence * 100);
-  return (
-    <span className="confidence">
-      <span>Confidence: {percent}%</span>
-      <span className="confidence-bar" aria-hidden="true">
-        <span className="confidence-fill" style={{ width: `${percent}%` }} />
-      </span>
-    </span>
-  );
-}
+type FocusTarget = { kind: 'accept' | 'edit'; field: FieldName } | { kind: 'verify' };
 
-function FieldItem({ field, selected, onSelect }: { field: Field; selected: boolean; onSelect: () => void }) {
-  return (
-    <li>
-      <button
-        type="button"
-        className={selected ? 'field-item field-selected' : 'field-item'}
-        aria-pressed={selected}
-        data-field={field.name}
-        onClick={onSelect}
-      >
-        <span className="field-name">{FIELD_LABELS[field.name]}</span>
-        <span className={field.value === null ? 'field-value field-empty' : 'field-value'}>
-          {field.value ?? NOT_FOUND_TEXT}
-        </span>
-        <ConfidenceBar confidence={field.confidence} />
-        {field.flags.map((message) => (
-          <span key={message} className="field-flag">
-            <span aria-hidden="true">⚑</span> <span>{message}</span>
-          </span>
-        ))}
-      </button>
-    </li>
-  );
-}
-
-function selectionLine(fields: Field[], selection: Selection | null): string {
+function selectionLine(fields: readonly Field[], selection: Selection | null, review: ReviewState): string {
   const field = selection ? fields.find((f) => f.name === selection.name) : undefined;
   if (!field) return '';
   const label = FIELD_LABELS[field.name];
+  const entered = fieldReview(review, field.name).enteredValue;
+  if (entered !== null) {
+    const read = field.value === null ? 'nothing was read' : `the page value was ${field.value}`;
+    return `Showing source for ${label}: the highlight is where the page value was read (${read}). The value now shown, ${entered}, was entered by the reviewer.`;
+  }
   if (field.value === null) {
     return `Showing source for ${label}: ${NOT_FOUND_TEXT.toLowerCase()}, so there is nothing to highlight.`;
   }
@@ -94,22 +80,83 @@ function selectionLine(fields: Field[], selection: Selection | null): string {
  * (viewBox = the fax size in pixels), so they scale together. Ghost rectangles are
  * drawn straight from OCR word boxes, found by word ID.
  */
-export function FaxView({ item, fax, reader, onReaderChange, onBack }: FaxViewProps) {
+export function FaxView({ item, fax, reader, review, onReaderChange, onReview, onVerify, now, onBack }: FaxViewProps) {
   const heading = useRef<HTMLHeadingElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
   const reducedMotion = usePrefersReducedMotion();
   const [selection, setSelection] = useState<Selection | null>(null);
+  const [editing, setEditing] = useState<FieldName | null>(null);
+  const [announcement, setAnnouncement] = useState('');
+  const [pendingFocus, setPendingFocus] = useState<FocusTarget | null>(null);
   useEffect(() => {
     heading.current?.focus();
   }, []);
 
+  useEffect(() => {
+    if (!pendingFocus) return;
+    const root = panel.current ?? document;
+    const selector =
+      pendingFocus.kind === 'verify'
+        ? '[data-verify]'
+        : pendingFocus.kind === 'accept'
+          ? `[data-accept="${pendingFocus.field}"]`
+          : `[data-edit="${pendingFocus.field}"]`;
+    root.querySelector<HTMLElement>(selector)?.focus();
+    setPendingFocus(null);
+  }, [pendingFocus]);
+
   const result = fax.readers[reader];
   const fields = result.status === 'ok' ? result.fields : [];
-  const status = reviewLabel(fax);
+  const status = result.status === 'ok' ? reviewStatus(fields, review) : 'Not yet reviewed';
   const imageName = `Faxed referral form, fax ${item.entry.id}, with source highlights`;
 
   function ghostClass(selected: boolean): string {
     if (!selected) return 'ghost';
     return reducedMotion ? 'ghost ghost-selected ghost-static' : 'ghost ghost-selected ghost-pulse';
+  }
+
+  // Choosing a field again pulses its ghost again; acting on the selected field does not.
+  const select = (name: FieldName) => setSelection((cur) => ({ name, count: (cur?.count ?? 0) + 1 }));
+  const keepSelected = (name: FieldName) =>
+    setSelection((cur) => (cur?.name === name ? cur : { name, count: (cur?.count ?? 0) + 1 }));
+
+  function accept(field: Field) {
+    keepSelected(field.name);
+    setEditing(null);
+    onReview({ type: 'accept', field: field.name, originalValue: field.value, at: now().toISOString() });
+    setAnnouncement(`${FIELD_LABELS[field.name]} accepted.`);
+    // Next unreviewed flagged field after this one in the order shown, else Verify record.
+    const order = sortForReview(fields);
+    const waiting = new Set(unreviewedFlagged(fields, review).map((f) => f.name));
+    waiting.delete(field.name);
+    const at = order.findIndex((f) => f.name === field.name);
+    const next = [...order.slice(at + 1), ...order.slice(0, at)].find((f) => waiting.has(f.name));
+    setPendingFocus(next ? { kind: 'accept', field: next.name } : { kind: 'verify' });
+  }
+
+  function save(field: Field, text: string) {
+    keepSelected(field.name);
+    setEditing(null);
+    onReview({
+      type: 'edit',
+      field: field.name,
+      originalValue: field.value,
+      newValue: text,
+      at: now().toISOString(),
+    });
+    setAnnouncement(`${FIELD_LABELS[field.name]} saved. The value you entered is shown.`);
+    setPendingFocus({ kind: 'edit', field: field.name });
+  }
+
+  function cancel(name: FieldName) {
+    setEditing(null);
+    onReview({ type: 'cancel' });
+    setPendingFocus({ kind: 'edit', field: name });
+  }
+
+  function changeReader(next: ReaderName) {
+    setEditing(null);
+    onReaderChange(next);
   }
 
   // The selected field is drawn last so it sits on top of the others.
@@ -124,11 +171,9 @@ export function FaxView({ item, fax, reader, onReaderChange, onBack }: FaxViewPr
         <h2 id="fax-title" tabIndex={-1} ref={heading}>
           Fax {item.entry.id}
         </h2>
-        {status && (
-          <span className="review-status">
-            <span aria-hidden="true">○</span> {status}
-          </span>
-        )}
+        <span className="review-status">
+          <span aria-hidden="true">○</span> {status}
+        </span>
       </div>
       <p className="reader-name">{READER_LABEL[reader]}</p>
       <div role="group" aria-label="Which reader to show" className="reader-toggle">
@@ -138,7 +183,7 @@ export function FaxView({ item, fax, reader, onReaderChange, onBack }: FaxViewPr
             type="button"
             className="button toggle-button"
             aria-pressed={reader === choice.name}
-            onClick={() => onReaderChange(choice.name)}
+            onClick={() => changeReader(choice.name)}
           >
             {choice.label}
           </button>
@@ -182,34 +227,46 @@ export function FaxView({ item, fax, reader, onReaderChange, onBack }: FaxViewPr
             })}
           </svg>
           <p role="status" className="selection-line">
-            {selectionLine(fields, selection)}
+            {selectionLine(fields, selection, review)}
           </p>
         </div>
 
         <div className="viewer-side">
           {result.status === 'ok' ? (
-            <ul className="field-list" aria-label="Fields read from this fax">
-              {result.fields.map((field) => (
-                <FieldItem
-                  key={field.name}
-                  field={field}
-                  selected={selection?.name === field.name}
-                  onSelect={() => setSelection((current) => ({ name: field.name, count: (current?.count ?? 0) + 1 }))}
-                />
-              ))}
-            </ul>
+            <ReviewPanel
+              fields={result.fields}
+              state={review}
+              selected={selection?.name ?? null}
+              editing={editing}
+              panelRef={panel}
+              onSelect={select}
+              onAccept={accept}
+              onEditOpen={(name) => {
+                keepSelected(name);
+                setEditing(name);
+              }}
+              onSave={save}
+              onCancel={cancel}
+              onVerify={onVerify}
+            />
           ) : (
-            <div className="problem-box no-answer">
-              <p>
-                <span aria-hidden="true">–</span> {result.message}
-              </p>
-              {reader === 'model' && (
-                <button type="button" className="button" onClick={() => onReaderChange('rules')}>
-                  Show the rules reader
-                </button>
-              )}
-            </div>
+            <>
+              <div className="problem-box no-answer">
+                <p>
+                  <span aria-hidden="true">–</span> {result.message}
+                </p>
+                {reader === 'model' && (
+                  <button type="button" className="button" onClick={() => changeReader('rules')}>
+                    Show the rules reader
+                  </button>
+                )}
+              </div>
+              <VerifyBar enabled={false} reason={NO_ANSWER_VERIFY_REASON} onVerify={onVerify} />
+            </>
           )}
+          <p className="sr-only" aria-live="polite">
+            {announcement}
+          </p>
         </div>
       </div>
     </section>

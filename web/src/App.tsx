@@ -4,10 +4,30 @@ import { FaxView } from './FaxView';
 import { DEFAULT_READER, type ReaderName } from './flags';
 import { Inbox } from './Inbox';
 import { initialVisibleCount, revealNext } from './inbox-state';
+import {
+  EMPTY_REVIEW,
+  actionFromEvent,
+  reviewKey,
+  reviewReducer,
+  type ReviewAction,
+  type ReviewEvent,
+  type ReviewState,
+} from './review-state';
 
 type Load = { state: 'loading' } | { state: 'ready'; items: InboxItem[] } | { state: 'error'; message: string };
 
-export function App() {
+interface AppProps {
+  /** Clock for review timestamps. Tests pass a fixed one. */
+  now?: () => Date;
+  /** Called after each Accept or Save is recorded. Used by tests. */
+  onReviewAction?: (faxId: string, reader: ReaderName, action: ReviewAction) => void;
+  /** Called when Verify record is pressed while enabled. */
+  onVerify?: (faxId: string, reader: ReaderName) => void;
+}
+
+const systemClock = () => new Date();
+
+export function App({ now = systemClock, onReviewAction, onVerify }: AppProps = {}) {
   const [load, setLoad] = useState<Load>({ state: 'loading' });
   const [attempt, setAttempt] = useState(0);
   // App-level, so the inbox flag counts follow the reader chosen on the fax screen.
@@ -17,6 +37,15 @@ export function App() {
   const [arrivedId, setArrivedId] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [returnFocusId, setReturnFocusId] = useState<string | null>(null);
+  // Review state per fax and per reader, in memory only. A reload starts again (2.6 saves it).
+  const [reviews, setReviews] = useState<Record<string, ReviewState>>({});
+
+  function review(faxId: string, event: ReviewEvent) {
+    const key = reviewKey(faxId, reader);
+    setReviews((current) => ({ ...current, [key]: reviewReducer(current[key] ?? EMPTY_REVIEW, event) }));
+    const action = actionFromEvent(event);
+    if (action) onReviewAction?.(faxId, reader, action);
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -68,6 +97,11 @@ export function App() {
           item={opened}
           fax={opened.fax.value}
           reader={reader}
+          review={reviews[reviewKey(opened.entry.id, reader)] ?? EMPTY_REVIEW}
+          now={now}
+          onReview={(event) => review(opened.entry.id, event)}
+          // Verify does nothing visible yet. Saving the record and the laid-to-rest state come in 2.6.
+          onVerify={() => onVerify?.(opened.entry.id, reader)}
           onReaderChange={setReader}
           onBack={() => {
             setReturnFocusId(opened.entry.id);
@@ -81,6 +115,7 @@ export function App() {
           items={shown}
           total={items.length}
           reader={reader}
+          reviews={reviews}
           focusId={returnFocusId}
           arrivedId={arrivedId}
           onOpen={setOpenId}

@@ -190,7 +190,7 @@ describe('viewer', () => {
     expect(document.querySelectorAll('button[data-field]')).toHaveLength(7);
   });
 
-  it('is reachable by keyboard: toggle, fields, and Enter selects', async () => {
+  it('is reachable by keyboard: toggle, fields in review order, and Enter selects', async () => {
     stubSite();
     const user = userEvent.setup();
     const { container } = await openFax(user, 'fax-0003');
@@ -200,23 +200,28 @@ describe('viewer', () => {
     expect(screen.getByRole('button', { name: 'Model answers' })).toHaveFocus();
     await user.tab();
     expect(screen.getByRole('button', { name: 'Rules reader' })).toHaveFocus();
+    // Flagged fields come first, lowest confidence first: Callback phone, then NPI.
     await user.tab();
-    expect(fieldButton('patientName')).toHaveFocus();
-    await user.tab();
-    expect(fieldButton('dob')).toHaveFocus();
+    expect(fieldButton('callbackPhone')).toHaveFocus();
     await user.keyboard('{Enter}');
-    expect(ghostGroup(container, 'dob')).toHaveClass('ghost-selected');
+    expect(ghostGroup(container, 'callbackPhone')).toHaveClass('ghost-selected');
     await user.tab();
-    await user.keyboard(' ');
-    expect(ghostGroup(container, 'referringProvider')).toHaveClass('ghost-selected');
+    expect(document.querySelector('[data-accept="callbackPhone"]')).toHaveFocus();
+    await user.tab();
+    expect(document.querySelector('[data-edit="callbackPhone"]')).toHaveFocus();
+    await user.tab();
+    expect(fieldButton('npi')).toHaveFocus();
+    await user.tab({ shift: true });
+    await user.tab({ shift: true });
+    await user.tab({ shift: true });
+    expect(fieldButton('callbackPhone')).toHaveFocus();
 
     // Back to inbox comes before the toggle and the fields in tab order.
-    for (let i = 0; i < 5; i += 1) await user.tab({ shift: true });
+    for (let i = 0; i < 3; i += 1) await user.tab({ shift: true });
     expect(screen.getByRole('button', { name: 'Back to inbox' })).toHaveFocus();
     await user.keyboard('{Enter}');
     expect(screen.getByRole('heading', { level: 2, name: 'Inbox' })).toBeInTheDocument();
   });
-
   it('has no accessibility violations with the model reader, the rules reader and a selection', async () => {
     stubSite();
     const user = userEvent.setup();

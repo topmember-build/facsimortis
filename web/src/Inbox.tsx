@@ -3,6 +3,7 @@ import type { InboxItem } from './data';
 import { formatReceived } from './format';
 import { NO_MORE_FAXES_MESSAGE } from './inbox-state';
 import { reviewLabel } from './review';
+import type { ReviewState } from './review-state';
 import { NO_SAVED_ANSWER_LABEL, READER_LABEL, summariseFlags, type ReaderName } from './flags';
 
 function FlagSummaryLine({ item, reader }: { item: InboxItem; reader: ReaderName }) {
@@ -42,7 +43,15 @@ function Thumbnail({ item }: { item: InboxItem }) {
   );
 }
 
-function RowText({ item, reader }: { item: InboxItem; reader: ReaderName }) {
+function RowText({
+  item,
+  reader,
+  reviews,
+}: {
+  item: InboxItem;
+  reader: ReaderName;
+  reviews: Readonly<Record<string, ReviewState>>;
+}) {
   return (
     <span className="row-text">
       <span className="row-id">{item.entry.id}</span>
@@ -52,11 +61,9 @@ function RowText({ item, reader }: { item: InboxItem; reader: ReaderName }) {
       {item.fax.ok ? (
         <>
           <FlagSummaryLine item={item} reader={reader} />
-          {reviewLabel(item.fax.value) && (
-            <span className="review-status">
-              <span aria-hidden="true">○</span> {reviewLabel(item.fax.value)}
-            </span>
-          )}
+          <span className="review-status">
+            <span aria-hidden="true">○</span> {reviewLabel(item.fax.value, reader, reviews)}
+          </span>
         </>
       ) : (
         <span className="flag-line flag-on">
@@ -72,6 +79,7 @@ interface InboxProps {
   items: InboxItem[];
   total: number;
   reader: ReaderName;
+  reviews: Readonly<Record<string, ReviewState>>;
   /** Fax whose row gets focus when the inbox appears (after coming back from a fax). */
   focusId: string | null;
   arrivedId: string | null;
@@ -80,7 +88,7 @@ interface InboxProps {
   onRetry: () => void;
 }
 
-export function Inbox({ items, total, reader, focusId, arrivedId, onOpen, onIncoming, onRetry }: InboxProps) {
+export function Inbox({ items, total, reader, reviews, focusId, arrivedId, onOpen, onIncoming, onRetry }: InboxProps) {
   useEffect(() => {
     if (!focusId) return;
     const rows = Array.from(document.querySelectorAll<HTMLElement>('[data-fax-id]'));
@@ -126,12 +134,12 @@ export function Inbox({ items, total, reader, focusId, arrivedId, onOpen, onInco
                   onClick={() => onOpen(item.entry.id)}
                 >
                   <Thumbnail item={item} />
-                  <RowText item={item} reader={reader} />
+                  <RowText item={item} reader={reader} reviews={reviews} />
                 </button>
               ) : (
                 <div className="row-button row-failed">
                   <Thumbnail item={item} />
-                  <RowText item={item} reader={reader} />
+                  <RowText item={item} reader={reader} reviews={reviews} />
                 </div>
               )}
             </li>

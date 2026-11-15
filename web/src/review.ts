@@ -1,15 +1,10 @@
 import type { SampleFax } from '../../src/samples/schema.js';
+import type { ReaderName } from './flags';
+import { EMPTY_REVIEW, NOT_YET_REVIEWED, reviewKey, reviewStatus, type ReviewState } from './review-state';
 
-export const NOT_YET_REVIEWED = 'Not yet reviewed';
-
-/**
- * Review comes later (2.5). For now a fax is shown as "Not yet reviewed" when no field
- * in either reader's result has been reviewed. Nothing else is claimed.
- */
-export function reviewLabel(fax: SampleFax): string | null {
-  const anyReviewed = (['model', 'rules'] as const).some((name) => {
-    const result = fax.readers[name];
-    return result.status === 'ok' && result.fields.some((field) => field.reviewed);
-  });
-  return anyReviewed ? null : NOT_YET_REVIEWED;
+/** The review status for one fax and reader, as shown in the inbox row. */
+export function reviewLabel(fax: SampleFax, reader: ReaderName, reviews: Readonly<Record<string, ReviewState>>): string {
+  const result = fax.readers[reader];
+  if (result.status !== 'ok') return NOT_YET_REVIEWED;
+  return reviewStatus(result.fields, reviews[reviewKey(fax.id, reader)] ?? EMPTY_REVIEW);
 }
