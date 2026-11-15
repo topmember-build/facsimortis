@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Field, FieldName } from '../../src/extract/schema.js';
 import type { SampleFax } from '../../src/samples/schema.js';
+import { cropBox, viewBoxAttr, viewerBox } from './crop';
 import type { InboxItem } from './data';
+import type { OpenedBy } from './input-modality';
 import { FIELD_LABELS, NOT_FOUND_TEXT } from './field-labels';
 import { READER_LABEL, type ReaderName } from './flags';
 import { ghostRects } from './ghost';
@@ -20,6 +22,8 @@ interface FaxViewProps {
   item: InboxItem;
   fax: SampleFax;
   reader: ReaderName;
+  /** How the fax was opened. The heading shows a focus ring only after keyboard use. */
+  openedBy: OpenedBy;
   /** This reader's review state for this fax. */
   review: ReviewState;
   onReaderChange: (reader: ReaderName) => void;
@@ -80,11 +84,12 @@ function selectionLine(fields: readonly Field[], selection: Selection | null, re
  * (viewBox = the fax size in pixels), so they scale together. Ghost rectangles are
  * drawn straight from OCR word boxes, found by word ID.
  */
-export function FaxView({ item, fax, reader, review, onReaderChange, onReview, onVerify, now, onBack }: FaxViewProps) {
+export function FaxView({ item, fax, reader, openedBy, review, onReaderChange, onReview, onVerify, now, onBack }: FaxViewProps) {
   const heading = useRef<HTMLHeadingElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const reducedMotion = usePrefersReducedMotion();
   const [selection, setSelection] = useState<Selection | null>(null);
+  const [showFullPage, setShowFullPage] = useState(false);
   const [editing, setEditing] = useState<FieldName | null>(null);
   const [announcement, setAnnouncement] = useState('');
   const [pendingFocus, setPendingFocus] = useState<FocusTarget | null>(null);
@@ -162,13 +167,25 @@ export function FaxView({ item, fax, reader, review, onReaderChange, onReview, o
   // The selected field is drawn last so it sits on top of the others.
   const ordered = [...fields.filter((f) => f.name !== selection?.name), ...fields.filter((f) => f.name === selection?.name)];
 
+  // Cropped to the text by default. Only the viewBox changes, so the image and the
+  // highlights keep one coordinate system. A highlight outside the crop shows the full page.
+  const crop = cropBox(fax.ocr.words, fax);
+  const selectedField = fields.find((f) => f.name === selection?.name);
+  const box = viewerBox(crop, fax, ghostRects(selectedField, fax.ocr.words), showFullPage);
+
   return (
     <section aria-labelledby="fax-title" className="fax-view">
       <button type="button" className="button back-button" onClick={onBack}>
         Back to inbox
       </button>
       <div className="fax-title-row">
-        <h2 id="fax-title" tabIndex={-1} ref={heading}>
+        <h2
+          id="fax-title"
+          className="fax-heading"
+          data-opened-by={openedBy}
+          tabIndex={-1}
+          ref={heading}
+        >
           Fax {item.entry.id}
         </h2>
         <span className="review-status">
@@ -192,11 +209,14 @@ export function FaxView({ item, fax, reader, review, onReaderChange, onReview, o
 
       <div className="viewer">
         <div className="viewer-image">
+          <button type="button" className="button page-toggle" onClick={() => setShowFullPage((v) => !v)}>
+            {showFullPage ? 'Show cropped view' : 'Show full page'}
+          </button>
           <svg
             className="fax-image"
-            viewBox={`0 0 ${fax.width} ${fax.height}`}
+            viewBox={viewBoxAttr(box)}
             preserveAspectRatio="xMidYMid meet"
-            style={{ aspectRatio: `${fax.width} / ${fax.height}` }}
+            style={{ aspectRatio: `${box.width} / ${box.height}` }}
             role="img"
             aria-label={imageName}
           >

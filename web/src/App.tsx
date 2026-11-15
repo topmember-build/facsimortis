@@ -3,6 +3,7 @@ import { loadInbox, type InboxItem } from './data';
 import { FaxView } from './FaxView';
 import { DEFAULT_READER, type ReaderName } from './flags';
 import { Inbox } from './Inbox';
+import type { OpenedBy } from './input-modality';
 import { initialVisibleCount, revealNext } from './inbox-state';
 import {
   EMPTY_REVIEW,
@@ -36,6 +37,7 @@ export function App({ now = systemClock, onReviewAction, onVerify }: AppProps = 
   const [visible, setVisible] = useState<number | null>(null);
   const [arrivedId, setArrivedId] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [openedBy, setOpenedBy] = useState<OpenedBy>('keyboard');
   const [returnFocusId, setReturnFocusId] = useState<string | null>(null);
   // Review state per fax and per reader, in memory only. A reload starts again (2.6 saves it).
   const [reviews, setReviews] = useState<Record<string, ReviewState>>({});
@@ -97,6 +99,7 @@ export function App({ now = systemClock, onReviewAction, onVerify }: AppProps = 
           item={opened}
           fax={opened.fax.value}
           reader={reader}
+          openedBy={openedBy}
           review={reviews[reviewKey(opened.entry.id, reader)] ?? EMPTY_REVIEW}
           now={now}
           onReview={(event) => review(opened.entry.id, event)}
@@ -118,7 +121,10 @@ export function App({ now = systemClock, onReviewAction, onVerify }: AppProps = 
           reviews={reviews}
           focusId={returnFocusId}
           arrivedId={arrivedId}
-          onOpen={setOpenId}
+          onOpen={(id, by) => {
+            setOpenedBy(by);
+            setOpenId(id);
+          }}
           onIncoming={() => {
             const next = revealNext(shown.length, items.length);
             setVisible(next);

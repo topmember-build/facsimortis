@@ -1,5 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { cropBox, viewBoxAttr } from './crop';
 import type { InboxItem } from './data';
+import type { OpenedBy } from './input-modality';
 import { formatReceived } from './format';
 import { NO_MORE_FAXES_MESSAGE } from './inbox-state';
 import { reviewLabel } from './review';
@@ -30,16 +32,25 @@ function FlagSummaryLine({ item, reader }: { item: InboxItem; reader: ReaderName
   );
 }
 
+/** The thumbnail shows the same cropped area as the fax screen, by way of the SVG viewBox. */
 function Thumbnail({ item }: { item: InboxItem }) {
-  const size = item.fax.ok ? { width: item.fax.value.width, height: item.fax.value.height } : {};
+  const alt = `First page of fax ${item.entry.id}`;
+  if (!item.fax.ok) {
+    return <img className="thumb" src={item.imageUrl} alt={alt} loading="lazy" />;
+  }
+  const fax = item.fax.value;
+  const crop = cropBox(fax.ocr.words, fax);
   return (
-    <img
+    <svg
       className="thumb"
-      src={item.imageUrl}
-      alt={`First page of fax ${item.entry.id}`}
-      loading="lazy"
-      {...size}
-    />
+      viewBox={viewBoxAttr(crop)}
+      preserveAspectRatio="xMidYMid meet"
+      style={{ aspectRatio: `${crop.width} / ${crop.height}` }}
+      role="img"
+      aria-label={alt}
+    >
+      <image href={item.imageUrl} x={0} y={0} width={fax.width} height={fax.height} />
+    </svg>
   );
 }
 
@@ -83,12 +94,18 @@ interface InboxProps {
   /** Fax whose row gets focus when the inbox appears (after coming back from a fax). */
   focusId: string | null;
   arrivedId: string | null;
-  onOpen: (id: string) => void;
+  onOpen: (id: string, openedBy: OpenedBy) => void;
   onIncoming: () => void;
   onRetry: () => void;
 }
 
 export function Inbox({ items, total, reader, reviews, focusId, arrivedId, onOpen, onIncoming, onRetry }: InboxProps) {
+  // The last input on a row before its click: Enter or Space, or a pointer press.
+  // A click with neither (for example from assistive technology) counts as keyboard.
+  const lastInput = useRef<OpenedBy | null>(null);
+  const markPointer = () => {
+    lastInput.current = 'pointer';
+  };
   useEffect(() => {
     if (!focusId) return;
     const rows = Array.from(document.querySelectorAll<HTMLElement>('[data-fax-id]'));
@@ -131,7 +148,16 @@ export function Inbox({ items, total, reader, reviews, focusId, arrivedId, onOpe
                   type="button"
                   className="row-button"
                   data-fax-id={item.entry.id}
-                  onClick={() => onOpen(item.entry.id)}
+                  onPointerDown={markPointer}
+                  onMouseDown={markPointer}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') lastInput.current = 'keyboard';
+                  }}
+                  onClick={() => {
+                    const by = lastInput.current ?? 'keyboard';
+                    lastInput.current = null;
+                    onOpen(item.entry.id, by);
+                  }}
                 >
                   <Thumbnail item={item} />
                   <RowText item={item} reader={reader} reviews={reviews} />

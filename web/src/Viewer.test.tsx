@@ -4,6 +4,8 @@ import axe from 'axe-core';
 import { describe, expect, it, vi } from 'vitest';
 import { NO_SAVED_ANSWER_MESSAGE, SampleFaxSchema } from '../../src/samples/schema.js';
 import { App } from './App';
+import { boxContains, cropBox, viewBoxAttr } from './crop';
+import { ghostRects } from './ghost';
 import { committedFaxes, json, stubSite } from './test-site';
 
 type UserApi = ReturnType<typeof userEvent.setup>;
@@ -55,8 +57,9 @@ describe('viewer', () => {
     const { container } = await openFax(user, 'fax-0003');
     const fax = SampleFaxSchema.parse(committedFaxes['fax-0003.json']);
 
+    // The viewBox is the crop (image coordinates); the image keeps the full fax size.
     const svg = container.querySelector('svg')!;
-    expect(svg).toHaveAttribute('viewBox', `0 0 ${fax.width} ${fax.height}`);
+    expect(svg).toHaveAttribute('viewBox', viewBoxAttr(cropBox(fax.ocr.words, fax)));
     expect(svg.querySelector('image')).toHaveAttribute('width', String(fax.width));
     expect(svg.querySelector('image')).toHaveAttribute('height', String(fax.height));
 
@@ -70,6 +73,57 @@ describe('viewer', () => {
       expect(rect).toHaveAttribute('y', String(box.y));
       expect(rect).toHaveAttribute('width', String(box.width));
       expect(rect).toHaveAttribute('height', String(box.height));
+    }
+  });
+
+  it('shows the cropped area by default and toggles the full page without moving any highlight', async () => {
+    stubSite();
+    const user = userEvent.setup();
+    const { container } = await openFax(user, 'fax-0003');
+    const fax = SampleFaxSchema.parse(committedFaxes['fax-0003.json']);
+    const svg = container.querySelector('svg')!;
+    const crop = cropBox(fax.ocr.words, fax);
+    expect(crop.width * crop.height).toBeLessThan(fax.width * fax.height);
+    expect(svg).toHaveAttribute('viewBox', viewBoxAttr(crop));
+    expect(svg.style.aspectRatio).toBe(`${crop.width} / ${crop.height}`);
+
+    await user.click(fieldButton('patientName'));
+    const rectAttrs = () =>
+      Array.from(ghostGroup(container, 'patientName')!.querySelectorAll('rect')).map((r) => [
+        r.dataset['wordId'],
+        r.getAttribute('x'),
+        r.getAttribute('y'),
+        r.getAttribute('width'),
+        r.getAttribute('height'),
+      ]);
+    const cropped = rectAttrs();
+
+    await user.click(screen.getByRole('button', { name: 'Show full page' }));
+    expect(svg).toHaveAttribute('viewBox', `0 0 ${fax.width} ${fax.height}`);
+    expect(screen.queryByRole('button', { name: 'Show full page' })).not.toBeInTheDocument();
+    expect(rectAttrs()).toEqual(cropped);
+    for (const [id, x, y, width, height] of rectAttrs()) {
+      const box = wordBox('fax-0003', id!);
+      expect([x, y, width, height]).toEqual([box.x, box.y, box.width, box.height].map(String));
+    }
+    expect(svg.querySelector('image')).toHaveAttribute('width', String(fax.width));
+
+    await user.click(screen.getByRole('button', { name: 'Show cropped view' }));
+    expect(svg).toHaveAttribute('viewBox', viewBoxAttr(crop));
+    expect(rectAttrs()).toEqual(cropped);
+  });
+
+  it('keeps every highlight of every field inside the cropped view', () => {
+    for (const id of ['fax-0001', 'fax-0002', 'fax-0003']) {
+      const fax = SampleFaxSchema.parse(committedFaxes[`${id}.json`]);
+      const crop = cropBox(fax.ocr.words, fax);
+      for (const reader of ['model', 'rules'] as const) {
+        const result = fax.readers[reader];
+        if (result.status !== 'ok') continue;
+        for (const field of result.fields) {
+          expect(boxContains(crop, ghostRects(field, fax.ocr.words))).toBe(true);
+        }
+      }
     }
   });
 
@@ -200,6 +254,8 @@ describe('viewer', () => {
     expect(screen.getByRole('button', { name: 'Model answers' })).toHaveFocus();
     await user.tab();
     expect(screen.getByRole('button', { name: 'Rules reader' })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Show full page' })).toHaveFocus();
     // Flagged fields come first, lowest confidence first: Callback phone, then NPI.
     await user.tab();
     expect(fieldButton('callbackPhone')).toHaveFocus();
@@ -217,7 +273,7 @@ describe('viewer', () => {
     expect(fieldButton('callbackPhone')).toHaveFocus();
 
     // Back to inbox comes before the toggle and the fields in tab order.
-    for (let i = 0; i < 3; i += 1) await user.tab({ shift: true });
+    for (let i = 0; i < 4; i += 1) await user.tab({ shift: true });
     expect(screen.getByRole('button', { name: 'Back to inbox' })).toHaveFocus();
     await user.keyboard('{Enter}');
     expect(screen.getByRole('heading', { level: 2, name: 'Inbox' })).toBeInTheDocument();

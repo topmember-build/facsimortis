@@ -154,6 +154,7 @@ button.row-button:hover {
 }
 
 .thumb {
+  display: block;
   flex: none;
   width: 10rem;
   height: auto;
@@ -227,6 +228,23 @@ button.row-button:hover {
 
 .fax-title-row h2 {
   margin: 0;
+}
+
+/* The heading takes focus when a fax opens, so screen readers announce it. Its ring
+   shows only when the fax was opened with the keyboard, not with a mouse or touch.
+   Every other control keeps the :focus-visible ring above. */
+.fax-heading:focus,
+.fax-heading:focus-visible {
+  outline: none;
+}
+
+.fax-heading[data-opened-by='keyboard']:focus {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.page-toggle {
+  justify-self: start;
 }
 
 .review-status {
