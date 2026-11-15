@@ -24,7 +24,7 @@ export type ReviewAction =
       at: string;
     };
 
-/** Review state for one fax and one reader. In memory only (saving comes in 2.6). */
+/** Review state for one fax and one reader. Saved in this browser only (see storage.ts). */
 export interface ReviewState {
   readonly actions: readonly ReviewAction[];
 }
@@ -135,6 +135,8 @@ export const canVerify = (fields: readonly Field[], state: ReviewState, referenc
 export const NOT_YET_REVIEWED = 'Not yet reviewed';
 export const REVIEW_IN_PROGRESS = 'Review in progress';
 export const READY_TO_VERIFY = 'Ready to verify';
+/** The status of a verified record. */
+export const LAID_TO_REST = 'Laid to rest';
 
 /**
  * The status line. Ready to verify when no flagged field is waiting (so a fax with no

@@ -4,6 +4,7 @@ import type { InboxItem } from './data';
 import type { OpenedBy } from './input-modality';
 import { formatReceived } from './format';
 import { NO_MORE_FAXES_MESSAGE } from './inbox-state';
+import type { VerifiedRecord } from './record';
 import { reviewLabel } from './review';
 import type { ReviewState } from './review-state';
 import { NO_SAVED_ANSWER_LABEL, READER_LABEL, summariseFlags, type ReaderName } from './flags';
@@ -58,11 +59,13 @@ function RowText({
   item,
   reader,
   reviews,
+  verified,
   referenceDate,
 }: {
   item: InboxItem;
   reader: ReaderName;
   reviews: Readonly<Record<string, ReviewState>>;
+  verified: Readonly<Record<string, VerifiedRecord>>;
   referenceDate: string;
 }) {
   return (
@@ -75,7 +78,7 @@ function RowText({
         <>
           <FlagSummaryLine item={item} reader={reader} />
           <span className="review-status">
-            <span aria-hidden="true">○</span> {reviewLabel(item.fax.value, reader, reviews, referenceDate)}
+            <span aria-hidden="true">○</span> {reviewLabel(item.fax.value, reader, reviews, referenceDate, verified)}
           </span>
         </>
       ) : (
@@ -93,6 +96,8 @@ interface InboxProps {
   total: number;
   reader: ReaderName;
   reviews: Readonly<Record<string, ReviewState>>;
+  /** Verified records, by fax and reader. These rows read "Laid to rest". */
+  verified: Readonly<Record<string, VerifiedRecord>>;
   /** "Today" for date checks, from the sample index. */
   referenceDate: string;
   /** Fax whose row gets focus when the inbox appears (after coming back from a fax). */
@@ -103,7 +108,7 @@ interface InboxProps {
   onRetry: () => void;
 }
 
-export function Inbox({ items, total, reader, reviews, referenceDate, focusId, arrivedId, onOpen, onIncoming, onRetry }: InboxProps) {
+export function Inbox({ items, total, reader, reviews, verified, referenceDate, focusId, arrivedId, onOpen, onIncoming, onRetry }: InboxProps) {
   // The last input on a row before its click: Enter or Space, or a pointer press.
   // A click with neither (for example from assistive technology) counts as keyboard.
   const lastInput = useRef<OpenedBy | null>(null);
@@ -164,12 +169,12 @@ export function Inbox({ items, total, reader, reviews, referenceDate, focusId, a
                   }}
                 >
                   <Thumbnail item={item} />
-                  <RowText item={item} reader={reader} reviews={reviews} referenceDate={referenceDate} />
+                  <RowText item={item} reader={reader} reviews={reviews} verified={verified} referenceDate={referenceDate} />
                 </button>
               ) : (
                 <div className="row-button row-failed">
                   <Thumbnail item={item} />
-                  <RowText item={item} reader={reader} reviews={reviews} referenceDate={referenceDate} />
+                  <RowText item={item} reader={reader} reviews={reviews} verified={verified} referenceDate={referenceDate} />
                 </div>
               )}
             </li>

@@ -1,7 +1,9 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type Ref } from 'react';
 import type { Field, FieldName } from '../../src/extract/schema.js';
 import { FIELD_LABELS, NOT_FOUND_TEXT } from './field-labels';
+import { verifiedLine, type VerifiedRecord } from './record';
 import {
+  LAID_TO_REST,
   VERIFY_NOTE,
   canVerify,
   fieldReview,
@@ -94,9 +96,11 @@ interface FieldRowProps {
   onEditOpen: () => void;
   onSave: (text: string) => void;
   onCancel: () => void;
+  /** Verified: values are shown, Accept and Edit are hidden. */
+  readOnly: boolean;
 }
 
-function FieldRow({ field, state, referenceDate, selected, editing, onSelect, onAccept, onEditOpen, onSave, onCancel }: FieldRowProps) {
+function FieldRow({ field, state, referenceDate, selected, editing, onSelect, onAccept, onEditOpen, onSave, onCancel, readOnly }: FieldRowProps) {
   const label = FIELD_LABELS[field.name];
   const review = fieldReview(state, field.name);
   const edited = review.enteredValue !== null;
@@ -154,23 +158,25 @@ function FieldRow({ field, state, referenceDate, selected, editing, onSelect, on
             </span>
           ))}
       </button>
-      <div className="field-actions">
-        {pending && (
-          <button type="button" className="button" data-accept={field.name} onClick={onAccept}>
-            Accept<span className="sr-only"> {label}</span>
+      {!readOnly && (
+        <div className="field-actions">
+          {pending && (
+            <button type="button" className="button" data-accept={field.name} onClick={onAccept}>
+              Accept<span className="sr-only"> {label}</span>
+            </button>
+          )}
+          <button
+            type="button"
+            className="button"
+            data-edit={field.name}
+            aria-expanded={editing}
+            onClick={onEditOpen}
+          >
+            Edit<span className="sr-only"> {label}</span>
           </button>
-        )}
-        <button
-          type="button"
-          className="button"
-          data-edit={field.name}
-          aria-expanded={editing}
-          onClick={onEditOpen}
-        >
-          Edit<span className="sr-only"> {label}</span>
-        </button>
-      </div>
-      {editing && (
+        </div>
+      )}
+      {editing && !readOnly && (
         <EditForm
           field={field}
           initial={review.enteredValue ?? field.value ?? ''}
@@ -197,6 +203,9 @@ export interface ReviewPanelProps {
   onSave: (field: Field, text: string) => void;
   onCancel: (name: FieldName) => void;
   onVerify: () => void;
+  /** The verified record, when there is one. The panel is then read-only. */
+  verified: VerifiedRecord | null;
+  onDownload: () => void;
 }
 
 /** The review panel: sorted fields with their actions, then the Verify record action. */
@@ -220,10 +229,30 @@ export function ReviewPanel(props: ReviewPanelProps) {
             onEditOpen={() => props.onEditOpen(field.name)}
             onSave={(text) => props.onSave(field, text)}
             onCancel={() => props.onCancel(field.name)}
+            readOnly={props.verified !== null}
           />
         ))}
       </ul>
-      <VerifyBar enabled={enabled} reason={verifyReason(fields, state, referenceDate)} onVerify={props.onVerify} />
+      {props.verified ? (
+        <LaidToRest record={props.verified} onDownload={props.onDownload} />
+      ) : (
+        <VerifyBar enabled={enabled} reason={verifyReason(fields, state, referenceDate)} onVerify={props.onVerify} />
+      )}
+    </div>
+  );
+}
+
+/** The calm verified state: a plain statement, the Download JSON action, nothing else. */
+export function LaidToRest({ record, onDownload }: { record: VerifiedRecord; onDownload: () => void }) {
+  return (
+    <div className="laid-to-rest" data-laid-to-rest="true">
+      <h3 className="rest-title">{LAID_TO_REST}</h3>
+      <p>{verifiedLine(record.verifiedAt)}</p>
+      <p className="rest-note">Verifier: {record.verifier}. This is a fixed demo label; there are no accounts.</p>
+      <button type="button" className="button button-primary" data-download="true" onClick={onDownload}>
+        Download JSON
+      </button>
+      <p className="rest-note">The record and its edit history are kept only in this browser.</p>
     </div>
   );
 }

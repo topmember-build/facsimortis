@@ -9,7 +9,9 @@ import { FIELD_LABELS, NOT_FOUND_TEXT } from './field-labels';
 import { READER_LABEL, type ReaderName } from './flags';
 import { ghostRects } from './ghost';
 import { ReviewPanel, VerifyBar } from './ReviewPanel';
+import type { VerifiedRecord } from './record';
 import {
+  LAID_TO_REST,
   NO_ANSWER_VERIFY_REASON,
   fieldReview,
   reviewStatus,
@@ -33,6 +35,10 @@ interface FaxViewProps {
   onReview: (event: ReviewEvent) => void;
   /** Called when "Verify record" is pressed while it is enabled. */
   onVerify: () => void;
+  /** The verified record for this fax and reader, or null. */
+  verified: VerifiedRecord | null;
+  /** Called when "Download JSON" is pressed. */
+  onDownload: () => void;
   /** Clock for review timestamps. Tests pass a fixed one. */
   now: () => Date;
   onBack: () => void;
@@ -65,7 +71,7 @@ interface Selection {
   count: number;
 }
 
-type FocusTarget = { kind: 'accept' | 'edit'; field: FieldName } | { kind: 'verify' };
+type FocusTarget = { kind: 'accept' | 'edit'; field: FieldName } | { kind: 'verify' } | { kind: 'download' };
 
 function selectionLine(fields: readonly Field[], selection: Selection | null, review: ReviewState): string {
   const field = selection ? fields.find((f) => f.name === selection.name) : undefined;
@@ -87,7 +93,7 @@ function selectionLine(fields: readonly Field[], selection: Selection | null, re
  * (viewBox = the fax size in pixels), so they scale together. Ghost rectangles are
  * drawn straight from OCR word boxes, found by word ID.
  */
-export function FaxView({ item, fax, reader, openedBy, referenceDate, review, onReaderChange, onReview, onVerify, now, onBack }: FaxViewProps) {
+export function FaxView({ item, fax, reader, openedBy, referenceDate, review, onReaderChange, onReview, onVerify, verified, onDownload, now, onBack }: FaxViewProps) {
   const heading = useRef<HTMLHeadingElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const reducedMotion = usePrefersReducedMotion();
@@ -106,7 +112,9 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
     const selector =
       pendingFocus.kind === 'verify'
         ? '[data-verify]'
-        : pendingFocus.kind === 'accept'
+        : pendingFocus.kind === 'download'
+          ? '[data-download]'
+          : pendingFocus.kind === 'accept'
           ? `[data-accept="${pendingFocus.field}"]`
           : `[data-edit="${pendingFocus.field}"]`;
     root.querySelector<HTMLElement>(selector)?.focus();
@@ -115,7 +123,11 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
 
   const result = fax.readers[reader];
   const fields = result.status === 'ok' ? result.fields : [];
-  const status = result.status === 'ok' ? reviewStatus(fields, review, referenceDate) : 'Not yet reviewed';
+  const status = verified
+    ? LAID_TO_REST
+    : result.status === 'ok'
+      ? reviewStatus(fields, review, referenceDate)
+      : 'Not yet reviewed';
   const imageName = `Faxed referral form, fax ${item.entry.id}, with source highlights`;
 
   function ghostClass(selected: boolean): string {
@@ -157,6 +169,13 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
       `${FIELD_LABELS[field.name]} saved. The value you entered is shown.${problem ? ` ${problem}` : ''}`,
     );
     setPendingFocus({ kind: 'edit', field: field.name });
+  }
+
+  function verify() {
+    setEditing(null);
+    onVerify();
+    setAnnouncement('Record laid to rest. It is now read-only. Download JSON is available.');
+    setPendingFocus({ kind: 'download' });
   }
 
   function cancel(name: FieldName) {
@@ -274,7 +293,9 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
               }}
               onSave={save}
               onCancel={cancel}
-              onVerify={onVerify}
+              onVerify={verify}
+              verified={verified}
+              onDownload={onDownload}
             />
           ) : (
             <>

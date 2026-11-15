@@ -131,7 +131,14 @@ Starts the dev server at http://localhost:5173/. `npm run build` writes the stat
 
 The site is static: there is no server and no network call beyond loading its own files. It reads the sample data in `web/public/samples/`, which `npm run precompute` writes. The build uses relative paths, so the folder works from any subpath; set `SITE_BASE` (for example `/facsimortis/`) to build for a fixed one. Site code in `web/src/` shares the Zod schemas from `src/samples/schema.ts` and `src/extract/schema.ts`; ESLint blocks it from importing anything else in `src/` or any Node module. Site tests run with `npm test` (jsdom, web files only).
 
-For now the site is a placeholder screen with the "Synthetic data" notice.
+### Saved progress, verified records and export
+
+- Review progress (each Accept and Edit, with its time), the edit record and verified records are kept only in this browser's `localStorage`, under keys that start with `facsimortis:v1:`. There is no server. This is not a server audit trail, and clearing the site's data removes all of it. Each saved entry records the original value next to any edit.
+- Saved entries are tied to the sample data. If the sample data changes (data version, reference date or that fax's contents), the old entry is ignored and the page says so. Unreadable saved data is ignored the same way.
+- If the browser does not allow saving (for example private mode, or no space left), the app still works, and a short note says progress will not be kept.
+- There are no accounts. The verifier in every record is the fixed label "Demo reviewer".
+- A verified record is shown as "Laid to rest" and is read-only. "Download JSON" saves it as a file such as `facsimortis-fax-0003-model-verified.json`.
+- This is a demo built on synthetic data. It makes no compliance claims.
 
 ## Spec
 
