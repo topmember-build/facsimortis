@@ -1,0 +1,72 @@
+/* Dark theme. Contrast ratios against --bg (#0b0d12), checked by hand:
+   --text #e8eaf0 about 16:1, --muted #b4bbcb about 10:1, --accent #8fd8ff about 12:1,
+   --warm #ffb86b about 11:1. On --panel (#161b26) each is still above 7:1. */
+:root {
+  color-scheme: dark;
+  --bg: #0b0d12;
+  --panel: #161b26;
+  --border: #3a4458;
+  --text: #e8eaf0;
+  --muted: #b4bbcb;
+  --accent: #8fd8ff;
+  --warm: #ffb86b;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.page-header,
+.page-main,
+.synthetic-notice {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.page-header h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2rem;
+}
+
+.page-header p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.problem {
+  color: var(--warm);
+}
+
+.synthetic-notice {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 0.5rem;
+  max-width: calc(48rem - 3rem);
+}
+
+.synthetic-notice h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+.synthetic-notice p {
+  margin: 0;
+}

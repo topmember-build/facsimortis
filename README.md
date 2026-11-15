@@ -8,7 +8,7 @@ This is a demo built on synthetic data only. It makes no compliance or certifica
 
 ## Requirements
 
-- Node.js 22.12 or newer
+- Node.js 22.22.2 or newer on 22, 24.15.0 or newer on 24, or 26 and up (the site tests use jsdom 31, which needs this)
 
 ## Setup
 
@@ -120,6 +120,18 @@ npm run precompute
 ```
 
 This reads each fax in `fixtures/faxes/`, runs local OCR and both offline readers (rule-based and saved model answers, with the central checks), and writes to `web/public/samples/`: each fax's PNG, one JSON file per fax with its OCR words, boxes and both readers' results, and an `index.json`. It runs offline, never calls the live model and never reads the generator's answer-key files. A fax with no saved model answer gets a plain "no saved answer" entry. The output is the same every run, and the folder is committed. `npm run precompute -- --check` exits with an error if the committed data is out of date.
+
+## Site
+
+```
+npm run dev
+```
+
+Starts the dev server at http://localhost:5173/. `npm run build` writes the static site to `dist/web/` (git-ignored; it holds `index.html`, `assets/` and a copy of `samples/`). `npm run preview` serves that folder at http://localhost:4173/. Run `npm run build` first.
+
+The site is static: there is no server and no network call beyond loading its own files. It reads the sample data in `web/public/samples/`, which `npm run precompute` writes. The build uses relative paths, so the folder works from any subpath; set `SITE_BASE` (for example `/facsimortis/`) to build for a fixed one. Site code in `web/src/` shares the Zod schemas from `src/samples/schema.ts` and `src/extract/schema.ts`; ESLint blocks it from importing anything else in `src/` or any Node module. Site tests run with `npm test` (jsdom, web files only).
+
+For now the site is a placeholder screen with the "Synthetic data" notice.
 
 ## Spec
 

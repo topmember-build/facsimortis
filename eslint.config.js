@@ -1,5 +1,6 @@
 import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
+import { builtinModules } from 'node:module'
 
 export default tseslint.config(
   { ignores: ['node_modules', 'dist', 'coverage'] },
@@ -61,6 +62,35 @@ export default tseslint.config(
         {
           selector: 'Identifier[name=/truth/i]',
           message: 'Sample-data code must not use answer-key data.',
+        },
+      ],
+    },
+  },
+  {
+    // The static site runs in the browser. From src/ it may import only the pure Zod
+    // schema modules listed in the regex below. No Node built-ins, no file readers,
+    // no OCR, no readers, no scripts, no evaluation code.
+    files: ['web/src/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [...builtinModules, 'tesseract.js', 'dotenv'].map((name) => ({
+            name,
+            message: 'The site runs in the browser. Node-only modules are not allowed here.',
+          })),
+          patterns: [
+            {
+              regex: '^node:',
+              message: 'The site runs in the browser. Node built-ins are not allowed here.',
+            },
+            {
+              // Anything under a src/ folder except the allowed schema modules.
+              regex: '(^|/)src/(?!(samples|extract)/schema(\\.js|\\.ts)?$)',
+              message:
+                'The site may import only src/samples/schema and src/extract/schema from src/.',
+            },
+          ],
         },
       ],
     },

@@ -6,18 +6,21 @@
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=22.12.0"
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
   },
   "scripts": {
     "test": "vitest run",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p web/tsconfig.json",
     "gen:faxes": "tsx src/scripts/gen-faxes.ts",
     "ocr": "tsx src/scripts/ocr.ts",
     "extract": "tsx src/scripts/extract.ts",
     "record:live": "tsx src/scripts/record-live.ts",
     "proof": "tsx src/scripts/proof.ts",
-    "precompute": "tsx src/scripts/precompute.ts"
+    "precompute": "tsx src/scripts/precompute.ts",
+    "dev": "vite --config web/vite.config.ts",
+    "build": "vite build --config web/vite.config.ts",
+    "preview": "vite preview --config web/vite.config.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
