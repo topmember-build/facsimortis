@@ -15,7 +15,7 @@ import {
   type ReviewState,
 } from './review-state';
 
-type Load = { state: 'loading' } | { state: 'ready'; items: InboxItem[] } | { state: 'error'; message: string };
+type Load = { state: 'loading' } | { state: 'ready'; items: InboxItem[]; referenceDate: string } | { state: 'error'; message: string };
 
 interface AppProps {
   /** Clock for review timestamps. Tests pass a fixed one. */
@@ -56,8 +56,8 @@ export function App({ now = systemClock, onReviewAction, onVerify }: AppProps = 
         const result = await loadInbox(undefined, controller.signal);
         if (controller.signal.aborted) return;
         if (result.ok) {
-          setLoad({ state: 'ready', items: result.value });
-          setVisible((current) => current ?? initialVisibleCount(result.value.length));
+          setLoad({ state: 'ready', items: result.value.items, referenceDate: result.value.referenceDate });
+          setVisible((current) => current ?? initialVisibleCount(result.value.items.length));
         } else {
           setLoad({ state: 'error', message: result.error });
         }
@@ -90,7 +90,7 @@ export function App({ now = systemClock, onReviewAction, onVerify }: AppProps = 
       </div>
     );
   } else {
-    const { items } = load;
+    const { items, referenceDate } = load;
     const shown = items.slice(0, Math.min(visible ?? 0, items.length));
     const opened = openId === null ? undefined : shown.find((item) => item.entry.id === openId);
     if (opened && opened.fax.ok) {
@@ -100,6 +100,7 @@ export function App({ now = systemClock, onReviewAction, onVerify }: AppProps = 
           fax={opened.fax.value}
           reader={reader}
           openedBy={openedBy}
+          referenceDate={referenceDate}
           review={reviews[reviewKey(opened.entry.id, reader)] ?? EMPTY_REVIEW}
           now={now}
           onReview={(event) => review(opened.entry.id, event)}
@@ -119,6 +120,7 @@ export function App({ now = systemClock, onReviewAction, onVerify }: AppProps = 
           total={items.length}
           reader={reader}
           reviews={reviews}
+          referenceDate={referenceDate}
           focusId={returnFocusId}
           arrivedId={arrivedId}
           onOpen={(id, by) => {

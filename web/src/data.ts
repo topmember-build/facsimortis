@@ -20,6 +20,12 @@ export interface InboxItem {
   fax: Result<SampleFax>;
 }
 
+export interface Inbox {
+  items: InboxItem[];
+  /** "Today" for date checks (YYYY-MM-DD), from the index. Not the browser clock. */
+  referenceDate: string;
+}
+
 export const DEFAULT_SAMPLES_URL = `${import.meta.env.BASE_URL}samples/`;
 
 const failure = <T>(error: string): Result<T> => ({ ok: false, error });
@@ -69,7 +75,7 @@ export async function loadFax(
 export async function loadInbox(
   samplesUrl = DEFAULT_SAMPLES_URL,
   signal?: AbortSignal,
-): Promise<Result<InboxItem[]>> {
+): Promise<Result<Inbox>> {
   const index = await loadIndex(samplesUrl, signal);
   if (!index.ok) return index;
   const items = await Promise.all(
@@ -79,5 +85,5 @@ export async function loadInbox(
       fax: await loadFax(entry, samplesUrl, signal),
     })),
   );
-  return { ok: true, value: items };
+  return { ok: true, value: { items, referenceDate: index.value.referenceDate } };
 }

@@ -1,4 +1,5 @@
 import type { Field, FieldName } from '../../src/extract/schema.js';
+import { editFlag } from './edit-check';
 import { FIELD_LABELS } from './field-labels';
 
 /**
@@ -59,23 +60,25 @@ export function reviewReducer(state: ReviewState, event: ReviewEvent): ReviewSta
   return { actions: [...state.actions, action] };
 }
 
-/** The reviewer's side of one field: the latest action decides. */
+/** The reviewer's side of one field. */
 export interface FieldReview {
   reviewed: boolean;
-  /** The reviewer's value, when the latest action is an edit. */
+  /** The reviewer's value: the newest edit, kept when it is accepted later. */
   enteredValue: string | null;
-  /** The reviewer confirmed the field as read (including an empty field). */
+  /** The latest action is an Accept (the reviewer confirmed the value shown, even an empty one). */
   accepted: boolean;
 }
 
 export function fieldReview(state: ReviewState, name: FieldName): FieldReview {
   let latest: ReviewAction | undefined;
+  let entered: string | null = null;
   for (const action of state.actions) {
-    if (action.field === name) latest = action;
+    if (action.field !== name) continue;
+    latest = action;
+    if (action.action === 'edited') entered = action.newValue;
   }
   if (!latest) return { reviewed: false, enteredValue: null, accepted: false };
-  if (latest.action === 'edited') return { reviewed: true, enteredValue: latest.newValue, accepted: false };
-  return { reviewed: true, enteredValue: null, accepted: true };
+  return { reviewed: true, enteredValue: entered, accepted: latest.action === 'accepted' };
 }
 
 /** Flagged as read: the flags list is not empty. The reader's flags are never changed. */
@@ -99,14 +102,35 @@ export function sortForReview(fields: readonly Field[]): Field[] {
     .map((entry) => entry.field);
 }
 
-/** Originally flagged fields that have no review action yet, in the order given. */
-export function unreviewedFlagged(fields: readonly Field[], state: ReviewState): Field[] {
-  return fields.filter((field) => isOriginallyFlagged(field) && !fieldReview(state, field.name).reviewed);
+/**
+ * The flag messages that still stand for a field, in the order shown.
+ *  - Not edited: the reader's flags, until the reviewer acts on them.
+ *  - Edited: the validator message for the reviewer's value (if it is bad), until the
+ *    reviewer accepts that value. A good value clears the flag.
+ * `referenceDate` (YYYY-MM-DD) is "today" for the date of birth check.
+ */
+export function standingFlags(
+  field: Field,
+  state: ReviewState,
+  referenceDate: string,
+): string[] {
+  const review = fieldReview(state, field.name);
+  if (review.enteredValue !== null) {
+    if (review.accepted) return [];
+    const message = editFlag(field.name, review.enteredValue, referenceDate);
+    return message === null ? [] : [message];
+  }
+  return isOriginallyFlagged(field) && !review.reviewed ? [...field.flags] : [];
+}
+
+/** Fields that are flagged and not yet reviewed: originally flagged, or flagged again by a bad edit. */
+export function unreviewedFlagged(fields: readonly Field[], state: ReviewState, referenceDate: string): Field[] {
+  return fields.filter((field) => standingFlags(field, state, referenceDate).length > 0);
 }
 
 /** Verify is allowed only when no field is flagged and unreviewed (R5.3). */
-export const canVerify = (fields: readonly Field[], state: ReviewState): boolean =>
-  unreviewedFlagged(fields, state).length === 0;
+export const canVerify = (fields: readonly Field[], state: ReviewState, referenceDate: string): boolean =>
+  unreviewedFlagged(fields, state, referenceDate).length === 0;
 
 export const NOT_YET_REVIEWED = 'Not yet reviewed';
 export const REVIEW_IN_PROGRESS = 'Review in progress';
@@ -117,15 +141,15 @@ export const READY_TO_VERIFY = 'Ready to verify';
  * flags is ready at once). Otherwise "Not yet reviewed" until a field is reviewed, then
  * "Review in progress".
  */
-export function reviewStatus(fields: readonly Field[], state: ReviewState): string {
-  if (unreviewedFlagged(fields, state).length === 0) return READY_TO_VERIFY;
+export function reviewStatus(fields: readonly Field[], state: ReviewState, referenceDate: string): string {
+  if (unreviewedFlagged(fields, state, referenceDate).length === 0) return READY_TO_VERIFY;
   const anyReviewed = fields.some((field) => fieldReview(state, field.name).reviewed);
   return anyReviewed ? REVIEW_IN_PROGRESS : NOT_YET_REVIEWED;
 }
 
 /** Plain reason shown beside the Verify record button. */
-export function verifyReason(fields: readonly Field[], state: ReviewState): string {
-  const waiting = unreviewedFlagged(fields, state);
+export function verifyReason(fields: readonly Field[], state: ReviewState, referenceDate: string): string {
+  const waiting = unreviewedFlagged(fields, state, referenceDate);
   if (waiting.length === 0) {
     return fields.some(isOriginallyFlagged)
       ? 'Every flagged field has been reviewed. You can verify the record.'
@@ -136,6 +160,9 @@ export function verifyReason(fields: readonly Field[], state: ReviewState): stri
     ? `1 flagged field still needs review: ${names}.`
     : `${waiting.length} flagged fields still need review: ${names}.`;
 }
+
+/** Plain line shown beside the Verify record button. */
+export const VERIFY_NOTE = 'Check each value against the fax before verifying.';
 
 export const NO_ANSWER_VERIFY_REASON = 'There is no saved model answer to verify. Show the rules reader.';
 

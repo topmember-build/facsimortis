@@ -22,5 +22,6 @@
       "receivedAt": "2026-10-01T09:14:00"
     }
   ],
-  "version": 1
+  "referenceDate": "2026-10-01",
+  "version": 2
 }

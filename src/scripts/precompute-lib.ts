@@ -97,15 +97,19 @@ export function buildFax(input: FaxInput): SampleFax {
   });
 }
 
-export function buildIndex(faxes: Pick<FaxInput, 'id' | 'level'>[]): SampleIndex {
+export function buildIndex(
+  faxes: Pick<FaxInput, 'id' | 'level'>[],
+  referenceDate: string = REFERENCE_DATE,
+): SampleIndex {
   return SampleIndexSchema.parse({
     version: SAMPLE_DATA_VERSION,
+    referenceDate,
     faxes: faxes.map((f, i) => ({
       id: f.id,
       level: f.level,
       image: `${f.id}.png`,
       data: `${f.id}.json`,
-      receivedAt: receivedAt(i),
+      receivedAt: receivedAt(i, referenceDate),
     })),
   });
 }

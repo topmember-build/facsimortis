@@ -27,6 +27,7 @@ function field(name: FieldName, confidence: number, flagged = false, value: stri
 
 const names = (fields: Field[]) => fields.map((f) => f.name);
 const AT = '2025-01-02T03:04:05.000Z';
+const REF = '2026-10-01';
 
 describe('sortForReview', () => {
   it('puts flagged fields first, then lowest confidence first within each group', () => {
@@ -112,27 +113,27 @@ describe('verify rule and status', () => {
     reviewReducer(state, { type: 'accept', field: name, originalValue: 'x', at: AT });
 
   it('is blocked while a flagged field is unreviewed and names the fields in schema order', () => {
-    expect(canVerify(fields, EMPTY_REVIEW)).toBe(false);
-    expect(unreviewedFlagged(fields, EMPTY_REVIEW).map((f) => f.name)).toEqual(['npi', 'callbackPhone']);
-    expect(verifyReason(fields, EMPTY_REVIEW)).toBe(
+    expect(canVerify(fields, EMPTY_REVIEW, REF)).toBe(false);
+    expect(unreviewedFlagged(fields, EMPTY_REVIEW, REF).map((f) => f.name)).toEqual(['npi', 'callbackPhone']);
+    expect(verifyReason(fields, EMPTY_REVIEW, REF)).toBe(
       '2 flagged fields still need review: Provider number (NPI), Callback phone.',
     );
-    expect(reviewStatus(fields, EMPTY_REVIEW)).toBe('Not yet reviewed');
+    expect(reviewStatus(fields, EMPTY_REVIEW, REF)).toBe('Not yet reviewed');
   });
 
   it('counts down and then allows verifying', () => {
     const one = accept(EMPTY_REVIEW, 'npi');
-    expect(verifyReason(fields, one)).toBe('1 flagged field still needs review: Callback phone.');
-    expect(reviewStatus(fields, one)).toBe('Review in progress');
+    expect(verifyReason(fields, one, REF)).toBe('1 flagged field still needs review: Callback phone.');
+    expect(reviewStatus(fields, one, REF)).toBe('Review in progress');
     const done = accept(one, 'callbackPhone');
-    expect(canVerify(fields, done)).toBe(true);
-    expect(reviewStatus(fields, done)).toBe('Ready to verify');
-    expect(verifyReason(fields, done)).toContain('You can verify the record');
+    expect(canVerify(fields, done, REF)).toBe(true);
+    expect(reviewStatus(fields, done, REF)).toBe('Ready to verify');
+    expect(verifyReason(fields, done, REF)).toContain('You can verify the record');
   });
 
   it('allows verifying a fax with no flags at once', () => {
     const clean = [field('patientName', 0.9)];
-    expect(canVerify(clean, EMPTY_REVIEW)).toBe(true);
-    expect(reviewStatus(clean, EMPTY_REVIEW)).toBe('Ready to verify');
+    expect(canVerify(clean, EMPTY_REVIEW, REF)).toBe(true);
+    expect(reviewStatus(clean, EMPTY_REVIEW, REF)).toBe('Ready to verify');
   });
 });

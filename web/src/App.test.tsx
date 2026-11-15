@@ -205,7 +205,7 @@ describe('states', () => {
   });
 
   it('shows an empty state when the index has no faxes', async () => {
-    stubSite({ 'index.json': () => json({ version: 1, faxes: [] }) });
+    stubSite({ 'index.json': () => json({ version: 2, referenceDate: '2026-10-01', faxes: [] }) });
     const { container } = render(<App />);
     expect(await screen.findByText('There are no sample faxes.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Incoming fax' })).toHaveAttribute('aria-disabled', 'true');
@@ -228,7 +228,7 @@ describe('states', () => {
   });
 
   it('treats an index that fails the schema as an error', async () => {
-    stubSite({ 'index.json': () => json({ version: 99, faxes: [] }) });
+    stubSite({ 'index.json': () => json({ version: 99, referenceDate: '2026-10-01', faxes: [] }) });
     render(<App />);
     expect(await screen.findByRole('alert')).toHaveTextContent('not in the expected form');
   });

@@ -2,10 +2,11 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent, type Ref } from
 import type { Field, FieldName } from '../../src/extract/schema.js';
 import { FIELD_LABELS, NOT_FOUND_TEXT } from './field-labels';
 import {
+  VERIFY_NOTE,
   canVerify,
   fieldReview,
-  isOriginallyFlagged,
   sortForReview,
+  standingFlags,
   verifyReason,
   type ReviewState,
 } from './review-state';
@@ -26,16 +27,19 @@ function ConfidenceBar({ confidence }: { confidence: number }) {
 
 function EditForm({
   field,
+  initial,
   onSave,
   onCancel,
 }: {
   field: Field;
+  /** What the box starts with: the reviewer's earlier value, else the value as read. */
+  initial: string;
   onSave: (text: string) => void;
   onCancel: () => void;
 }) {
   const inputId = useId();
   const input = useRef<HTMLInputElement>(null);
-  const [text, setText] = useState(field.value ?? '');
+  const [text, setText] = useState(initial);
   useEffect(() => {
     input.current?.focus();
   }, []);
@@ -82,6 +86,7 @@ function EditForm({
 interface FieldRowProps {
   field: Field;
   state: ReviewState;
+  referenceDate: string;
   selected: boolean;
   editing: boolean;
   onSelect: () => void;
@@ -91,12 +96,13 @@ interface FieldRowProps {
   onCancel: () => void;
 }
 
-function FieldRow({ field, state, selected, editing, onSelect, onAccept, onEditOpen, onSave, onCancel }: FieldRowProps) {
+function FieldRow({ field, state, referenceDate, selected, editing, onSelect, onAccept, onEditOpen, onSave, onCancel }: FieldRowProps) {
   const label = FIELD_LABELS[field.name];
-  const flagged = isOriginallyFlagged(field);
   const review = fieldReview(state, field.name);
   const edited = review.enteredValue !== null;
-  const pending = flagged && !review.reviewed;
+  // Flags that still stand: the reader's flags until acted on, or the validator's message for a bad edit.
+  const standing = standingFlags(field, state, referenceDate);
+  const pending = standing.length > 0;
 
   return (
     <li className="field-row">
@@ -112,6 +118,7 @@ function FieldRow({ field, state, selected, editing, onSelect, onAccept, onEditO
           <>
             <span className="field-value">{review.enteredValue}</span>
             <span className="field-note">Entered by the reviewer</span>
+            {review.accepted && <span className="field-note">Accepted by the reviewer</span>}
             <span className="field-note">Read from the page: {field.value ?? NOT_READ_TEXT}</span>
             <span className="field-note">The highlight shows where the page value was read.</span>
           </>
@@ -134,37 +141,43 @@ function FieldRow({ field, state, selected, editing, onSelect, onAccept, onEditO
         ) : (
           <ConfidenceBar confidence={field.confidence} />
         )}
-        {field.flags.map((message) =>
-          pending ? (
-            <span key={message} className="field-flag">
-              <span aria-hidden="true">⚑</span> <span>{message}</span>
-            </span>
-          ) : (
+        {standing.map((message) => (
+          <span key={message} className="field-flag">
+            <span aria-hidden="true">⚑</span> <span>{message}</span>
+          </span>
+        ))}
+        {field.flags
+          .filter((message) => !standing.includes(message))
+          .map((message) => (
             <span key={message} className="field-history">
               <span aria-hidden="true">✓</span> <span>Was flagged: {message}</span>
             </span>
-          ),
-        )}
+          ))}
       </button>
-      {flagged && (
-        <div className="field-actions">
-          {pending && (
-            <button type="button" className="button" data-accept={field.name} onClick={onAccept}>
-              Accept<span className="sr-only"> {label}</span>
-            </button>
-          )}
-          <button
-            type="button"
-            className="button"
-            data-edit={field.name}
-            aria-expanded={editing}
-            onClick={onEditOpen}
-          >
-            Edit<span className="sr-only"> {label}</span>
+      <div className="field-actions">
+        {pending && (
+          <button type="button" className="button" data-accept={field.name} onClick={onAccept}>
+            Accept<span className="sr-only"> {label}</span>
           </button>
-        </div>
+        )}
+        <button
+          type="button"
+          className="button"
+          data-edit={field.name}
+          aria-expanded={editing}
+          onClick={onEditOpen}
+        >
+          Edit<span className="sr-only"> {label}</span>
+        </button>
+      </div>
+      {editing && (
+        <EditForm
+          field={field}
+          initial={review.enteredValue ?? field.value ?? ''}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
       )}
-      {editing && <EditForm field={field} onSave={onSave} onCancel={onCancel} />}
     </li>
   );
 }
@@ -173,6 +186,8 @@ export interface ReviewPanelProps {
   /** The reader's fields exactly as read, in schema order. */
   fields: readonly Field[];
   state: ReviewState;
+  /** "Today" for date checks (YYYY-MM-DD), from the sample index. */
+  referenceDate: string;
   selected: FieldName | null;
   editing: FieldName | null;
   panelRef: Ref<HTMLDivElement>;
@@ -186,9 +201,9 @@ export interface ReviewPanelProps {
 
 /** The review panel: sorted fields with their actions, then the Verify record action. */
 export function ReviewPanel(props: ReviewPanelProps) {
-  const { fields, state } = props;
+  const { fields, state, referenceDate } = props;
   const sorted = sortForReview(fields);
-  const enabled = canVerify(fields, state);
+  const enabled = canVerify(fields, state, referenceDate);
   return (
     <div ref={props.panelRef} className="review-panel">
       <ul className="field-list" aria-label="Fields read from this fax, flagged fields first">
@@ -197,6 +212,7 @@ export function ReviewPanel(props: ReviewPanelProps) {
             key={field.name}
             field={field}
             state={state}
+            referenceDate={referenceDate}
             selected={props.selected === field.name}
             editing={props.editing === field.name}
             onSelect={() => props.onSelect(field.name)}
@@ -207,7 +223,7 @@ export function ReviewPanel(props: ReviewPanelProps) {
           />
         ))}
       </ul>
-      <VerifyBar enabled={enabled} reason={verifyReason(fields, state)} onVerify={props.onVerify} />
+      <VerifyBar enabled={enabled} reason={verifyReason(fields, state, referenceDate)} onVerify={props.onVerify} />
     </div>
   );
 }
@@ -220,7 +236,7 @@ export function VerifyBar({ enabled, reason, onVerify }: { enabled: boolean; rea
         className="button button-primary"
         data-verify="true"
         aria-disabled={!enabled}
-        aria-describedby="verify-reason"
+        aria-describedby="verify-reason verify-note"
         onClick={() => {
           if (enabled) onVerify();
         }}
@@ -230,6 +246,7 @@ export function VerifyBar({ enabled, reason, onVerify }: { enabled: boolean; rea
       <p id="verify-reason" className="verify-reason" aria-live="polite">
         {reason}
       </p>
+      <p id="verify-note" className="verify-note">{VERIFY_NOTE}</p>
     </div>
   );
 }

@@ -32,7 +32,7 @@ describe('loadIndex', () => {
   });
 
   it('reports data that fails the shared schema', async () => {
-    stubSite({ 'index.json': () => json({ version: 99, faxes: [] }) });
+    stubSite({ 'index.json': () => json({ version: 99, referenceDate: '2026-10-01', faxes: [] }) });
     expect(await loadIndex(BASE)).toEqual({
       ok: false,
       error: 'The list of sample faxes is not in the expected form.',
@@ -68,19 +68,20 @@ describe('loadInbox', () => {
     stubSite();
     const result = await loadInbox(BASE);
     if (!result.ok) throw new Error(result.error);
-    expect(result.value.map((i) => i.imageUrl)).toEqual([
+    expect(result.value.referenceDate).toBe('2026-10-01');
+    expect(result.value.items.map((i) => i.imageUrl)).toEqual([
       '/site/samples/fax-0001.png',
       '/site/samples/fax-0002.png',
       '/site/samples/fax-0003.png',
     ]);
-    expect(result.value.every((i) => i.fax.ok)).toBe(true);
+    expect(result.value.items.every((i) => i.fax.ok)).toBe(true);
   });
 
   it('keeps the other faxes when one file is bad', async () => {
     stubSite({ 'fax-0002.json': () => json({}, 500) });
     const result = await loadInbox(BASE);
     if (!result.ok) throw new Error(result.error);
-    expect(result.value.map((i) => i.fax.ok)).toEqual([true, false, true]);
+    expect(result.value.items.map((i) => i.fax.ok)).toEqual([true, false, true]);
   });
 
   it('fails as a whole when the index is bad', async () => {

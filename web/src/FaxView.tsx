@@ -3,6 +3,7 @@ import type { Field, FieldName } from '../../src/extract/schema.js';
 import type { SampleFax } from '../../src/samples/schema.js';
 import { cropBox, viewBoxAttr, viewerBox } from './crop';
 import type { InboxItem } from './data';
+import { editFlag } from './edit-check';
 import type { OpenedBy } from './input-modality';
 import { FIELD_LABELS, NOT_FOUND_TEXT } from './field-labels';
 import { READER_LABEL, type ReaderName } from './flags';
@@ -24,6 +25,8 @@ interface FaxViewProps {
   reader: ReaderName;
   /** How the fax was opened. The heading shows a focus ring only after keyboard use. */
   openedBy: OpenedBy;
+  /** "Today" for date checks (YYYY-MM-DD), from the sample index. Not the browser clock. */
+  referenceDate: string;
   /** This reader's review state for this fax. */
   review: ReviewState;
   onReaderChange: (reader: ReaderName) => void;
@@ -84,7 +87,7 @@ function selectionLine(fields: readonly Field[], selection: Selection | null, re
  * (viewBox = the fax size in pixels), so they scale together. Ghost rectangles are
  * drawn straight from OCR word boxes, found by word ID.
  */
-export function FaxView({ item, fax, reader, openedBy, review, onReaderChange, onReview, onVerify, now, onBack }: FaxViewProps) {
+export function FaxView({ item, fax, reader, openedBy, referenceDate, review, onReaderChange, onReview, onVerify, now, onBack }: FaxViewProps) {
   const heading = useRef<HTMLHeadingElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const reducedMotion = usePrefersReducedMotion();
@@ -112,7 +115,7 @@ export function FaxView({ item, fax, reader, openedBy, review, onReaderChange, o
 
   const result = fax.readers[reader];
   const fields = result.status === 'ok' ? result.fields : [];
-  const status = result.status === 'ok' ? reviewStatus(fields, review) : 'Not yet reviewed';
+  const status = result.status === 'ok' ? reviewStatus(fields, review, referenceDate) : 'Not yet reviewed';
   const imageName = `Faxed referral form, fax ${item.entry.id}, with source highlights`;
 
   function ghostClass(selected: boolean): string {
@@ -132,7 +135,7 @@ export function FaxView({ item, fax, reader, openedBy, review, onReaderChange, o
     setAnnouncement(`${FIELD_LABELS[field.name]} accepted.`);
     // Next unreviewed flagged field after this one in the order shown, else Verify record.
     const order = sortForReview(fields);
-    const waiting = new Set(unreviewedFlagged(fields, review).map((f) => f.name));
+    const waiting = new Set(unreviewedFlagged(fields, review, referenceDate).map((f) => f.name));
     waiting.delete(field.name);
     const at = order.findIndex((f) => f.name === field.name);
     const next = [...order.slice(at + 1), ...order.slice(0, at)].find((f) => waiting.has(f.name));
@@ -149,7 +152,10 @@ export function FaxView({ item, fax, reader, openedBy, review, onReaderChange, o
       newValue: text,
       at: now().toISOString(),
     });
-    setAnnouncement(`${FIELD_LABELS[field.name]} saved. The value you entered is shown.`);
+    const problem = editFlag(field.name, text, referenceDate);
+    setAnnouncement(
+      `${FIELD_LABELS[field.name]} saved. The value you entered is shown.${problem ? ` ${problem}` : ''}`,
+    );
     setPendingFocus({ kind: 'edit', field: field.name });
   }
 
@@ -256,6 +262,7 @@ export function FaxView({ item, fax, reader, openedBy, review, onReaderChange, o
             <ReviewPanel
               fields={result.fields}
               state={review}
+              referenceDate={referenceDate}
               selected={selection?.name ?? null}
               editing={editing}
               panelRef={panel}

@@ -4,7 +4,7 @@ import axe from 'axe-core';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import type { ReviewAction } from './review-state';
-import { stubSite } from './test-site';
+import { committedIndex, json, stubSite } from './test-site';
 
 type UserApi = ReturnType<typeof userEvent.setup>;
 
@@ -45,6 +45,8 @@ async function expectNoViolations(container: HTMLElement) {
   expect((await axe.run(container)).violations).toEqual([]);
 }
 
+const NOTE = 'Check each value against the fax before verifying.';
+const withNote = (reason: string) => `${reason} ${NOTE}`;
 const BOTH =
   '2 flagged fields still need review: Provider number (NPI), Callback phone.';
 
@@ -54,11 +56,11 @@ describe('review panel: fax-0003, model reader', () => {
     await openFax(user, 'fax-0003');
     expect(fieldOrder()).toEqual(['callbackPhone', 'npi', 'referringProvider', 'patientName', 'reason', 'urgency', 'dob']);
     expect(verify()).toHaveAttribute('aria-disabled', 'true');
-    expect(verify()).toHaveAccessibleDescription(BOTH);
+    expect(verify()).toHaveAccessibleDescription(withNote(BOTH));
     expect(statusLine()).toContain('Not yet reviewed');
-    // Only flagged fields have review actions.
+    // Accept is for flagged fields only. Every field can be edited.
     expect(document.querySelectorAll('[data-accept]')).toHaveLength(2);
-    expect(document.querySelectorAll('[data-edit]')).toHaveLength(2);
+    expect(document.querySelectorAll('[data-edit]')).toHaveLength(7);
     expect(within(fieldButton('patientName')).getByText('Confidence: 80%')).toBeInTheDocument();
   });
 
@@ -74,7 +76,7 @@ describe('review panel: fax-0003, model reader', () => {
     await openFax(user, 'fax-0003');
     await user.click(accept('npi'));
 
-    expect(verify()).toHaveAccessibleDescription('1 flagged field still needs review: Callback phone.');
+    expect(verify()).toHaveAccessibleDescription(withNote('1 flagged field still needs review: Callback phone.'));
     expect(statusLine()).toContain('Review in progress');
     expect(accept('callbackPhone')).toHaveFocus();
     expect(document.querySelector('[data-accept="npi"]')).toBeNull();
@@ -121,7 +123,7 @@ describe('review panel: fax-0003, model reader', () => {
     expect(ghost('callbackPhone')!.querySelectorAll('rect').length).toBeGreaterThan(0);
     expect(screen.getByRole('status')).toHaveTextContent('the highlight is where the page value was read');
     expect(edit('callbackPhone')).toHaveFocus();
-    expect(verify()).toHaveAccessibleDescription('1 flagged field still needs review: Provider number (NPI).');
+    expect(verify()).toHaveAccessibleDescription(withNote('1 flagged field still needs review: Provider number (NPI).'));
 
     await user.click(accept('npi'));
     expect(verify()).toHaveFocus();
@@ -142,7 +144,7 @@ describe('review panel: fax-0003, model reader', () => {
     expect(screen.queryByLabelText('Provider number (NPI)')).not.toBeInTheDocument();
     expect(edit('npi')).toHaveFocus();
     expect(within(fieldButton('npi')).getByText('6720988041')).toBeInTheDocument();
-    expect(verify()).toHaveAccessibleDescription(BOTH);
+    expect(verify()).toHaveAccessibleDescription(withNote(BOTH));
     expect(recorded).toEqual([]);
 
     await user.click(edit('npi'));
@@ -168,7 +170,7 @@ describe('review panel: fax-0003, model reader', () => {
     await openFax(user, 'fax-0003');
     await user.click(accept('npi'));
     await user.click(screen.getByRole('button', { name: 'Rules reader' }));
-    expect(verify()).toHaveAccessibleDescription(BOTH);
+    expect(verify()).toHaveAccessibleDescription(withNote(BOTH));
     expect(statusLine()).toContain('Not yet reviewed');
     await user.click(screen.getByRole('button', { name: 'Back to inbox' }));
     expect(rowFor('fax-0003').getByText('Not yet reviewed')).toBeInTheDocument();
@@ -211,7 +213,7 @@ describe('review panel: other faxes', () => {
     ]);
     expect(within(fieldButton('reason')).getByText(/Accepted as empty/)).toBeInTheDocument();
     expect(verify()).toHaveAccessibleDescription(
-      '2 flagged fields still need review: Referring provider, Provider number (NPI).',
+      withNote('2 flagged fields still need review: Referring provider, Provider number (NPI).'),
     );
     // Editing an empty field starts from an empty box and keeps "Not read" as the page value.
     await user.click(edit('npi'));
@@ -220,13 +222,185 @@ describe('review panel: other faxes', () => {
     expect(within(fieldButton('npi')).getByText('Read from the page: Not read')).toBeInTheDocument();
   });
 
-  it('enables Verify at once for a fax with no flags and offers no review actions', async () => {
+  it('enables Verify at once for a fax with no flags and offers Edit but no Accept', async () => {
     const { user, onVerify } = setup();
     await openFax(user, 'fax-0001');
     expect(verify()).toHaveAttribute('aria-disabled', 'false');
     expect(statusLine()).toContain('Ready to verify');
-    expect(document.querySelectorAll('[data-accept], [data-edit]')).toHaveLength(0);
+    expect(document.querySelectorAll('[data-accept]')).toHaveLength(0);
+    expect(document.querySelectorAll('[data-edit]')).toHaveLength(7);
     await user.click(verify());
     expect(onVerify).toHaveBeenCalledWith('fax-0001', 'model');
+  });
+});
+
+describe('Edit on every field', () => {
+  const REFERRER = 'Dr.Linnea Ashgrove, Willowbrook Family Clinic';
+
+  it('edits an unflagged field, keeps the page value and offers no Accept', async () => {
+    const { user, recorded } = setup();
+    await openFax(user, 'fax-0002');
+    expect(within(fieldButton('referringProvider')).getByText(REFERRER)).toBeInTheDocument();
+    expect(document.querySelectorAll('[data-accept]')).toHaveLength(0);
+    expect(document.querySelectorAll('[data-edit]')).toHaveLength(7);
+
+    await user.click(edit('referringProvider'));
+    const input = screen.getByLabelText('Referring provider');
+    expect(input).toHaveValue(REFERRER);
+    expect(input).toHaveFocus();
+    await user.clear(input);
+    await user.type(input, 'Dr Linnea Ashgrove, Willowbrook Family Clinic{Enter}');
+
+    const row = within(fieldButton('referringProvider'));
+    expect(row.getByText('Dr Linnea Ashgrove, Willowbrook Family Clinic')).toBeInTheDocument();
+    expect(row.getByText('Entered by the reviewer')).toBeInTheDocument();
+    expect(row.getByText(`Read from the page: ${REFERRER}`)).toBeInTheDocument();
+    expect(ghost('referringProvider')!.querySelectorAll('rect').length).toBeGreaterThan(0);
+    expect(edit('referringProvider')).toHaveFocus();
+    expect(statusLine()).toContain('Ready to verify');
+    expect(verify()).toHaveAttribute('aria-disabled', 'false');
+    expect(recorded.map((r) => r.action)).toEqual([
+      {
+        field: 'referringProvider',
+        action: 'edited',
+        originalValue: REFERRER,
+        newValue: 'Dr Linnea Ashgrove, Willowbrook Family Clinic',
+        at: '2025-01-02T03:04:00.000Z',
+      },
+    ]);
+  });
+
+  it('cancels and rejects blank text on an unflagged field too', async () => {
+    const { user, recorded } = setup();
+    await openFax(user, 'fax-0002');
+    await user.click(edit('patientName'));
+    await user.keyboard('{Escape}');
+    expect(edit('patientName')).toHaveFocus();
+    await user.click(edit('patientName'));
+    await user.clear(screen.getByLabelText('Patient name'));
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(recorded).toEqual([]);
+  });
+});
+
+describe('edits are checked again', () => {
+  const NPI_FLAG = 'The provider number looks wrong: the last digit does not match.';
+  const PHONE_FLAG = 'The callback phone number is not in a usual format. Please check it.';
+  const FUTURE = 'The date of birth is in the future. Please check it.';
+  const flagText = (name: string) =>
+    Array.from(fieldButton(name).querySelectorAll('.field-flag')).map((n) => n.textContent!.replace('⚑', '').trim());
+
+  it('keeps the flag for a bad NPI, blocks Verify, and Accept confirms the entered value', async () => {
+    const { user, recorded, onVerify } = setup();
+    await openFax(user, 'fax-0003');
+    await user.click(accept('callbackPhone'));
+    await user.click(edit('npi'));
+    await user.clear(screen.getByLabelText('Provider number (NPI)'));
+    await user.type(screen.getByLabelText('Provider number (NPI)'), '1234567890{Enter}');
+
+    const npi = within(fieldButton('npi'));
+    expect(npi.getByText('1234567890')).toBeInTheDocument();
+    expect(npi.getByText('Read from the page: 6720988041')).toBeInTheDocument();
+    expect(flagText('npi')).toEqual([NPI_FLAG]);
+    expect(accept('npi')).toBeInTheDocument();
+    expect(verify()).toHaveAttribute('aria-disabled', 'true');
+    expect(verify()).toHaveAccessibleDescription(
+      withNote('1 flagged field still needs review: Provider number (NPI).'),
+    );
+    expect(statusLine()).toContain('Review in progress');
+    await user.click(verify());
+    expect(onVerify).not.toHaveBeenCalled();
+    // The check is not a user action.
+    expect(recorded.map((r) => r.action.action)).toEqual(['accepted', 'edited']);
+
+    await user.click(accept('npi'));
+    expect(flagText('npi')).toEqual([]);
+    expect(npi.getByText('1234567890')).toBeInTheDocument();
+    expect(npi.getByText('Entered by the reviewer')).toBeInTheDocument();
+    expect(npi.getByText('Accepted by the reviewer')).toBeInTheDocument();
+    expect(document.querySelector('[data-accept="npi"]')).toBeNull();
+    expect(verify()).toHaveAttribute('aria-disabled', 'false');
+    expect(statusLine()).toContain('Ready to verify');
+    expect(recorded.map((r) => r.action.action)).toEqual(['accepted', 'edited', 'accepted']);
+    expect(recorded[1]!.action).toMatchObject({ field: 'npi', originalValue: '6720988041', newValue: '1234567890' });
+  });
+
+  it('clears the flag for a valid NPI', async () => {
+    const { user } = setup();
+    await openFax(user, 'fax-0003');
+    await user.click(edit('npi'));
+    await user.clear(screen.getByLabelText('Provider number (NPI)'));
+    await user.type(screen.getByLabelText('Provider number (NPI)'), '1234567893{Enter}');
+    expect(flagText('npi')).toEqual([]);
+    expect(document.querySelector('[data-accept="npi"]')).toBeNull();
+    expect(within(fieldButton('npi')).getByText(`Was flagged: ${NPI_FLAG}`)).toBeInTheDocument();
+    expect(verify()).toHaveAccessibleDescription(
+      withNote('1 flagged field still needs review: Callback phone.'),
+    );
+  });
+
+  it('flags an edit of an unflagged date of birth that is in the future of the index reference date', async () => {
+    const { user } = setup();
+    await openFax(user, 'fax-0002');
+    expect(verify()).toHaveAttribute('aria-disabled', 'false');
+    await user.click(edit('dob'));
+    await user.clear(screen.getByLabelText('Date of birth'));
+    await user.type(screen.getByLabelText('Date of birth'), '10/02/2026{Enter}');
+    expect(flagText('dob')).toEqual([FUTURE]);
+    expect(accept('dob')).toBeInTheDocument();
+    expect(verify()).toHaveAttribute('aria-disabled', 'true');
+    expect(verify()).toHaveAccessibleDescription(withNote('1 flagged field still needs review: Date of birth.'));
+    expect(statusLine()).toContain('Review in progress');
+
+    // The reference day itself is fine.
+    await user.click(edit('dob'));
+    expect(screen.getByLabelText('Date of birth')).toHaveValue('10/02/2026');
+    await user.clear(screen.getByLabelText('Date of birth'));
+    await user.type(screen.getByLabelText('Date of birth'), '10/01/2026{Enter}');
+    expect(flagText('dob')).toEqual([]);
+    expect(verify()).toHaveAttribute('aria-disabled', 'false');
+  });
+
+  it('uses the reference date from the index, not the browser clock', async () => {
+    const earlier = { ...(committedIndex as object), referenceDate: '2000-01-01' };
+    stubSite({ 'index.json': () => json(earlier) });
+    const user = userEvent.setup();
+    render(<App now={() => new Date(Date.UTC(2025, 0, 2, 3, 4, 5))} />);
+    await openFax(user, 'fax-0002');
+    await user.click(edit('dob'));
+    await user.clear(screen.getByLabelText('Date of birth'));
+    await user.type(screen.getByLabelText('Date of birth'), '01/02/2001{Enter}');
+    expect(flagText('dob')).toEqual([FUTURE]);
+  });
+
+  it('keeps the phone message for a bad phone and clears it for a good one', async () => {
+    const { user } = setup();
+    await openFax(user, 'fax-0003');
+    await user.click(edit('callbackPhone'));
+    await user.clear(screen.getByLabelText('Callback phone'));
+    await user.type(screen.getByLabelText('Callback phone'), '555~0152{Enter}');
+    expect(flagText('callbackPhone')).toEqual([PHONE_FLAG]);
+    expect(accept('callbackPhone')).toBeInTheDocument();
+    expect(verify()).toHaveAttribute('aria-disabled', 'true');
+
+    await user.click(edit('callbackPhone'));
+    expect(screen.getByLabelText('Callback phone')).toHaveValue('555~0152');
+    await user.clear(screen.getByLabelText('Callback phone'));
+    await user.type(screen.getByLabelText('Callback phone'), '555-0151{Enter}');
+    expect(flagText('callbackPhone')).toEqual([]);
+    expect(verify()).toHaveAccessibleDescription(
+      withNote('1 flagged field still needs review: Provider number (NPI).'),
+    );
+  });
+
+  it('shows the verify reminder beside the button and has no accessibility violations', async () => {
+    const { user, view } = setup();
+    await openFax(user, 'fax-0003');
+    expect(screen.getByText(NOTE)).toBeVisible();
+    expect(verify().getAttribute('aria-describedby')).toBe('verify-reason verify-note');
+    await user.click(edit('npi'));
+    await user.clear(screen.getByLabelText('Provider number (NPI)'));
+    await user.type(screen.getByLabelText('Provider number (NPI)'), '1234567890{Enter}');
+    await expectNoViolations(view.container);
   });
 });

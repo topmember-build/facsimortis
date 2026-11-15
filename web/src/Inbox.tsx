@@ -58,10 +58,12 @@ function RowText({
   item,
   reader,
   reviews,
+  referenceDate,
 }: {
   item: InboxItem;
   reader: ReaderName;
   reviews: Readonly<Record<string, ReviewState>>;
+  referenceDate: string;
 }) {
   return (
     <span className="row-text">
@@ -73,7 +75,7 @@ function RowText({
         <>
           <FlagSummaryLine item={item} reader={reader} />
           <span className="review-status">
-            <span aria-hidden="true">○</span> {reviewLabel(item.fax.value, reader, reviews)}
+            <span aria-hidden="true">○</span> {reviewLabel(item.fax.value, reader, reviews, referenceDate)}
           </span>
         </>
       ) : (
@@ -91,6 +93,8 @@ interface InboxProps {
   total: number;
   reader: ReaderName;
   reviews: Readonly<Record<string, ReviewState>>;
+  /** "Today" for date checks, from the sample index. */
+  referenceDate: string;
   /** Fax whose row gets focus when the inbox appears (after coming back from a fax). */
   focusId: string | null;
   arrivedId: string | null;
@@ -99,7 +103,7 @@ interface InboxProps {
   onRetry: () => void;
 }
 
-export function Inbox({ items, total, reader, reviews, focusId, arrivedId, onOpen, onIncoming, onRetry }: InboxProps) {
+export function Inbox({ items, total, reader, reviews, referenceDate, focusId, arrivedId, onOpen, onIncoming, onRetry }: InboxProps) {
   // The last input on a row before its click: Enter or Space, or a pointer press.
   // A click with neither (for example from assistive technology) counts as keyboard.
   const lastInput = useRef<OpenedBy | null>(null);
@@ -160,12 +164,12 @@ export function Inbox({ items, total, reader, reviews, focusId, arrivedId, onOpe
                   }}
                 >
                   <Thumbnail item={item} />
-                  <RowText item={item} reader={reader} reviews={reviews} />
+                  <RowText item={item} reader={reader} reviews={reviews} referenceDate={referenceDate} />
                 </button>
               ) : (
                 <div className="row-button row-failed">
                   <Thumbnail item={item} />
-                  <RowText item={item} reader={reader} reviews={reviews} />
+                  <RowText item={item} reader={reader} reviews={reviews} referenceDate={referenceDate} />
                 </div>
               )}
             </li>
