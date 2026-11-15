@@ -29,6 +29,7 @@ cp .env.example .env
 | `npm run extract` | Extract fields with word IDs | working (rule-based, offline) |
 | `npm run record:live` | Call the Gemini model once per fax and save the answers | you run it, needs `EXTRACT_API_KEY` |
 | `npm run proof` | Run the command-line runtime proof on the three fixture faxes; add `-- --reader recorded` to use the saved model answers with the network blocked | working (offline) |
+| `npm run precompute` | Write the sample data the site loads to `web/public/samples/`; add `-- --check` to verify the committed data is up to date | working (offline) |
 
 ## Synthetic faxes
 
@@ -111,6 +112,14 @@ npm run record:live
 ```
 
 This is the only step that uses the network. Put `EXTRACT_API_KEY` (and optionally `EXTRACT_MODEL`) in `.env`; the script loads `.env` if it exists. It reads each fax in `fixtures/faxes/` (or the PNG paths you pass), calls the model once per fax, prints the fields like `npm run extract`, and saves each usable answer in `fixtures/extract/`, named by a hash of the OCR words. A second call is made only when the first answer fails the checks. For each fax it prints the OCR time and the time spent in the model call on its own, plus the thinking level in use. An unusable answer is not saved, and the script exits with an error if any fax was not saved. If Google refuses a request, the script prints the HTTP status and Google's short error message from the reply, and nothing else from the response. The key is never printed.
+
+## Sample data for the site
+
+```
+npm run precompute
+```
+
+This reads each fax in `fixtures/faxes/`, runs local OCR and both offline readers (rule-based and saved model answers, with the central checks), and writes to `web/public/samples/`: each fax's PNG, one JSON file per fax with its OCR words, boxes and both readers' results, and an `index.json`. It runs offline, never calls the live model and never reads the generator's answer-key files. A fax with no saved model answer gets a plain "no saved answer" entry. The output is the same every run, and the folder is committed. `npm run precompute -- --check` exits with an error if the committed data is out of date.
 
 ## Spec
 

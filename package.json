@@ -16,7 +16,8 @@
     "ocr": "tsx src/scripts/ocr.ts",
     "extract": "tsx src/scripts/extract.ts",
     "record:live": "tsx src/scripts/record-live.ts",
-    "proof": "tsx src/scripts/proof.ts"
+    "proof": "tsx src/scripts/proof.ts",
+    "precompute": "tsx src/scripts/precompute.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
