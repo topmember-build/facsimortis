@@ -19,8 +19,10 @@ export interface FieldProof {
   gateFailures: string[];
   /** Measured tier, reported but never pass or fail. */
   tier: 'exact' | 'null-flagged' | 'unflagged-misread' | 'flagged-misread';
-  /** Value equals the expected value but carries a flag. */
+  /** Value equals the expected value but carries a flag the fax's trap does not explain. */
   correctButFlagged: boolean;
+  /** This is the field the fax's trap targets, and it is flagged, as it should be. */
+  expectedTrapFlag: boolean;
 }
 
 export interface FaxProof {
@@ -73,8 +75,12 @@ export function proveField(field: Field, expected: string | null, ocr: OcrResult
     gateFailures: failures,
     tier,
     correctButFlagged: field.value !== null && field.value === expected && flagged,
+    expectedTrapFlag: false,
   };
 }
+
+/** The field each trap targets. A flag on that field is the expected outcome. */
+const TRAP_FIELD: Readonly<Record<string, string>> = { 'bad-npi': 'npi' };
 
 export function proveFax(
   fax: string,
@@ -84,7 +90,12 @@ export function proveFax(
   ocr: OcrResult,
 ): FaxProof {
   const expectedByName = new Map(truthFields.map((f) => [f.name, f.value]));
-  const fields = result.fields.map((f) => proveField(f, expectedByName.get(f.name) ?? null, ocr));
+  const trapField = trap === null ? undefined : TRAP_FIELD[trap];
+  const fields = result.fields.map((f) => {
+    const proof = proveField(f, expectedByName.get(f.name) ?? null, ocr);
+    if (f.name !== trapField || proof.flags.length === 0) return proof;
+    return { ...proof, expectedTrapFlag: true, correctButFlagged: false };
+  });
   const gateFailures: string[] = [];
   for (const f of fields) for (const g of f.gateFailures) gateFailures.push(`${fax} ${f.name}: ${g}`);
   if (trap === 'bad-npi') {
@@ -103,6 +114,8 @@ export interface Tally {
   flaggedMisreads: number;
   unflaggedMisreads: string[];
   correctButFlagged: string[];
+  /** Trap fields flagged as expected. Not counted as correct but flagged. */
+  expectedTrapFlags: string[];
 }
 
 export function tally(proofs: FaxProof[]): Tally {
@@ -113,6 +126,7 @@ export function tally(proofs: FaxProof[]): Tally {
     flaggedMisreads: 0,
     unflaggedMisreads: [],
     correctButFlagged: [],
+    expectedTrapFlags: [],
   };
   for (const p of proofs) {
     for (const f of p.fields) {
@@ -122,7 +136,40 @@ export function tally(proofs: FaxProof[]): Tally {
       else if (f.tier === 'flagged-misread') t.flaggedMisreads += 1;
       else t.unflaggedMisreads.push(`${p.fax} ${f.name}`);
       if (f.correctButFlagged) t.correctButFlagged.push(`${p.fax} ${f.name}`);
+      if (f.expectedTrapFlag) t.expectedTrapFlags.push(`${p.fax} ${f.name}`);
     }
   }
   return t;
+}
+
+export type ProofReader = 'rules' | 'recorded';
+
+export type ReaderChoice = { ok: true; reader: ProofReader } | { ok: false; message: string };
+
+const READERS: readonly ProofReader[] = ['rules', 'recorded'];
+
+/**
+ * Reads `--reader rules|recorded` (or `--reader=...`) from the command-line
+ * arguments. Default is rules. Any other argument is an error. Pure.
+ */
+export function parseReader(args: readonly string[]): ReaderChoice {
+  let reader: string | undefined;
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i] as string;
+    if (arg === '--reader') {
+      const next = args[i + 1];
+      if (next === undefined || next.startsWith('--')) {
+        return { ok: false, message: 'Give a reader after --reader: rules or recorded.' };
+      }
+      reader = next;
+      i++;
+    } else if (arg.startsWith('--reader=')) {
+      reader = arg.slice('--reader='.length);
+    } else {
+      return { ok: false, message: `Unknown option "${arg}". Use --reader rules or --reader recorded.` };
+    }
+  }
+  if (reader === undefined) return { ok: true, reader: 'rules' };
+  if ((READERS as readonly string[]).includes(reader)) return { ok: true, reader: reader as ProofReader };
+  return { ok: false, message: `Reader "${reader}" is not known. Use rules or recorded.` };
 }

@@ -30,7 +30,7 @@ flowchart LR
   Ingest --> Store
   Ingest --> OCR
   OCR -->|"words + boxes"| Extract
-  Extract -->|"fields + word IDs + confidence"| Validate
+  Extract -->|"values + word IDs"| Validate
   Validate --> DB
   Viewer --> DB
   Review --> Audit
@@ -43,10 +43,12 @@ flowchart LR
 The model never draws boxes. The pipeline is:
 
 1. OCR returns every word with an ID and a bounding box.
-2. The model receives the word list and returns, per field, the value, the word IDs it used, and a confidence.
+2. The model receives the word list and returns, per field, the value and the word IDs it used. It returns no confidence. Our code rejects the reply unless every cited ID exists, no ID repeats, a null value cites nothing, and the value equals the cited words' OCR text joined by single spaces. An invalid reply gets one retry, then the fax is marked needs-review. Field confidence is the lowest OCR confidence among the cited words.
 3. The UI draws each source ghost from those word IDs.
 
 This makes the highlight honest: if the model cites words that are not on the page, validation rejects the field. That check is the core "runtime proof" to build first.
+
+Considered and not chosen: the model returns word IDs only and our code builds the value by joining the cited words. The exact-match check gives the same guarantee, because the value can only be the cited words' text, and it keeps the reply readable.
 
 ## Components
 
@@ -85,7 +87,9 @@ type FaxRecord = {
 
 ## Flagging rules
 
-A field is flagged when any of these hold: value is null; confidence is below the threshold (start at 0.85, tune against the generator); any validator fails; cited word IDs do not exist or do not contain the value.
+A field is flagged when its value is null, when any validator fails, or when its cited word IDs do not exist or do not contain the value.
+
+The 0.85 confidence threshold was an initial guess and is not used yet. The Phase 0 measurements showed that OCR confidence alone cannot separate misreads from correct words. The threshold, and any other flagging signals, are chosen in task 1.2 on the evaluation set, using hold-out seeds. The source highlight plus human review is the final safeguard.
 
 ## UI
 

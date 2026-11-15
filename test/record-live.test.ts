@@ -4,7 +4,8 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { RecordedResponseCache } from '../src/extract/recorded.js';
 import { FIELD_ORDER } from '../src/extract/schema.js';
-import { findFaxPngs, recordFax, redactKey } from '../src/scripts/record-live-lib.js';
+import { failureLine, findFaxPngs, formatTimings, recordFax, redactKey } from '../src/scripts/record-live-lib.js';
+import { GeminiClient } from '../src/extract/gemini.js';
 import type { OcrResult } from '../src/ocr/types.js';
 
 const ocr: OcrResult = {
@@ -61,6 +62,36 @@ describe('recordFax', () => {
     expect(out).toMatchObject({ calls: 2, saved: true });
     expect((await cache.get(ocr))?.text).toBe(goodReply);
   });
+
+  it('times each generate() call on its own, one entry per call', async () => {
+    const cache = new RecordedResponseCache(dir);
+    const one = await recordFax(ocr, async () => ({ model: 'm', text: goodReply }), cache);
+    expect(one.modelSeconds).toHaveLength(1);
+    const two = await recordFax(ocr, async () => ({ model: 'm', text: 'nope' }), cache);
+    expect(two.modelSeconds).toHaveLength(2);
+    expect([...one.modelSeconds, ...two.modelSeconds].every((s) => s >= 0)).toBe(true);
+  });
+
+  it('measures the time spent inside generate()', async () => {
+    const cache = new RecordedResponseCache(dir);
+    const out = await recordFax(
+      ocr,
+      async () => {
+        await new Promise((r) => setTimeout(r, 30));
+        return { model: 'm', text: goodReply };
+      },
+      cache,
+    );
+    expect(out.modelSeconds[0]).toBeGreaterThanOrEqual(0.025);
+  });
+});
+describe('formatTimings', () => {
+  it('prints OCR and model time for one call', () => {
+    expect(formatTimings(2.14, [4.26])).toBe('OCR 2.1 s. Model 4.3 s.');
+  });
+  it('lists each call when there was a retry', () => {
+    expect(formatTimings(1, [1.9, 2.4])).toBe('OCR 1.0 s. Model 4.3 s (2 calls: 1.9 s, 2.4 s).');
+  });
 });
 
 describe('redactKey', () => {
@@ -81,5 +112,36 @@ describe('findFaxPngs', () => {
       'fixtures/faxes/L2/fax-0002.png',
       'fixtures/faxes/L2/fax-0003.png',
     ]);
+  });
+});
+
+describe('failureLine', () => {
+  const KEY = 'AIzaFakeKeyForTests_0123456789abcdef';
+
+  it('prints the status and Google message for a refused call, never headers or the key', async () => {
+    const client = new GeminiClient({
+      env: { EXTRACT_API_KEY: KEY },
+      fetch: () =>
+        Promise.resolve(
+          new Response(JSON.stringify({ error: { code: 'rate_limited', message: 'Quota exceeded.' } }), {
+            status: 429,
+            headers: { 'Content-Type': 'application/json', 'x-secret-header': 'header-value-123' },
+          }),
+        ),
+    });
+    const err = await client.generate({ prompt: 'p', schema: {} }).catch((e: unknown) => e);
+    const line = failureLine('fax.png', err, KEY);
+    expect(line).toBe('fax.png: The model reader refused the request. HTTP 429. Google says: Quota exceeded.');
+    expect(line).not.toContain('header-value-123');
+    expect(line).not.toContain(KEY);
+  });
+
+  it('uses the message only, not the cause or stack', () => {
+    const err = new Error('Plain message.', { cause: new Error(`secret ${KEY}`) });
+    expect(failureLine('f', err, KEY)).toBe('f: Plain message.');
+  });
+
+  it('hides the key even if it reached the message', () => {
+    expect(failureLine('f', new Error(`bad ${KEY}`), KEY)).toBe('f: bad [key hidden]');
   });
 });

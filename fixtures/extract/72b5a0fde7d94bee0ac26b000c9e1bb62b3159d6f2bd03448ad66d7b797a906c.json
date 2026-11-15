@@ -1,0 +1,5 @@
+{
+  "key": "72b5a0fde7d94bee0ac26b000c9e1bb62b3159d6f2bd03448ad66d7b797a906c",
+  "model": "gemini-3.8-flash",
+  "text": "{\"fields\":[{\"name\":\"patientName\",\"value\":\"Nell Copperfield\",\"wordIds\":[\"o0018\",\"o0019\"]},{\"name\":\"dob\",\"value\":\"10/20/2001\",\"wordIds\":[\"o0023\"]},{\"name\":\"referringProvider\",\"value\":\"Dr Hollis Ivesley, Northfield Example Health\",\"wordIds\":[\"o0026\",\"o0027\",\"o0030\",\"o0031\",\"o0032\",\"o0033\"]},{\"name\":\"npi\",\"value\":\"6720988041\",\"wordIds\":[\"o0034\"]},{\"name\":\"reason\",\"value\":\"ENT evaluation, recurring sinus congestian\",\"wordIds\":[\"o0038\",\"o0039\",\"o0041\",\"o0042\",\"o0043\"]},{\"name\":\"urgency\",\"value\":\"urgent\",\"wordIds\":[\"o0044\"]},{\"name\":\"callbackPhone\",\"value\":\"555~0151\",\"wordIds\":[\"o0048\"]}]}"
+}

@@ -3,7 +3,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import fc from 'fast-check';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_EXTRACT_MODEL, GeminiClient, interactionText } from '../src/extract/gemini.js';
+import {
+  DEFAULT_EXTRACT_MODEL,
+  GeminiClient,
+  interactionText,
+  refusedMessage,
+  thinkingLevelFrom,
+} from '../src/extract/gemini.js';
 import { RecordedResponseCache, ocrWordsKey } from '../src/extract/recorded.js';
 import { ExtractionError } from '../src/extract/types.js';
 import type { OcrResult } from '../src/ocr/types.js';
@@ -181,5 +187,119 @@ describe('interactionText', () => {
     expect(() => interactionText({})).toThrow(ExtractionError);
     expect(() => interactionText({ steps: 'x' })).toThrow(ExtractionError);
     expect(() => interactionText({ steps: [{ type: 'thought' }] })).toThrow(ExtractionError);
+  });
+});
+
+describe('EXTRACT_THINKING_LEVEL', () => {
+  const request = { prompt: 'p', schema: { type: 'object' } };
+  const bodyOf = (stub: ReturnType<typeof vi.fn>): Record<string, unknown> =>
+    JSON.parse((stub.mock.calls[0] as [string, RequestInit])[1].body as string) as Record<string, unknown>;
+
+  it('reads low, medium and high in any case; unset or blank gives nothing', () => {
+    expect(thinkingLevelFrom({ EXTRACT_THINKING_LEVEL: 'low' })).toBe('low');
+    expect(thinkingLevelFrom({ EXTRACT_THINKING_LEVEL: ' Medium ' })).toBe('medium');
+    expect(thinkingLevelFrom({ EXTRACT_THINKING_LEVEL: 'HIGH' })).toBe('high');
+    expect(thinkingLevelFrom({})).toBeUndefined();
+    expect(thinkingLevelFrom({ EXTRACT_THINKING_LEVEL: '  ' })).toBeUndefined();
+  });
+
+  it('rejects other values, including minimal, which this model does not support', () => {
+    for (const v of ['minimal', 'xhigh', 'fast', '0']) {
+      expect(() => thinkingLevelFrom({ EXTRACT_THINKING_LEVEL: v })).toThrow(ExtractionError);
+    }
+  });
+
+  it('sends generation_config.thinking_level only when set', async () => {
+    const set = vi.fn().mockResolvedValue(okResponse(reply('x')));
+    await new GeminiClient({ env: { EXTRACT_API_KEY: KEY, EXTRACT_THINKING_LEVEL: 'low' }, fetch: set }).generate(request);
+    expect(bodyOf(set)['generation_config']).toEqual({ thinking_level: 'low' });
+
+    const blank = vi.fn().mockResolvedValue(okResponse(reply('x')));
+    await new GeminiClient({ env: { EXTRACT_API_KEY: KEY, EXTRACT_THINKING_LEVEL: '' }, fetch: blank }).generate(request);
+    expect(bodyOf(blank)).not.toHaveProperty('generation_config');
+  });
+
+  it('fails on a bad level before any network call', async () => {
+    const stub = vi.fn();
+    const client = new GeminiClient({ env: { EXTRACT_API_KEY: KEY, EXTRACT_THINKING_LEVEL: 'minimal' }, fetch: stub });
+    await expect(client.generate(request)).rejects.toThrow(/EXTRACT_THINKING_LEVEL/);
+    expect(stub).not.toHaveBeenCalled();
+  });
+});
+describe('refused requests', () => {
+  const request = { prompt: 'p', schema: { type: 'object' } };
+  const googleError = (status: number, code: string, message: string) => () =>
+    Promise.resolve(
+      new Response(JSON.stringify({ error: { code, message } }), {
+        status,
+        headers: { 'Content-Type': 'application/json', 'x-debug-trace': 'trace-header-value' },
+      }),
+    );
+  const messageFor = async (fetchStub: () => Promise<Response>): Promise<string> => {
+    const client = new GeminiClient({ env: { EXTRACT_API_KEY: KEY }, fetch: fetchStub });
+    const err = await client.generate(request).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ExtractionError);
+    return (err as Error).message;
+  };
+
+  it('429: keeps the plain message and adds the status and Google message', async () => {
+    const m = await messageFor(googleError(429, 'resource_exhausted', 'You exceeded your current quota.'));
+    expect(m).toBe(
+      'The model reader refused the request. HTTP 429. Google says: You exceeded your current quota.',
+    );
+  });
+
+  it('400: reports a bad request', async () => {
+    const m = await messageFor(googleError(400, 'invalid_request', "The value 'x' is not supported for 'type'."));
+    expect(m).toBe(
+      "The model reader refused the request. HTTP 400. Google says: The value 'x' is not supported for 'type'.",
+    );
+  });
+
+  it('403: reports a refused key without the key or any header', async () => {
+    const m = await messageFor(googleError(403, 'permission_denied', `API key ${KEY} is not valid.`));
+    expect(m).toBe('The model reader refused the request. HTTP 403. Google says: API key [key hidden] is not valid.');
+    expect(m).not.toContain(KEY);
+    expect(m).not.toContain('trace-header-value');
+  });
+
+  it('gives the status alone when the body is not Google JSON', () => {
+    const base = 'The model reader refused the request. HTTP 502.';
+    expect(refusedMessage(502, '<html>Bad gateway</html>', KEY)).toBe(base);
+    expect(refusedMessage(502, '', KEY)).toBe(base);
+    expect(refusedMessage(502, JSON.stringify({ error: { message: '   ' } }), KEY)).toBe(base);
+    expect(refusedMessage(502, JSON.stringify({ message: 'not the documented shape' }), KEY)).toBe(base);
+  });
+
+  it('shortens a long Google message', () => {
+    const m = refusedMessage(400, JSON.stringify({ error: { message: 'x'.repeat(1000) } }), KEY);
+    expect(m.length).toBeLessThan(400);
+    expect(m.endsWith('...')).toBe(true);
+  });
+
+  it('never lets the key appear in the message, wherever Google puts it', () => {
+    const keyArb = fc.stringMatching(/^[A-Za-z0-9_-]{20,40}$/);
+    fc.assert(
+      fc.property(
+        keyArb,
+        fc.array(fc.oneof(fc.string(), fc.constant('KEY')), { maxLength: 8 }),
+        fc.integer({ min: 400, max: 599 }),
+        fc.boolean(),
+        (key, parts, status, googleShaped) => {
+          const text = parts.map((p) => (p === 'KEY' ? key : p)).join(' ');
+          const body = googleShaped ? JSON.stringify({ error: { message: text } }) : text;
+          const m = refusedMessage(status, body, key);
+          expect(m).not.toContain(key);
+          expect(m.startsWith(`The model reader refused the request. HTTP ${status}.`)).toBe(true);
+        },
+      ),
+    );
+  });
+
+  it('hides anything shaped like a Google key, even one that is not ours', () => {
+    const other = 'AIzaSyOtherKey_abcdefghijklmnopqrstu';
+    expect(refusedMessage(403, JSON.stringify({ error: { message: `key ${other} denied` } }), KEY)).not.toContain(
+      other,
+    );
   });
 });

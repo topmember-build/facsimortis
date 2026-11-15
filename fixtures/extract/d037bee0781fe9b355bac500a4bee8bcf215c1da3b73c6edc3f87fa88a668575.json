@@ -1,0 +1,5 @@
+{
+  "key": "d037bee0781fe9b355bac500a4bee8bcf215c1da3b73c6edc3f87fa88a668575",
+  "model": "gemini-3.8-flash",
+  "text": "{\"fields\":[{\"name\":\"patientName\",\"value\":\"Pippa Ellery\",\"wordIds\":[\"o0020\",\"o0021\"]},{\"name\":\"dob\",\"value\":\"01/02/1965\",\"wordIds\":[\"o0025\"]},{\"name\":\"referringProvider\",\"value\":\"Dr.Linnea Ashgrove, Willowbrook Family Clinic\",\"wordIds\":[\"o0026\",\"o0027\",\"o0028\",\"o0029\",\"o0030\"]},{\"name\":\"npi\",\"value\":\"8128904231\",\"wordIds\":[\"o0035\"]},{\"name\":\"reason\",\"value\":\"neurology consult, frequent -headaches\",\"wordIds\":[\"o0038\",\"o0039\",\"o0040\",\"o0041\"]},{\"name\":\"urgency\",\"value\":\"emergent\",\"wordIds\":[\"o0044\"]},{\"name\":\"callbackPhone\",\"value\":\"555-0193\",\"wordIds\":[\"o0047\"]}]}"
+}
