@@ -61,7 +61,7 @@ Do not tune thresholds or add repairs to reach zero on the three Phase 0 faxes.
 
 ## Phase 1: Core pipeline
 
-- [ ] 1.1 Validators: NPI, DOB, phone, with property-based tests. (R4)
+- [x] 1.1 Validators: NPI, DOB, phone, with property-based tests. (R4)
 - [ ] 1.2 Flagging rules and confidence threshold. (R5)
 - [ ] 1.3 Deskew and normalisation. (R2.2)
 - [ ] 1.4 Audit trail and data model. (R7.3)
