@@ -749,6 +749,18 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794484997529
       }
+    ],
+    "2.1 Precompute script: `npm run precompute` runs, for each sample fax in fixtures/faxes/, local OCR and both offline readers (rules and recorded, with the central checks and a fixed \"today\" taken from the generator's REFERENCE_DATE constant, not from truth files), and writes one data folder the site loads: web/public/samples/ with each fax's PNG, one JSON file per fax holding its OCR words with boxes and both readers' results, and an index.json listing the faxes. Output is validated with Zod and is byte-for-byte deterministic; `npm run precompute -- --check` exits non-zero if the committed data is out of date. It never reads truth files (an ESLint rule or test enforces it), never uses the network, and never calls the live model; a fax with no saved model answer gets a plain \"no saved answer\" entry for the recorded reader instead of failing. The data folder is committed. Tests: schema, determinism, no truth reads, missing saved answer. (R2.1, R3.1, R3.2, R8)": [
+      {
+        "executionId": "0198beed-17a3-4324-a9b6-ff17aa642586",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794733519032
+      },
+      {
+        "executionId": "0198beed-17a3-4324-a9b6-ff17aa642586",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794734426128
+      }
     ]
   }
 }
