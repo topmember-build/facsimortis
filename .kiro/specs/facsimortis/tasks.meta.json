@@ -785,6 +785,18 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794736494204
       }
+    ],
+    "2.4 Viewer with source ghosts: the fax image with a highlight drawn over each field's cited OCR word boxes, looked up by word ID only (never coordinates from a reader); selecting a field pulses its ghost once; a field with no words has no ghost; \"Synthetic data\" notice on screen. Shows the model answers by default, with a visible toggle to the rules reader; the reader in use is named on screen; a fax with no saved model answer says so plainly and offers the rules reader. Tests: ghosts match cited word boxes, unknown IDs draw nothing, the toggle switches results and the on-screen reader name. (R3.3, R6.1, R8.2)": [
+      {
+        "executionId": "44aea749-9b52-444a-9bc2-4de47f532fce",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794737834324
+      },
+      {
+        "executionId": "44aea749-9b52-444a-9bc2-4de47f532fce",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794738321725
+      }
     ]
   }
 }
