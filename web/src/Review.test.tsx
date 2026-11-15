@@ -38,7 +38,7 @@ const accept = (name: string) => document.querySelector<HTMLElement>(`[data-acce
 const edit = (name: string) => document.querySelector<HTMLElement>(`[data-edit="${name}"]`)!;
 const verify = () => screen.getByRole('button', { name: 'Verify record' });
 const ghost = (name: string) => document.querySelector<SVGGElement>(`g[data-field="${name}"]`);
-const statusLine = () => document.querySelector('.fax-title-row .review-status')!.textContent;
+const statusLine = () => document.querySelector('.summary-bar .review-status')!.textContent;
 const rowFor = (id: string) => within(screen.getAllByRole('button').find((b) => b.dataset['faxId'] === id)!);
 
 async function expectNoViolations(container: HTMLElement) {

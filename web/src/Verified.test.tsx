@@ -39,7 +39,7 @@ const rowFor = (id: string) => within(screen.getAllByRole('button').find((b) => 
 const accept = (name: string) => document.querySelector<HTMLElement>(`[data-accept="${name}"]`)!;
 const edit = (name: string) => document.querySelector<HTMLElement>(`[data-edit="${name}"]`)!;
 const fieldButton = (name: string) => document.querySelector<HTMLElement>(`button[data-field="${name}"]`)!;
-const statusLine = () => document.querySelector('.fax-title-row .review-status')!.textContent;
+const statusLine = () => document.querySelector('.summary-bar .review-status')!.textContent;
 const verifyButton = () => screen.queryByRole('button', { name: 'Verify record' });
 const downloadButton = () => screen.queryByRole('button', { name: 'Download JSON' });
 

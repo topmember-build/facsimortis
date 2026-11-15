@@ -5,11 +5,9 @@ import { verifiedLine, type VerifiedRecord } from './record';
 import {
   LAID_TO_REST,
   VERIFY_NOTE,
-  canVerify,
   fieldReview,
   sortForReview,
   standingFlags,
-  verifyReason,
   type ReviewState,
 } from './review-state';
 
@@ -202,17 +200,15 @@ export interface ReviewPanelProps {
   onEditOpen: (name: FieldName) => void;
   onSave: (field: Field, text: string) => void;
   onCancel: (name: FieldName) => void;
-  onVerify: () => void;
   /** The verified record, when there is one. The panel is then read-only. */
   verified: VerifiedRecord | null;
   onDownload: () => void;
 }
 
-/** The review panel: sorted fields with their actions, then the Verify record action. */
+/** The review panel: sorted fields with their actions (Verify record lives in the summary bar). */
 export function ReviewPanel(props: ReviewPanelProps) {
   const { fields, state, referenceDate } = props;
   const sorted = sortForReview(fields);
-  const enabled = canVerify(fields, state, referenceDate);
   return (
     <div ref={props.panelRef} className="review-panel">
       <ul className="field-list" aria-label="Fields read from this fax, flagged fields first">
@@ -233,11 +229,7 @@ export function ReviewPanel(props: ReviewPanelProps) {
           />
         ))}
       </ul>
-      {props.verified ? (
-        <LaidToRest record={props.verified} onDownload={props.onDownload} />
-      ) : (
-        <VerifyBar enabled={enabled} reason={verifyReason(fields, state, referenceDate)} onVerify={props.onVerify} />
-      )}
+      {props.verified && <LaidToRest record={props.verified} onDownload={props.onDownload} />}
     </div>
   );
 }
@@ -257,25 +249,55 @@ export function LaidToRest({ record, onDownload }: { record: VerifiedRecord; onD
   );
 }
 
-export function VerifyBar({ enabled, reason, onVerify }: { enabled: boolean; reason: string; onVerify: () => void }) {
+export interface SummaryBarProps {
+  faxId: string;
+  status: string;
+  /** Verified: the bar shows the status only. No reason, note or Verify button. */
+  verified: boolean;
+  enabled: boolean;
+  reason: string;
+  onVerify: () => void;
+  barRef?: Ref<HTMLDivElement>;
+}
+
+/**
+ * The slim summary bar: fax id, review status, the short reason and the one Verify record
+ * button. FaxView puts it LAST in the DOM and CSS shows it first (flex order), so the tab
+ * order is: fields, then Verify.
+ */
+export function SummaryBar({ faxId, status, verified, enabled, reason, onVerify, barRef }: SummaryBarProps) {
   return (
-    <div className="verify">
-      <button
-        type="button"
-        className="button button-primary"
-        data-verify="true"
-        aria-disabled={!enabled}
-        aria-describedby="verify-reason verify-note"
-        onClick={() => {
-          if (enabled) onVerify();
-        }}
-      >
-        Verify record
-      </button>
-      <p id="verify-reason" className="verify-reason" aria-live="polite">
-        {reason}
-      </p>
-      <p id="verify-note" className="verify-note">{VERIFY_NOTE}</p>
+    <div className="summary-bar" role="region" aria-label="Review summary" ref={barRef}>
+      <div className="summary-row">
+        <span className="summary-id">Fax {faxId}</span>
+        <span className="review-status">
+          <span aria-hidden="true">○</span> {status}
+        </span>
+        {!verified && (
+          <p id="verify-reason" className="verify-reason" aria-live="polite">
+            {reason}
+          </p>
+        )}
+        {!verified && (
+          <button
+            type="button"
+            className="button button-primary"
+            data-verify="true"
+            aria-disabled={!enabled}
+            aria-describedby="verify-reason verify-note"
+            onClick={() => {
+              if (enabled) onVerify();
+            }}
+          >
+            Verify record
+          </button>
+        )}
+      </div>
+      {!verified && (
+        <p id="verify-note" className="verify-note">
+          {VERIFY_NOTE}
+        </p>
+      )}
     </div>
   );
 }

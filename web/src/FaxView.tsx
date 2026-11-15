@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Field, FieldName } from '../../src/extract/schema.js';
 import type { SampleFax } from '../../src/samples/schema.js';
 import { cropBox, viewBoxAttr, viewerBox } from './crop';
@@ -8,15 +8,17 @@ import type { OpenedBy } from './input-modality';
 import { FIELD_LABELS, NOT_FOUND_TEXT } from './field-labels';
 import { READER_LABEL, type ReaderName } from './flags';
 import { ghostRects } from './ghost';
-import { ReviewPanel, VerifyBar } from './ReviewPanel';
+import { ReviewPanel, SummaryBar } from './ReviewPanel';
 import type { VerifiedRecord } from './record';
 import {
   LAID_TO_REST,
   NO_ANSWER_VERIFY_REASON,
+  canVerify,
   fieldReview,
   reviewStatus,
   sortForReview,
   unreviewedFlagged,
+  verifyReason,
   type ReviewEvent,
   type ReviewState,
 } from './review-state';
@@ -96,6 +98,8 @@ function selectionLine(fields: readonly Field[], selection: Selection | null, re
 export function FaxView({ item, fax, reader, openedBy, referenceDate, review, onReaderChange, onReview, onVerify, verified, onDownload, now, onBack }: FaxViewProps) {
   const heading = useRef<HTMLHeadingElement>(null);
   const panel = useRef<HTMLDivElement>(null);
+  const bar = useRef<HTMLDivElement>(null);
+  const root = useRef<HTMLElement>(null);
   const reducedMotion = usePrefersReducedMotion();
   const [selection, setSelection] = useState<Selection | null>(null);
   const [showFullPage, setShowFullPage] = useState(false);
@@ -106,9 +110,23 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
     heading.current?.focus();
   }, []);
 
+  // The sticky field list sits just below the bar. The bar can wrap, so its real height is
+  // handed to the stylesheet as --summary-bar-h (the CSS has a fallback for first paint).
+  useLayoutEffect(() => {
+    const barEl = bar.current;
+    const rootEl = root.current;
+    if (!barEl || !rootEl) return;
+    const apply = () => rootEl.style.setProperty('--summary-bar-h', `${barEl.offsetHeight}px`);
+    apply();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(apply);
+    observer.observe(barEl);
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     if (!pendingFocus) return;
-    const root = panel.current ?? document;
+    const scope = pendingFocus.kind === 'verify' ? bar.current : panel.current;
     const selector =
       pendingFocus.kind === 'verify'
         ? '[data-verify]'
@@ -117,7 +135,7 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
           : pendingFocus.kind === 'accept'
           ? `[data-accept="${pendingFocus.field}"]`
           : `[data-edit="${pendingFocus.field}"]`;
-    root.querySelector<HTMLElement>(selector)?.focus();
+    (scope ?? document).querySelector<HTMLElement>(selector)?.focus();
     setPendingFocus(null);
   }, [pendingFocus]);
 
@@ -199,7 +217,7 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
   const box = viewerBox(crop, fax, ghostRects(selectedField, fax.ocr.words), showFullPage);
 
   return (
-    <section aria-labelledby="fax-title" className="fax-view">
+    <section aria-labelledby="fax-title" className="fax-view" ref={root}>
       <button type="button" className="button back-button" onClick={onBack}>
         Back to inbox
       </button>
@@ -213,9 +231,6 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
         >
           Fax {item.entry.id}
         </h2>
-        <span className="review-status">
-          <span aria-hidden="true">○</span> {status}
-        </span>
       </div>
       <p className="reader-name">{READER_LABEL[reader]}</p>
       <div role="group" aria-label="Which reader to show" className="reader-toggle">
@@ -293,30 +308,37 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
               }}
               onSave={save}
               onCancel={cancel}
-              onVerify={verify}
               verified={verified}
               onDownload={onDownload}
             />
           ) : (
-            <>
-              <div className="problem-box no-answer">
-                <p>
-                  <span aria-hidden="true">–</span> {result.message}
-                </p>
-                {reader === 'model' && (
-                  <button type="button" className="button" onClick={() => changeReader('rules')}>
-                    Show the rules reader
-                  </button>
-                )}
-              </div>
-              <VerifyBar enabled={false} reason={NO_ANSWER_VERIFY_REASON} onVerify={onVerify} />
-            </>
+            <div className="problem-box no-answer">
+              <p>
+                <span aria-hidden="true">–</span> {result.message}
+              </p>
+              {reader === 'model' && (
+                <button type="button" className="button" onClick={() => changeReader('rules')}>
+                  Show the rules reader
+                </button>
+              )}
+            </div>
           )}
           <p className="sr-only" aria-live="polite">
             {announcement}
           </p>
         </div>
       </div>
+
+      {/* Last in the DOM so Verify follows the fields in tab order; CSS (flex order) shows it first. */}
+      <SummaryBar
+        faxId={item.entry.id}
+        status={status}
+        verified={verified !== null}
+        enabled={result.status === 'ok' && canVerify(fields, review, referenceDate)}
+        reason={result.status === 'ok' ? verifyReason(fields, review, referenceDate) : NO_ANSWER_VERIFY_REASON}
+        onVerify={verify}
+        barRef={bar}
+      />
     </section>
   );
 }

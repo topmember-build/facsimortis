@@ -206,13 +206,66 @@ button.row-button:hover {
   max-width: 72rem;
 }
 
+/* A flex column (not a grid) so the summary bar can be sticky across the whole screen.
+   The bar is last in the DOM (Verify follows the fields in tab order) and shown above
+   the viewer with `order`. --summary-bar-h is the bar's real height, set by FaxView;
+   5rem is the first-paint fallback. */
 .fax-view {
-  display: grid;
+  --bar-h: var(--summary-bar-h, 5rem);
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
 }
 
 .fax-view .back-button {
-  justify-self: start;
+  align-self: flex-start;
+}
+
+.summary-bar {
+  order: 1;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: grid;
+  gap: 0.125rem;
+  padding: 0.5rem 0.875rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+.viewer {
+  order: 2;
+}
+
+.summary-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.875rem;
+}
+
+.summary-id {
+  font-weight: 600;
+}
+
+.summary-bar .verify-reason {
+  flex: 1 1 14rem;
+  margin: 0;
+  color: var(--text);
+}
+
+.summary-bar .verify-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+/* Keep keyboard focus clear of the sticky bar when the page scrolls to it. */
+.fax-view button,
+.fax-view input {
+  scroll-margin-top: calc(var(--bar-h) + 0.75rem);
+  scroll-margin-bottom: 0.75rem;
 }
 
 .fax-view .reader-name {
@@ -280,9 +333,28 @@ button.row-button:hover {
   align-items: start;
 }
 
+/* Wide layout: the field list is a sticky column below the summary bar, with its own
+   scroll, so it stays in view while the fax image scrolls. Narrow layouts (below 60rem)
+   keep normal flow: the list sits under the image and is not sticky. */
 @media (min-width: 60rem) {
   .viewer {
     grid-template-columns: minmax(0, 1fr) 24rem;
+  }
+
+  .viewer-side {
+    position: sticky;
+    top: calc(var(--bar-h) + 0.5rem);
+    max-height: calc(100vh - var(--bar-h) - 1rem);
+    max-height: calc(100dvh - var(--bar-h) - 1rem);
+    overflow-y: auto;
+    padding: 0.25rem;
+    scroll-padding: 0.5rem;
+  }
+
+  /* Inside the scrolled list the list itself does the scrolling, so the bar offset is not needed. */
+  .viewer-side button,
+  .viewer-side input {
+    scroll-margin-top: 0.5rem;
   }
 }
 
