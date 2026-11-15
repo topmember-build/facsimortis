@@ -2,7 +2,7 @@
    --text #e8eaf0 16.2 and 14.3, --muted #b4bbcb 10.1 and 9.0,
    --flag #ffb86b 11.4 and 10.1, --edge #8a94aa 6.4 and 5.7 (borders of controls),
    --focus #ffffff 19.4 and 17.2.
-   --ghost #8fd8ff (12.4 and 11.0) is RESERVED for source ghosts (2.4). Nothing else may
+   --ghost #8fd8ff (12.4 and 11.0) is RESERVED for source ghosts (.ghost rules below). Nothing else may
    use it: not the inbox, not focus rings, not buttons, not the notice. */
 :root {
   color-scheme: dark;
@@ -201,26 +201,209 @@ button.row-button:hover {
   color: var(--muted);
 }
 
+.page-main-wide {
+  max-width: 72rem;
+}
+
 .fax-view {
   display: grid;
-  justify-items: center;
   gap: 0.5rem;
 }
 
-.fax-view .button {
+.fax-view .back-button {
   justify-self: start;
 }
 
 .fax-view .reader-name {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.fax-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.fax-title-row h2 {
+  margin: 0;
+}
+
+.review-status {
+  display: inline-block;
+  color: var(--muted);
+  font-size: 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0 0.625rem;
+}
+
+.reader-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.toggle-button[aria-pressed='true'] {
+  background: var(--panel);
+  border-color: var(--text);
+  border-width: 2px;
+  padding: calc(0.375rem - 1px) calc(0.875rem - 1px);
+  font-weight: 600;
+}
+
+/* The fax image is the centre; the field list sits beside it on wide screens and
+   below it on narrow ones. */
+.viewer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (min-width: 60rem) {
+  .viewer {
+    grid-template-columns: minmax(0, 1fr) 24rem;
+  }
+}
+
+.viewer-image {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: center;
 }
 
 .fax-image {
+  display: block;
   width: 100%;
-  max-width: 36rem;
+  max-width: 40rem;
   height: auto;
   background: #ffffff;
   border: 1px solid var(--edge);
+}
+
+.selection-line {
+  margin: 0;
+  min-height: 1.5rem;
+  color: var(--muted);
+}
+
+/* Source ghosts. --ghost is used here and nowhere else. Strokes keep a constant
+   on-screen width however the image is scaled. */
+.ghost rect {
+  fill: var(--ghost);
+  fill-opacity: 0.12;
+  stroke: var(--ghost);
+  stroke-opacity: 0.4;
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+
+.ghost-selected rect {
+  fill-opacity: 0.4;
+  stroke-opacity: 1;
+  stroke-width: 3px;
+}
+
+.ghost-pulse rect {
+  animation: ghost-pulse 1.2s ease-out 1;
+}
+
+@keyframes ghost-pulse {
+  0% {
+    fill-opacity: 0.15;
+  }
+  40% {
+    fill-opacity: 0.8;
+  }
+  100% {
+    fill-opacity: 0.4;
+  }
+}
+
+.field-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.field-item {
+  display: grid;
+  gap: 0.125rem;
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.field-item:hover {
+  border-color: var(--edge);
+}
+
+.field-selected,
+.field-selected:hover {
+  border: 2px solid var(--text);
+  padding: calc(0.625rem - 1px) calc(0.875rem - 1px);
+}
+
+.field-name {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.field-value {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.field-empty {
+  font-weight: 400;
+  font-style: italic;
+}
+
+.confidence {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.confidence-bar {
+  flex: 1;
+  height: 0.5rem;
+  background: var(--bg);
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.confidence-fill {
+  display: block;
+  height: 100%;
+  background: var(--muted);
+}
+
+.field-flag {
+  color: var(--flag);
+  font-weight: 600;
+}
+
+.no-answer {
+  border-color: var(--edge);
+}
+
+.no-answer p {
+  color: var(--text);
 }
 
 @media (max-width: 36rem) {
@@ -228,7 +411,6 @@ button.row-button:hover {
     flex-direction: column;
   }
 }
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

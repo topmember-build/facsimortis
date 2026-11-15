@@ -120,7 +120,8 @@ describe('opened fax', () => {
     await user.click(rowNames()[0]!);
 
     expect(screen.getByRole('heading', { level: 2, name: 'Fax fax-0001' })).toBeInTheDocument();
-    expect(screen.getByAltText('Faxed referral form, fax fax-0001')).toHaveAttribute('src', expect.stringMatching(/fax-0001\.png$/));
+    expect(screen.getByRole('img', { name: /Faxed referral form, fax fax-0001/ })).toBeInTheDocument();
+    expect(container.querySelector('image')).toHaveAttribute('href', expect.stringMatching(/fax-0001\.png$/));
     expect(screen.getByText('Reader: model (saved answers)')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Synthetic data' })).toBeVisible();
     await expectNoViolations(container);

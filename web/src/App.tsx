@@ -10,8 +10,8 @@ type Load = { state: 'loading' } | { state: 'ready'; items: InboxItem[] } | { st
 export function App() {
   const [load, setLoad] = useState<Load>({ state: 'loading' });
   const [attempt, setAttempt] = useState(0);
-  // The reader is app-level state so the reader toggle (2.4) can change it without rework.
-  const [reader] = useState<ReaderName>(DEFAULT_READER);
+  // App-level, so the inbox flag counts follow the reader chosen on the fax screen.
+  const [reader, setReader] = useState<ReaderName>(DEFAULT_READER);
   // In memory only: a reload starts again.
   const [visible, setVisible] = useState<number | null>(null);
   const [arrivedId, setArrivedId] = useState<string | null>(null);
@@ -68,6 +68,7 @@ export function App() {
           item={opened}
           fax={opened.fax.value}
           reader={reader}
+          onReaderChange={setReader}
           onBack={() => {
             setReturnFocusId(opened.entry.id);
             setOpenId(null);
@@ -102,7 +103,7 @@ export function App() {
           A demo that turns faxed referrals into checked records. It is built on synthetic data only.
         </p>
       </header>
-      <main className="page-main">{screen}</main>
+      <main className={openId !== null && load.state === 'ready' ? 'page-main page-main-wide' : 'page-main'}>{screen}</main>
       <section className="synthetic-notice" aria-labelledby="synthetic-notice-title">
         <h2 id="synthetic-notice-title">Synthetic data</h2>
         <p>Every fax, person, provider and number in this demo is made up.</p>

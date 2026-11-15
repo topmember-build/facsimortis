@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import type { InboxItem } from './data';
 import { formatReceived } from './format';
 import { NO_MORE_FAXES_MESSAGE } from './inbox-state';
+import { reviewLabel } from './review';
 import { NO_SAVED_ANSWER_LABEL, READER_LABEL, summariseFlags, type ReaderName } from './flags';
 
 function FlagSummaryLine({ item, reader }: { item: InboxItem; reader: ReaderName }) {
@@ -49,7 +50,14 @@ function RowText({ item, reader }: { item: InboxItem; reader: ReaderName }) {
         Received <time dateTime={item.entry.receivedAt}>{formatReceived(item.entry.receivedAt)}</time>
       </span>
       {item.fax.ok ? (
-        <FlagSummaryLine item={item} reader={reader} />
+        <>
+          <FlagSummaryLine item={item} reader={reader} />
+          {reviewLabel(item.fax.value) && (
+            <span className="review-status">
+              <span aria-hidden="true">○</span> {reviewLabel(item.fax.value)}
+            </span>
+          )}
+        </>
       ) : (
         <span className="flag-line flag-on">
           <span aria-hidden="true">⚠</span> Could not be read. {item.fax.error}
