@@ -134,3 +134,39 @@ describe('property: nothing original is overwritten', () => {
     );
   });
 });
+
+describe('acceptedDespiteFlag in the record', () => {
+  const FAILED = ['The provider number looks wrong: the last digit does not match.'];
+  const despite = reviewReducer(EMPTY_REVIEW, {
+    type: 'accept',
+    field: 'npi',
+    originalValue: '6720988041',
+    failedChecks: FAILED,
+    at: '2026-10-01T09:30:00.000Z',
+  });
+
+  it('carries the flag and messages on the field and the action, and false everywhere else', () => {
+    const record = build(despite);
+    expect(record.fields.map((f) => f.acceptedDespiteFlag)).toEqual(FIELD_ORDER.map((n) => n === 'npi'));
+    expect(record.fields.find((f) => f.name === 'npi')!.failedChecks).toEqual(FAILED);
+    expect(record.fields.filter((f) => f.name !== 'npi').every((f) => f.failedChecks.length === 0)).toBe(true);
+    expect(record.actions[0]).toMatchObject({ acceptedDespiteFlag: true, failedChecks: FAILED });
+    expect(VerifiedRecordSchema.safeParse(JSON.parse(serialiseRecord(record))).success).toBe(true);
+  });
+
+  it('requires the boolean on every field', () => {
+    const record = JSON.parse(serialiseRecord(build(despite))) as { fields: Record<string, unknown>[] };
+    delete record.fields[0]!['acceptedDespiteFlag'];
+    expect(VerifiedRecordSchema.safeParse(record).success).toBe(false);
+  });
+
+  it('final field state is false after a later valid edit, and the earlier action stays true', () => {
+    const later = reviewReducer(despite, {
+      type: 'edit', field: 'npi', originalValue: '6720988041', newValue: '1234567893', at: '2026-10-01T09:30:01.000Z',
+    });
+    const record = build(later);
+    expect(record.fields.find((f) => f.name === 'npi')).toMatchObject({ acceptedDespiteFlag: false, failedChecks: [] });
+    expect(record.actions.map((a) => a.action)).toEqual(['accepted', 'edited']);
+    expect(record.actions[0]).toMatchObject({ acceptedDespiteFlag: true });
+  });
+});

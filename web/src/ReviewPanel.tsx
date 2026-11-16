@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent, type Ref } from
 import type { Field, FieldName } from '../../src/extract/schema.js';
 import { FORMAT_HINTS, editLabel } from './edit-hints';
 import { FIELD_LABELS, NOT_FOUND_TEXT } from './field-labels';
-import { verifiedLine, type VerifiedRecord } from './record';
+import { ACCEPTED_DESPITE_TEXT, verifiedLine, type VerifiedRecord } from './record';
 import {
   LAID_TO_REST,
   VERIFY_NOTE,
@@ -165,6 +165,16 @@ function FieldRow({ field, state, referenceDate, selected, editing, onSelect, on
             <span aria-hidden="true">⚑</span> <span>{message}</span>
           </span>
         ))}
+        {review.acceptedDespiteFlag && (
+          <span className="field-flag" data-accepted-despite="true">
+            <span aria-hidden="true">⚠</span> <span>{ACCEPTED_DESPITE_TEXT}</span>
+            {review.failedChecks.map((message) => (
+              <span key={message} className="field-check">
+                {message}
+              </span>
+            ))}
+          </span>
+        )}
         {field.flags
           .filter((message) => !standing.includes(message))
           .map((message) => (
@@ -253,11 +263,26 @@ export function ReviewPanel(props: ReviewPanelProps) {
 
 /** The calm verified state: a plain statement, the Download JSON action, nothing else. */
 export function LaidToRest({ record, onDownload }: { record: VerifiedRecord; onDownload: () => void }) {
+  const despite = record.fields.filter((field) => field.acceptedDespiteFlag);
   return (
     <div className="laid-to-rest" data-laid-to-rest="true">
       <h3 className="rest-title">{LAID_TO_REST}</h3>
       <p>{verifiedLine(record.verifiedAt)}</p>
       <p className="rest-note">Verifier: {record.verifier}. This is a fixed demo label; there are no accounts.</p>
+      {despite.length > 0 && (
+        <ul className="rest-despite" aria-label="Fields accepted although a check failed">
+          {despite.map((field) => (
+            <li key={field.name} className="field-flag" data-accepted-despite="true">
+              <span aria-hidden="true">⚠</span> <span>{field.label}: {ACCEPTED_DESPITE_TEXT}</span>
+              {field.failedChecks.map((message) => (
+                <span key={message} className="field-check">
+                  {message}
+                </span>
+              ))}
+            </li>
+          ))}
+        </ul>
+      )}
       <button type="button" className="button button-strong" data-download="true" onClick={onDownload}>
         Download JSON
       </button>

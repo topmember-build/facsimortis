@@ -605,6 +605,19 @@ button.row-button:hover {
   font-weight: 600;
 }
 
+.field-check {
+  display: block;
+  font-weight: 400;
+}
+
+.rest-despite {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 .no-answer {
   border-color: var(--edge);
 }

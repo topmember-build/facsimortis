@@ -133,7 +133,7 @@ The site is static: there is no server and no network call beyond loading its ow
 
 ### Saved progress, verified records and export
 
-- Review progress (each Accept and Edit, with its time), the edit record and verified records are kept only in this browser's `localStorage`, under keys that start with `facsimortis:v1:`. There is no server. This is not a server audit trail, and clearing the site's data removes all of it. Each saved entry records the original value next to any edit.
+- Review progress (each Accept and Edit, with its time), the edit record and verified records are kept only in this browser's `localStorage`, under keys that start with `facsimortis:v2:`. There is no server. This is not a server audit trail, and clearing the site's data removes all of it. Each saved entry records the original value next to any edit. When a reviewer presses Accept on a value that still fails a check (provider number, date of birth or phone), the action and the field in the export carry `acceptedDespiteFlag: true` and the exact messages in `failedChecks`; every field has the boolean, and format v2 does not read older `facsimortis:v1:` entries (the page says so).
 - Saved entries are tied to the sample data. If the sample data changes (data version, reference date or that fax's contents), the old entry is ignored and the page says so. Unreadable saved data is ignored the same way.
 - If the browser does not allow saving (for example private mode, or no space left), the app still works, and a short note says progress will not be kept.
 - There are no accounts. The verifier in every record is the fixed label "Demo reviewer".

@@ -18,6 +18,7 @@ import {
   reviewStatus,
   sortForReview,
   unreviewedFlagged,
+  validatorFailures,
   verifyReason,
   type ReviewEvent,
   type ReviewState,
@@ -161,8 +162,13 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
   function accept(field: Field) {
     keepSelected(field.name);
     setEditing(null);
-    onReview({ type: 'accept', field: field.name, originalValue: field.value, at: now().toISOString() });
-    setAnnouncement(`${FIELD_LABELS[field.name]} accepted.`);
+    const failedChecks = validatorFailures(field, review, referenceDate);
+    onReview({ type: 'accept', field: field.name, originalValue: field.value, failedChecks, at: now().toISOString() });
+    setAnnouncement(
+      failedChecks.length > 0
+        ? `${FIELD_LABELS[field.name]} accepted although the check failed.`
+        : `${FIELD_LABELS[field.name]} accepted.`,
+    );
     // Next unreviewed flagged field after this one in the order shown, else Verify record.
     const order = sortForReview(fields);
     const waiting = new Set(unreviewedFlagged(fields, review, referenceDate).map((f) => f.name));

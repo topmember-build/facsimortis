@@ -1,4 +1,11 @@
 import type { Field, FieldName } from '../../src/extract/schema.js';
+import {
+  DOB_FUTURE_FLAG,
+  DOB_NOT_A_DATE_FLAG,
+  DOB_TOO_OLD_FLAG,
+  NPI_FLAG,
+  PHONE_FLAG,
+} from '../../src/validators/messages.js';
 import { editFlag } from './edit-check';
 import { FIELD_LABELS } from './field-labels';
 
@@ -12,6 +19,13 @@ export type ReviewAction =
       action: 'accepted';
       /** The value as read from the page (null: nothing was read). */
       originalValue: string | null;
+      /**
+       * True when the reviewer accepted a value while a validator check on it was failing
+       * and the value was unchanged from what the check failed on.
+       */
+      acceptedDespiteFlag: boolean;
+      /** The exact validator messages that were failing. Empty when acceptedDespiteFlag is false. */
+      failedChecks: string[];
       /** ISO timestamp from the injected clock. */
       at: string;
     }
@@ -32,14 +46,29 @@ export interface ReviewState {
 export const EMPTY_REVIEW: ReviewState = { actions: [] };
 
 export type ReviewEvent =
-  | { type: 'accept'; field: FieldName; originalValue: string | null; at: string }
+  | {
+      type: 'accept';
+      field: FieldName;
+      originalValue: string | null;
+      /** Validator messages standing on the field at Accept (see validatorFailures). Default: none. */
+      failedChecks?: readonly string[];
+      at: string;
+    }
   | { type: 'edit'; field: FieldName; originalValue: string | null; newValue: string; at: string }
   | { type: 'cancel' };
 
 /** The action an accept or edit event records. Cancel records nothing. */
 export function actionFromEvent(event: ReviewEvent): ReviewAction | null {
   if (event.type === 'accept') {
-    return { field: event.field, action: 'accepted', originalValue: event.originalValue, at: event.at };
+    const failedChecks = [...(event.failedChecks ?? [])];
+    return {
+      field: event.field,
+      action: 'accepted',
+      originalValue: event.originalValue,
+      acceptedDespiteFlag: failedChecks.length > 0,
+      failedChecks,
+      at: event.at,
+    };
   }
   if (event.type === 'edit') {
     return {
@@ -67,6 +96,10 @@ export interface FieldReview {
   enteredValue: string | null;
   /** The latest action is an Accept (the reviewer confirmed the value shown, even an empty one). */
   accepted: boolean;
+  /** The latest action is an Accept made while a validator check was failing. Cleared by any later action. */
+  acceptedDespiteFlag: boolean;
+  /** The validator messages of that Accept, or an empty list. */
+  failedChecks: string[];
 }
 
 export function fieldReview(state: ReviewState, name: FieldName): FieldReview {
@@ -77,8 +110,17 @@ export function fieldReview(state: ReviewState, name: FieldName): FieldReview {
     latest = action;
     if (action.action === 'edited') entered = action.newValue;
   }
-  if (!latest) return { reviewed: false, enteredValue: null, accepted: false };
-  return { reviewed: true, enteredValue: entered, accepted: latest.action === 'accepted' };
+  if (!latest) {
+    return { reviewed: false, enteredValue: null, accepted: false, acceptedDespiteFlag: false, failedChecks: [] };
+  }
+  const despite = latest.action === 'accepted' && latest.acceptedDespiteFlag;
+  return {
+    reviewed: true,
+    enteredValue: entered,
+    accepted: latest.action === 'accepted',
+    acceptedDespiteFlag: despite,
+    failedChecks: latest.action === 'accepted' && despite ? [...latest.failedChecks] : [],
+  };
 }
 
 /** Flagged as read: the flags list is not empty. The reader's flags are never changed. */
@@ -122,6 +164,23 @@ export function standingFlags(
   }
   return isOriginallyFlagged(field) && !review.reviewed ? [...field.flags] : [];
 }
+
+/** The validator messages (NPI, date of birth, phone) and nothing else. Matched by message. */
+const VALIDATOR_FLAGS: ReadonlySet<string> = new Set([
+  NPI_FLAG,
+  DOB_NOT_A_DATE_FLAG,
+  DOB_FUTURE_FLAG,
+  DOB_TOO_OLD_FLAG,
+  PHONE_FLAG,
+]);
+
+/**
+ * The validator messages standing on a field right now: what Accept would accept despite.
+ * Reader flags that are not validator messages (label not found, not read clearly) are left out.
+ * Standing flags always describe the value now shown, so the value is unchanged by definition.
+ */
+export const validatorFailures = (field: Field, state: ReviewState, referenceDate: string): string[] =>
+  standingFlags(field, state, referenceDate).filter((message) => VALIDATOR_FLAGS.has(message));
 
 /** Fields that are flagged and not yet reviewed: originally flagged, or flagged again by a bad edit. */
 export function unreviewedFlagged(fields: readonly Field[], state: ReviewState, referenceDate: string): Field[] {

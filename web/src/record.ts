@@ -20,6 +20,8 @@ export const ReviewActionSchema = z.discriminatedUnion('action', [
     field: FieldNameSchema,
     action: z.literal('accepted'),
     originalValue: z.string().nullable(),
+    acceptedDespiteFlag: z.boolean(),
+    failedChecks: z.array(z.string()),
     at: IsoTimeSchema,
   }),
   z.strictObject({
@@ -44,6 +46,10 @@ const VerifiedFieldSchema = z.strictObject({
   source: z.enum(['page', 'reviewer']),
   /** The reviewer accepted or edited this field. */
   reviewed: z.boolean(),
+  /** The final state: the last action was an Accept made while a validator check was failing. */
+  acceptedDespiteFlag: z.boolean(),
+  /** The exact validator messages for that Accept. Always present; empty when acceptedDespiteFlag is false. */
+  failedChecks: z.array(z.string()),
 });
 
 export const VerifiedRecordSchema = z
@@ -112,6 +118,8 @@ export function buildVerifiedRecord(input: BuildRecordInput): VerifiedRecord | n
         finalValue: edited ? review.enteredValue : field.value,
         source: edited ? ('reviewer' as const) : ('page' as const),
         reviewed: review.reviewed,
+        acceptedDespiteFlag: review.acceptedDespiteFlag,
+        failedChecks: [...review.failedChecks],
       };
     }),
     actions,
@@ -123,6 +131,9 @@ export const serialiseRecord = (record: VerifiedRecord): string => `${JSON.strin
 
 export const exportFileName = (record: VerifiedRecord): string =>
   `facsimortis-${record.faxId}-${record.reader}-verified.json`;
+
+/** Shown beside a field that was accepted while a validator check was failing. Does not say the value is right. */
+export const ACCEPTED_DESPITE_TEXT = 'Accepted although the check failed';
 
 export const LAID_TO_REST_RULE = 'This record is read-only.';
 

@@ -4,6 +4,7 @@ import axe from 'axe-core';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import type { ReviewAction } from './review-state';
+import { NPI_FLAG as VALIDATOR_NPI_FLAG } from '../../src/validators/messages.js';
 import { committedIndex, json, stubSite } from './test-site';
 
 type UserApi = ReturnType<typeof userEvent.setup>;
@@ -86,12 +87,19 @@ describe('review panel: fax-0003, model reader', () => {
     expect(npi.getByText('6720988041')).toBeInTheDocument();
     expect(npi.getByText('Was flagged: The provider number looks wrong: the last digit does not match.')).toBeInTheDocument();
     expect(ghost('npi')).toHaveAttribute('data-selected', 'true');
-    expect(screen.getByText('Provider number (NPI) accepted.')).toBeInTheDocument();
+    expect(screen.getByText('Provider number (NPI) accepted although the check failed.')).toBeInTheDocument();
     expect(recorded).toEqual([
       {
         faxId: 'fax-0003',
         reader: 'model',
-        action: { field: 'npi', action: 'accepted', originalValue: '6720988041', at: '2025-01-02T03:04:00.000Z' },
+        action: {
+          field: 'npi',
+          action: 'accepted',
+          originalValue: '6720988041',
+          acceptedDespiteFlag: true,
+          failedChecks: [VALIDATOR_NPI_FLAG],
+          at: '2025-01-02T03:04:00.000Z',
+        },
       },
     ]);
 
@@ -131,7 +139,14 @@ describe('review panel: fax-0003, model reader', () => {
     expect(onVerify).toHaveBeenCalledWith('fax-0003', 'model');
     expect(recorded.map((r) => r.action)).toEqual([
       { field: 'callbackPhone', action: 'edited', originalValue: '555~0151', newValue: '555-0151', at: '2025-01-02T03:04:00.000Z' },
-      { field: 'npi', action: 'accepted', originalValue: '6720988041', at: '2025-01-02T03:04:01.000Z' },
+      {
+        field: 'npi',
+        action: 'accepted',
+        originalValue: '6720988041',
+        acceptedDespiteFlag: true,
+        failedChecks: [VALIDATOR_NPI_FLAG],
+        at: '2025-01-02T03:04:01.000Z',
+      },
     ]);
   });
 
@@ -209,7 +224,7 @@ describe('review panel: other faxes', () => {
 
     await user.click(accept('reason'));
     expect(recorded.map((r) => r.action)).toEqual([
-      { field: 'reason', action: 'accepted', originalValue: null, at: expect.any(String) },
+      { field: 'reason', action: 'accepted', originalValue: null, acceptedDespiteFlag: false, failedChecks: [], at: expect.any(String) },
     ]);
     expect(within(fieldButton('reason')).getByText(/Accepted as empty/)).toBeInTheDocument();
     expect(verify()).toHaveAccessibleDescription(
@@ -288,7 +303,7 @@ describe('edits are checked again', () => {
   const PHONE_FLAG = 'The callback phone number is not in a usual format. Please check it.';
   const FUTURE = 'The date of birth is in the future. Please check it.';
   const flagText = (name: string) =>
-    Array.from(fieldButton(name).querySelectorAll('.field-flag')).map((n) => n.textContent!.replace('⚑', '').trim());
+    Array.from(fieldButton(name).querySelectorAll('.field-flag:not([data-accepted-despite])')).map((n) => n.textContent!.replace('⚑', '').trim());
 
   it('keeps the flag for a bad NPI, blocks Verify, and Accept confirms the entered value', async () => {
     const { user, recorded, onVerify } = setup();

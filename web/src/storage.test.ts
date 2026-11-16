@@ -5,7 +5,10 @@ import { reviewReducer, EMPTY_REVIEW } from './review-state';
 import {
   MemoryStore,
   ReviewStorage,
+  LEGACY_PREFIX,
+  STALE_NOTE,
   STORAGE_PREFIX,
+  hydrate,
   entryKey,
   faxFingerprint,
   loadEntry,
@@ -39,7 +42,7 @@ const throwing: KeyValueStore = {
 
 describe('storage', () => {
   it('uses one versioned prefix and a key per fax and reader', () => {
-    expect(entryKey('fax-0003', 'model')).toBe('facsimortis:v1:fax-0003:model');
+    expect(entryKey('fax-0003', 'model')).toBe('facsimortis:v2:fax-0003:model');
     const store = new MemoryStore();
     saveEntry(new ReviewStorage(store), fax, 'model', REF, state, null);
     expect([...store.data.keys()]).toEqual([`${STORAGE_PREFIX}fax-0003:model`]);
@@ -122,5 +125,56 @@ describe('storage', () => {
     expect(storage.ok).toBe(true);
     expect(loadEntry(storage, 'fax-0003', 'model', context)).toEqual({ kind: 'none' });
     expect(storage.ok).toBe(false);
+  });
+});
+
+describe('acceptedDespiteFlag in storage (format v2)', () => {
+  const FAILED = ['The provider number looks wrong: the last digit does not match.'];
+  const despite = reviewReducer(EMPTY_REVIEW, {
+    type: 'accept',
+    field: 'npi',
+    originalValue: '6720988041',
+    failedChecks: FAILED,
+    at: '2026-10-01T09:30:00.000Z',
+  });
+
+  it('keeps the flag and messages through a save and a reload', () => {
+    const store = new MemoryStore();
+    const record = buildVerifiedRecord({
+      fax, reader: 'model', referenceDate: REF, sampleDataVersion: SAMPLE_DATA_VERSION, state: despite, verifiedAt: '2026-10-01T09:30:02.000Z',
+    });
+    saveEntry(new ReviewStorage(store), fax, 'model', REF, despite, record);
+    const loaded = loadEntry(new ReviewStorage(store), 'fax-0003', 'model', context);
+    expect(loaded).toEqual({ kind: 'ok', actions: despite.actions, verified: record });
+    expect(loaded.kind === 'ok' && loaded.actions[0]).toMatchObject({ acceptedDespiteFlag: true, failedChecks: FAILED });
+  });
+
+  it('does not read a v1 entry, says so with the stale note, and never throws', () => {
+    expect(STORAGE_PREFIX).toBe('facsimortis:v2:');
+    const store = new MemoryStore();
+    const v1Entry = {
+      version: 1, faxId: 'fax-0003', reader: 'model', sampleDataVersion: context.sampleDataVersion,
+      referenceDate: REF, fingerprint: context.fingerprint,
+      actions: [{ field: 'npi', action: 'accepted', originalValue: '6720988041', at: '2026-10-01T09:30:00.000Z' }],
+      verified: null,
+    };
+    store.setItem(`${LEGACY_PREFIX}fax-0003:model`, JSON.stringify(v1Entry));
+    expect(loadEntry(new ReviewStorage(store), 'fax-0003', 'model', context)).toEqual({ kind: 'stale' });
+    const item = { fax: { ok: true, value: fax } } as unknown as Parameters<typeof hydrate>[1][number];
+    const out = hydrate(new ReviewStorage(store), [item], REF);
+    expect(out.notices).toEqual([STALE_NOTE]);
+    expect(out.reviews).toEqual({});
+    // The old entry is left alone.
+    expect(store.data.has(`${LEGACY_PREFIX}fax-0003:model`)).toBe(true);
+  });
+
+  it('treats a v2 entry whose Accept lacks the new fields as corrupt', () => {
+    const store = new MemoryStore();
+    saveEntry(new ReviewStorage(store), fax, 'model', REF, despite, null);
+    const key = entryKey('fax-0003', 'model');
+    const entry = JSON.parse(store.data.get(key)!) as { actions: Record<string, unknown>[] };
+    delete entry.actions[0]!['acceptedDespiteFlag'];
+    store.setItem(key, JSON.stringify(entry));
+    expect(loadEntry(new ReviewStorage(store), 'fax-0003', 'model', context)).toEqual({ kind: 'corrupt' });
   });
 });

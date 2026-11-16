@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Field, FieldName } from '../../src/extract/schema.js';
+import { NPI_FLAG, PHONE_FLAG } from '../../src/validators/messages.js';
 import {
   EMPTY_REVIEW,
   canVerify,
@@ -8,6 +9,7 @@ import {
   reviewStatus,
   sortForReview,
   unreviewedFlagged,
+  validatorFailures,
   verifyReason,
   type ReviewState,
 } from './review-state';
@@ -65,14 +67,29 @@ describe('reviewReducer', () => {
 
   it('records an accept with the original value and the time given', () => {
     const next = reviewReducer(EMPTY_REVIEW, { type: 'accept', field: 'npi', originalValue: '6720988041', at: AT });
-    expect(next.actions).toEqual([{ field: 'npi', action: 'accepted', originalValue: '6720988041', at: AT }]);
-    expect(fieldReview(next, 'npi')).toEqual({ reviewed: true, enteredValue: null, accepted: true });
+    expect(next.actions).toEqual([
+      { field: 'npi', action: 'accepted', originalValue: '6720988041', acceptedDespiteFlag: false, failedChecks: [], at: AT },
+    ]);
+    expect(fieldReview(next, 'npi')).toEqual({
+      reviewed: true,
+      enteredValue: null,
+      accepted: true,
+      acceptedDespiteFlag: false,
+      failedChecks: [],
+    });
     expect(EMPTY_REVIEW.actions).toEqual([]);
   });
 
   it('records an accept of an empty field', () => {
     const next = reviewReducer(EMPTY_REVIEW, { type: 'accept', field: 'reason', originalValue: null, at: AT });
-    expect(next.actions[0]).toEqual({ field: 'reason', action: 'accepted', originalValue: null, at: AT });
+    expect(next.actions[0]).toEqual({
+      field: 'reason',
+      action: 'accepted',
+      originalValue: null,
+      acceptedDespiteFlag: false,
+      failedChecks: [],
+      at: AT,
+    });
   });
 
   it('records an edit and appends a second edit without changing the first', () => {
@@ -135,5 +152,37 @@ describe('verify rule and status', () => {
     const clean = [field('patientName', 0.9)];
     expect(canVerify(clean, EMPTY_REVIEW, REF)).toBe(true);
     expect(reviewStatus(clean, EMPTY_REVIEW, REF)).toBe('Ready to verify');
+  });
+});
+
+describe('validatorFailures and acceptedDespiteFlag', () => {
+  const npi = { ...field('npi', 0.9, true, '6720988041'), flags: [NPI_FLAG] };
+  const readerOnly = { ...field('reason', 0.4, true, null), flags: ['The label was not found.'] };
+
+  it('lists only validator messages, matched by message', () => {
+    expect(validatorFailures(npi, EMPTY_REVIEW, REF)).toEqual([NPI_FLAG]);
+    expect(validatorFailures(readerOnly, EMPTY_REVIEW, REF)).toEqual([]);
+    const mixed = { ...npi, flags: ['Some words were not read.', NPI_FLAG] };
+    expect(validatorFailures(mixed, EMPTY_REVIEW, REF)).toEqual([NPI_FLAG]);
+  });
+
+  it('follows the value now shown: a bad edit fails, a good edit and a later accept do not', () => {
+    const bad = reviewReducer(EMPTY_REVIEW, { type: 'edit', field: 'npi', originalValue: '6720988041', newValue: '1234567890', at: AT });
+    expect(validatorFailures(npi, bad, REF)).toEqual([NPI_FLAG]);
+    const good = reviewReducer(EMPTY_REVIEW, { type: 'edit', field: 'npi', originalValue: '6720988041', newValue: '1234567893', at: AT });
+    expect(validatorFailures(npi, good, REF)).toEqual([]);
+    const accepted = reviewReducer(bad, { type: 'accept', field: 'npi', originalValue: '6720988041', failedChecks: [NPI_FLAG], at: AT });
+    expect(validatorFailures(npi, accepted, REF)).toEqual([]);
+  });
+
+  it('sets the flag on the action and the field, and a later action clears the field only', () => {
+    const accepted = reviewReducer(EMPTY_REVIEW, { type: 'accept', field: 'callbackPhone', originalValue: 'x', failedChecks: [PHONE_FLAG], at: AT });
+    expect(accepted.actions[0]).toMatchObject({ acceptedDespiteFlag: true, failedChecks: [PHONE_FLAG] });
+    expect(fieldReview(accepted, 'callbackPhone')).toMatchObject({ acceptedDespiteFlag: true, failedChecks: [PHONE_FLAG] });
+    const later = reviewReducer(accepted, { type: 'edit', field: 'callbackPhone', originalValue: 'x', newValue: '555-0151', at: AT });
+    expect(later.actions).toHaveLength(2);
+    expect(later.actions[0]).toEqual(accepted.actions[0]);
+    expect(fieldReview(later, 'callbackPhone')).toMatchObject({ acceptedDespiteFlag: false, failedChecks: [] });
+    expect(fieldReview(accepted, 'npi').acceptedDespiteFlag).toBe(false);
   });
 });

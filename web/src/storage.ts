@@ -13,12 +13,19 @@ export interface KeyValueStore {
 }
 
 /**
- * Every key starts with this prefix. The "v1" is the storage format. A different format
+ * Every key starts with this prefix. The "v2" is the storage format. A different format
  * would use a new prefix, and old keys would simply not be read.
- * Key: `facsimortis:v1:<faxId>:<reader>`, one entry per fax and reader.
+ * Key: `facsimortis:v2:<faxId>:<reader>`, one entry per fax and reader.
+ *
+ * v2 added acceptedDespiteFlag and failedChecks to each Accept. A v1 entry cannot say
+ * whether an Accept was made despite a failed check, and defaulting it to false could hide
+ * one in an export. So v1 entries are not migrated: they are left untouched and not read,
+ * and the page shows the plain stale note.
  */
-export const STORAGE_PREFIX = 'facsimortis:v1:';
-export const STORAGE_FORMAT_VERSION = 1;
+export const STORAGE_PREFIX = 'facsimortis:v2:';
+export const STORAGE_FORMAT_VERSION = 2;
+/** The earlier format. Only checked for, so the page can say it was not used. */
+export const LEGACY_PREFIX = 'facsimortis:v1:';
 export const entryKey = (faxId: string, reader: ReaderName): string => `${STORAGE_PREFIX}${faxId}:${reader}`;
 
 export const STALE_NOTE = 'Saved progress was made with different sample data, so it was not used.';
@@ -169,7 +176,9 @@ export function loadEntry(
   context: SampleContext,
 ): LoadResult {
   const raw = storage.read(entryKey(faxId, reader));
-  if (raw === null) return { kind: 'none' };
+  if (raw === null) {
+    return storage.read(`${LEGACY_PREFIX}${faxId}:${reader}`) !== null ? { kind: 'stale' } : { kind: 'none' };
+  }
   let json: unknown;
   try {
     json = JSON.parse(raw);

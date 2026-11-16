@@ -106,7 +106,7 @@ describe('edit form: label, hint and primary button', () => {
     await user.click(document.querySelector<HTMLElement>('[data-accept="npi"]')!);
 
     const live = document.querySelector('[aria-live="polite"].sr-only')!;
-    expect(live).toHaveTextContent('Provider number (NPI) accepted.');
+    expect(live).toHaveTextContent('Provider number (NPI) accepted although the check failed.');
     expect(document.querySelector('.selection-line')).not.toHaveClass('sr-only');
     expect(document.querySelector('#verify-reason')).not.toHaveClass('sr-only');
     // The field name after Accept/Edit is read aloud only.
