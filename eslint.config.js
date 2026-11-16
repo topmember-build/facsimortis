@@ -68,7 +68,7 @@ export default tseslint.config(
   },
   {
     // The static site runs in the browser. From src/ it may import only the pure Zod
-    // schema modules listed in the regex below. No Node built-ins, no file readers,
+    // schema modules and the pure validators listed in the regex below. No Node built-ins, no file readers,
     // no OCR, no readers, no scripts, no evaluation code.
     files: ['web/src/**/*.{ts,tsx}'],
     rules: {
@@ -85,10 +85,12 @@ export default tseslint.config(
               message: 'The site runs in the browser. Node built-ins are not allowed here.',
             },
             {
-              // Anything under a src/ folder except the allowed schema modules.
-              regex: '(^|/)src/(?!(samples|extract)/schema(\\.js|\\.ts)?$)',
+              // Anything under a src/ folder except the allowed schema modules and the
+              // pure validators.
+              regex:
+                '(^|/)src/(?!((samples|extract)/schema|validators/(npi|dob|phone|messages))(\\.js|\\.ts)?$)',
               message:
-                'The site may import only src/samples/schema and src/extract/schema from src/.',
+                'The site may import only src/samples/schema, src/extract/schema and src/validators/{npi,dob,phone,messages} from src/.',
             },
           ],
         },

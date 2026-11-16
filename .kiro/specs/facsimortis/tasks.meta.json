@@ -773,6 +773,94 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1794735626816
       }
+    ],
+    "2.3 Inbox: a data loader that reads index.json and the per-fax files with schema validation, and an inbox list with thumbnail, received time and flagged-field count per fax; selecting a fax opens it. A small \"Incoming fax\" button reveals the next sample fax from the precomputed data (no upload, no network). Tests with fixture data, including the button revealing faxes in order and stopping after the last. (R1, R1.2, R5.2)": [
+      {
+        "executionId": "2eb7c8b8-6317-4a09-a199-def3b40f3015",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794736014013
+      },
+      {
+        "executionId": "2eb7c8b8-6317-4a09-a199-def3b40f3015",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794736494204
+      }
+    ],
+    "2.4 Viewer with source ghosts: the fax image with a highlight drawn over each field's cited OCR word boxes, looked up by word ID only (never coordinates from a reader); selecting a field pulses its ghost once; a field with no words has no ghost; \"Synthetic data\" notice on screen. Shows the model answers by default, with a visible toggle to the rules reader; the reader in use is named on screen; a fax with no saved model answer says so plainly and offers the rules reader. Tests: ghosts match cited word boxes, unknown IDs draw nothing, the toggle switches results and the on-screen reader name. (R3.3, R6.1, R8.2)": [
+      {
+        "executionId": "44aea749-9b52-444a-9bc2-4de47f532fce",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794737834324
+      },
+      {
+        "executionId": "44aea749-9b52-444a-9bc2-4de47f532fce",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794738321725
+      }
+    ],
+    "2.5 Review panel: flagged fields first, then lowest confidence first within each group (R5.1); confidence is shown as a number or bar, never as a flag; each field shows value, plain flag reasons (colour plus icon plus text) and its ghost link; accept and inline edit clear a field's flag and record the change with a timestamp; a single \"Verify record\" action is enabled only when no field is flagged and unreviewed. Values are never changed except by the user's edit. Tests for sorting, accept, edit and the Verify rule. (R5.1, R5.3, R6)": [
+      {
+        "executionId": "0e172c98-a9fd-4496-b71b-4a9426bcb75b",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794738884633
+      },
+      {
+        "executionId": "0e172c98-a9fd-4496-b71b-4a9426bcb75b",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794739614005
+      },
+      {
+        "executionId": "9fdbdd08-eb1f-4a9a-802d-567f9a9263c3",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794772043215
+      },
+      {
+        "executionId": "9fdbdd08-eb1f-4a9a-802d-567f9a9263c3",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794774226185
+      },
+      {
+        "executionId": "07cbb5e6-420d-4fe2-90d6-7173716c03b0",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794774939562
+      },
+      {
+        "executionId": "07cbb5e6-420d-4fe2-90d6-7173716c03b0",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794775422623
+      },
+      {
+        "executionId": "d8a8613c-be0d-4882-9897-d19562896abf",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794817943331
+      },
+      {
+        "executionId": "47092570-2908-4f42-9f6c-26c838f94088",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794819191322
+      }
+    ],
+    "2.6 Verified state and JSON export: Verify saves the record in the browser (localStorage, no server) and shows the calm \"laid to rest\" state; the edit record is browser-only (original values, edits, timestamps and verifier kept in localStorage, not a server audit trail), and the README says so; the verified record downloads as JSON with that record; reload keeps the state. Tests for save, reload and export contents. (R7.1, R7.3)": [
+      {
+        "executionId": "9fdbdd08-eb1f-4a9a-802d-567f9a9263c3",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794774236904
+      },
+      {
+        "executionId": "9fdbdd08-eb1f-4a9a-802d-567f9a9263c3",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794774882179
+      },
+      {
+        "executionId": "47092570-2908-4f42-9f6c-26c838f94088",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794819191444
+      },
+      {
+        "executionId": "2ac127b2-df78-4792-8cb1-05039bb1ac2b",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1794821036418
+      }
     ]
   }
 }

@@ -131,7 +131,14 @@ Starts the dev server at http://localhost:5173/. `npm run build` writes the stat
 
 The site is static: there is no server and no network call beyond loading its own files. It reads the sample data in `web/public/samples/`, which `npm run precompute` writes. The build uses relative paths, so the folder works from any subpath; set `SITE_BASE` (for example `/facsimortis/`) to build for a fixed one. Site code in `web/src/` shares the Zod schemas from `src/samples/schema.ts` and `src/extract/schema.ts`; ESLint blocks it from importing anything else in `src/` or any Node module. Site tests run with `npm test` (jsdom, web files only).
 
-For now the site is a placeholder screen with the "Synthetic data" notice.
+### Saved progress, verified records and export
+
+- Review progress (each Accept and Edit, with its time), the edit record and verified records are kept only in this browser's `localStorage`, under keys that start with `facsimortis:v4:`. There is no server. This is not a server audit trail, and clearing the site's data removes all of it. Each saved entry records the original value next to any edit. When a reviewer presses Accept on a value that still fails a check (provider number, date of birth or phone), the action and the field in the export carry `acceptedDespiteFlag: true` and the exact messages in `failedChecks`; every field has the boolean, and format v4 does not read older `facsimortis:v1:` or `facsimortis:v2:` entries (the page says so). Times are UTC, and the key names say so: the export has `verifiedAtUtc` and each action has `atUtc`, both ISO 8601 strings ending in `Z` (for example `2026-10-01T09:30:00.000Z`), and the verified card reads, for example, "Verified on Oct 1, 09:30 UTC." Entries saved in the v3 format (with `verifiedAt` and `at`) are converted to v4 when the page loads, with no values changed and no note; a v3 entry that cannot be read is left alone and the page says so. Any future change to the saved format needs a migration or a clear plain-language note, never a silent reset. The export also has a `summary` of counts over the seven fields (`totalFields`, `flagged`, `reviewed`, `edited`, `acceptedDespiteFlag`, `notFlaggedNotChecked`), worked out from the fields by one function and shown on the verified card; it counts what happened and does not say any value is right.
+- Saved entries are tied to the sample data. If the sample data changes (data version, reference date or that fax's contents), the old entry is ignored and the page says so. Unreadable saved data is ignored the same way.
+- If the browser does not allow saving (for example private mode, or no space left), the app still works, and a short note says progress will not be kept.
+- There are no accounts. The verifier in every record is the fixed label "Demo reviewer".
+- A verified record is shown as "Laid to rest" and is read-only. "Download JSON" saves it as a file such as `facsimortis-fax-0003-model-verified.json`.
+- This is a demo built on synthetic data. It makes no compliance claims.
 
 ## Spec
 

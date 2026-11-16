@@ -1,7 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { cropBox, viewBoxAttr } from './crop';
 import type { InboxItem } from './data';
+import type { OpenedBy } from './input-modality';
 import { formatReceived } from './format';
 import { NO_MORE_FAXES_MESSAGE } from './inbox-state';
+import type { VerifiedRecord } from './record';
+import { reviewLabel } from './review';
+import type { ReviewState } from './review-state';
 import { NO_SAVED_ANSWER_LABEL, READER_LABEL, summariseFlags, type ReaderName } from './flags';
 
 function FlagSummaryLine({ item, reader }: { item: InboxItem; reader: ReaderName }) {
@@ -28,20 +33,41 @@ function FlagSummaryLine({ item, reader }: { item: InboxItem; reader: ReaderName
   );
 }
 
+/** The thumbnail shows the same cropped area as the fax screen, by way of the SVG viewBox. */
 function Thumbnail({ item }: { item: InboxItem }) {
-  const size = item.fax.ok ? { width: item.fax.value.width, height: item.fax.value.height } : {};
+  const alt = `First page of fax ${item.entry.id}`;
+  if (!item.fax.ok) {
+    return <img className="thumb" src={item.imageUrl} alt={alt} loading="lazy" />;
+  }
+  const fax = item.fax.value;
+  const crop = cropBox(fax.ocr.words, fax);
   return (
-    <img
+    <svg
       className="thumb"
-      src={item.imageUrl}
-      alt={`First page of fax ${item.entry.id}`}
-      loading="lazy"
-      {...size}
-    />
+      viewBox={viewBoxAttr(crop)}
+      preserveAspectRatio="xMidYMid meet"
+      style={{ aspectRatio: `${crop.width} / ${crop.height}` }}
+      role="img"
+      aria-label={alt}
+    >
+      <image href={item.imageUrl} x={0} y={0} width={fax.width} height={fax.height} />
+    </svg>
   );
 }
 
-function RowText({ item, reader }: { item: InboxItem; reader: ReaderName }) {
+function RowText({
+  item,
+  reader,
+  reviews,
+  verified,
+  referenceDate,
+}: {
+  item: InboxItem;
+  reader: ReaderName;
+  reviews: Readonly<Record<string, ReviewState>>;
+  verified: Readonly<Record<string, VerifiedRecord>>;
+  referenceDate: string;
+}) {
   return (
     <span className="row-text">
       <span className="row-id">{item.entry.id}</span>
@@ -49,7 +75,12 @@ function RowText({ item, reader }: { item: InboxItem; reader: ReaderName }) {
         Received <time dateTime={item.entry.receivedAt}>{formatReceived(item.entry.receivedAt)}</time>
       </span>
       {item.fax.ok ? (
-        <FlagSummaryLine item={item} reader={reader} />
+        <>
+          <FlagSummaryLine item={item} reader={reader} />
+          <span className="review-status">
+            <span aria-hidden="true">○</span> {reviewLabel(item.fax.value, reader, reviews, referenceDate, verified)}
+          </span>
+        </>
       ) : (
         <span className="flag-line flag-on">
           <span aria-hidden="true">⚠</span> Could not be read. {item.fax.error}
@@ -64,15 +95,26 @@ interface InboxProps {
   items: InboxItem[];
   total: number;
   reader: ReaderName;
+  reviews: Readonly<Record<string, ReviewState>>;
+  /** Verified records, by fax and reader. These rows read "Laid to rest". */
+  verified: Readonly<Record<string, VerifiedRecord>>;
+  /** "Today" for date checks, from the sample index. */
+  referenceDate: string;
   /** Fax whose row gets focus when the inbox appears (after coming back from a fax). */
   focusId: string | null;
   arrivedId: string | null;
-  onOpen: (id: string) => void;
+  onOpen: (id: string, openedBy: OpenedBy) => void;
   onIncoming: () => void;
   onRetry: () => void;
 }
 
-export function Inbox({ items, total, reader, focusId, arrivedId, onOpen, onIncoming, onRetry }: InboxProps) {
+export function Inbox({ items, total, reader, reviews, verified, referenceDate, focusId, arrivedId, onOpen, onIncoming, onRetry }: InboxProps) {
+  // The last input on a row before its click: Enter or Space, or a pointer press.
+  // A click with neither (for example from assistive technology) counts as keyboard.
+  const lastInput = useRef<OpenedBy | null>(null);
+  const markPointer = () => {
+    lastInput.current = 'pointer';
+  };
   useEffect(() => {
     if (!focusId) return;
     const rows = Array.from(document.querySelectorAll<HTMLElement>('[data-fax-id]'));
@@ -115,15 +157,24 @@ export function Inbox({ items, total, reader, focusId, arrivedId, onOpen, onInco
                   type="button"
                   className="row-button"
                   data-fax-id={item.entry.id}
-                  onClick={() => onOpen(item.entry.id)}
+                  onPointerDown={markPointer}
+                  onMouseDown={markPointer}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') lastInput.current = 'keyboard';
+                  }}
+                  onClick={() => {
+                    const by = lastInput.current ?? 'keyboard';
+                    lastInput.current = null;
+                    onOpen(item.entry.id, by);
+                  }}
                 >
                   <Thumbnail item={item} />
-                  <RowText item={item} reader={reader} />
+                  <RowText item={item} reader={reader} reviews={reviews} verified={verified} referenceDate={referenceDate} />
                 </button>
               ) : (
                 <div className="row-button row-failed">
                   <Thumbnail item={item} />
-                  <RowText item={item} reader={reader} />
+                  <RowText item={item} reader={reader} reviews={reviews} verified={verified} referenceDate={referenceDate} />
                 </div>
               )}
             </li>

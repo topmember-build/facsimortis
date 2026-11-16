@@ -2,8 +2,9 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import axe from 'axe-core';
 import { describe, expect, it } from 'vitest';
-import { NO_SAVED_ANSWER_MESSAGE } from '../../src/samples/schema.js';
+import { NO_SAVED_ANSWER_MESSAGE, SampleFaxSchema } from '../../src/samples/schema.js';
 import { App } from './App';
+import { cropBox, viewBoxAttr } from './crop';
 import { committedFaxes, committedIndex, json, stubSite } from './test-site';
 
 async function expectNoViolations(container: HTMLElement) {
@@ -25,9 +26,11 @@ describe('inbox', () => {
     await renderInbox();
 
     expect(rowNames().map((row) => row.dataset['faxId'])).toEqual(['fax-0001', 'fax-0002']);
-    expect(screen.getByAltText('First page of fax fax-0001')).toHaveAttribute('src', expect.stringMatching(/samples\/fax-0001\.png$/));
-    expect(screen.getByAltText('First page of fax fax-0002')).toBeInTheDocument();
-    expect(screen.queryByAltText('First page of fax fax-0003')).not.toBeInTheDocument();
+    // Thumbnails are SVGs (so they can show the cropped area); the alt text is the accessible name.
+    const thumb = screen.getByRole('img', { name: 'First page of fax fax-0001' });
+    expect(thumb.querySelector('image')).toHaveAttribute('href', expect.stringMatching(/samples\/fax-0001\.png$/));
+    expect(screen.getByRole('img', { name: 'First page of fax fax-0002' })).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'First page of fax fax-0003' })).not.toBeInTheDocument();
 
     const first = within(rowNames()[0]!);
     expect(first.getByText('Oct 1, 09:00')).toBeInTheDocument();
@@ -78,6 +81,23 @@ describe('inbox', () => {
   });
 });
 
+describe('thumbnails', () => {
+  it('show the same cropped area as the fax screen, with the image and size unchanged', async () => {
+    stubSite();
+    await renderInbox();
+    for (const id of ['fax-0001', 'fax-0002']) {
+      const fax = SampleFaxSchema.parse(committedFaxes[`${id}.json`]);
+      const crop = cropBox(fax.ocr.words, fax);
+      const thumb = screen.getByRole('img', { name: `First page of fax ${id}` });
+      expect(thumb).toHaveAttribute('viewBox', viewBoxAttr(crop));
+      expect(crop.width * crop.height).toBeLessThan(fax.width * fax.height);
+      const image = thumb.querySelector('image')!;
+      expect(image).toHaveAttribute('width', String(fax.width));
+      expect(image).toHaveAttribute('height', String(fax.height));
+    }
+  });
+});
+
 describe('keyboard', () => {
   it('reaches rows and the button, opens a fax with Enter and returns focus to its row', async () => {
     stubSite();
@@ -120,13 +140,59 @@ describe('opened fax', () => {
     await user.click(rowNames()[0]!);
 
     expect(screen.getByRole('heading', { level: 2, name: 'Fax fax-0001' })).toBeInTheDocument();
-    expect(screen.getByAltText('Faxed referral form, fax fax-0001')).toHaveAttribute('src', expect.stringMatching(/fax-0001\.png$/));
+    expect(screen.getByRole('img', { name: /Faxed referral form, fax fax-0001/ })).toBeInTheDocument();
+    expect(container.querySelector('image')).toHaveAttribute('href', expect.stringMatching(/fax-0001\.png$/));
     expect(screen.getByText('Reader: model (saved answers)')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Synthetic data' })).toBeVisible();
     await expectNoViolations(container);
 
     await user.click(screen.getByRole('button', { name: 'Back to inbox' }));
     expect(screen.getByRole('heading', { level: 2, name: 'Inbox' })).toBeInTheDocument();
+  });
+});
+
+describe('heading focus ring', () => {
+  // jsdom does not load the stylesheet. The ring rule is keyed on data-opened-by, so the
+  // tests check that attribute; the heading always takes focus either way.
+  const heading = () => screen.getByRole('heading', { level: 2, name: 'Fax fax-0001' });
+
+  it('is marked for the keyboard when opened with Enter', async () => {
+    stubSite();
+    const user = userEvent.setup();
+    await renderInbox();
+    await user.tab();
+    await user.keyboard('{Enter}');
+    expect(heading()).toHaveFocus();
+    expect(heading()).toHaveAttribute('data-opened-by', 'keyboard');
+  });
+
+  it('is marked for the keyboard when opened with Space', async () => {
+    stubSite();
+    const user = userEvent.setup();
+    await renderInbox();
+    await user.tab();
+    await user.keyboard(' ');
+    expect(heading()).toHaveFocus();
+    expect(heading()).toHaveAttribute('data-opened-by', 'keyboard');
+  });
+
+  it('is marked for the pointer when opened with a mouse click', async () => {
+    stubSite();
+    const user = userEvent.setup();
+    await renderInbox();
+    await user.click(rowNames()[0]!);
+    expect(heading()).toHaveFocus();
+    expect(heading()).toHaveAttribute('data-opened-by', 'pointer');
+  });
+
+  it('follows the latest way of opening: mouse, back, then keyboard', async () => {
+    stubSite();
+    const user = userEvent.setup();
+    await renderInbox();
+    await user.click(rowNames()[0]!);
+    await user.click(screen.getByRole('button', { name: 'Back to inbox' }));
+    await user.keyboard('{Enter}');
+    expect(heading()).toHaveAttribute('data-opened-by', 'keyboard');
   });
 });
 
@@ -139,7 +205,7 @@ describe('states', () => {
   });
 
   it('shows an empty state when the index has no faxes', async () => {
-    stubSite({ 'index.json': () => json({ version: 1, faxes: [] }) });
+    stubSite({ 'index.json': () => json({ version: 2, referenceDate: '2026-10-01', faxes: [] }) });
     const { container } = render(<App />);
     expect(await screen.findByText('There are no sample faxes.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Incoming fax' })).toHaveAttribute('aria-disabled', 'true');
@@ -162,7 +228,7 @@ describe('states', () => {
   });
 
   it('treats an index that fails the schema as an error', async () => {
-    stubSite({ 'index.json': () => json({ version: 99, faxes: [] }) });
+    stubSite({ 'index.json': () => json({ version: 99, referenceDate: '2026-10-01', faxes: [] }) });
     render(<App />);
     expect(await screen.findByRole('alert')).toHaveTextContent('not in the expected form');
   });

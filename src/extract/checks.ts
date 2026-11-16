@@ -1,5 +1,12 @@
 import { dobProblem } from '../validators/dob.js';
 import type { DobProblem } from '../validators/dob.js';
+import {
+  DOB_FUTURE_FLAG,
+  DOB_NOT_A_DATE_FLAG,
+  DOB_TOO_OLD_FLAG,
+  NPI_FLAG,
+  PHONE_FLAG,
+} from '../validators/messages.js';
 import { isValidNpi } from '../validators/npi.js';
 import { isValidPhone } from '../validators/phone.js';
 import type { ExtractionResult, Field } from './schema.js';
@@ -17,16 +24,10 @@ import { parseExtractionResult } from './types.js';
  * value that fails its validator keeps its value, word IDs and confidence, and gets
  * one plain flag. Null fields are left alone.
  *
- * Wording note: the message says "last digit" because that is the usual failure.
- * isValidNpi also fails on non-digit characters or the wrong length. The NPI wording
- * is kept exactly as is.
+ * The message texts live in src/validators/messages.ts (shared with the review screen)
+ * and are re-exported here so existing imports keep working.
  */
-export const NPI_FLAG = 'The provider number looks wrong: the last digit does not match.';
-
-export const DOB_NOT_A_DATE_FLAG = 'The date of birth does not look like a real date. Please check it.';
-export const DOB_FUTURE_FLAG = 'The date of birth is in the future. Please check it.';
-export const DOB_TOO_OLD_FLAG = 'The date of birth is more than 120 years ago. Please check it.';
-export const PHONE_FLAG = 'The callback phone number is not in a usual format. Please check it.';
+export { DOB_FUTURE_FLAG, DOB_NOT_A_DATE_FLAG, DOB_TOO_OLD_FLAG, NPI_FLAG, PHONE_FLAG };
 
 const DOB_FLAGS: Readonly<Record<DobProblem, string>> = {
   'not-a-date': DOB_NOT_A_DATE_FLAG,

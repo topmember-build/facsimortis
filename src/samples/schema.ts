@@ -7,7 +7,8 @@ import { FIELD_ORDER, FieldSchema } from '../extract/schema.js';
  * Readers: "model" (saved model answers, shown by default) and "rules" (rule-based).
  */
 
-export const SAMPLE_DATA_VERSION = 1;
+// Version 2 adds the required referenceDate to the index.
+export const SAMPLE_DATA_VERSION = 2;
 
 /** Plain sentence shown when a fax has no saved model answer. */
 export const NO_SAVED_ANSWER_MESSAGE =
@@ -86,6 +87,8 @@ export const SampleFaxSchema = z
 
 export const SampleIndexSchema = z.strictObject({
   version: z.literal(SAMPLE_DATA_VERSION),
+  /** "Today" for date checks, YYYY-MM-DD. The site uses this, never the browser clock. */
+  referenceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   faxes: z.array(
     z.strictObject({
       id: z.string().min(1),
