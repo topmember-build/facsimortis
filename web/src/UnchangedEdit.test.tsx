@@ -142,7 +142,7 @@ describe('review panel: unchanged Save', () => {
     const note = document.querySelector('[data-no-change]')!;
     expect(note).toHaveTextContent('No change made');
     expect(live()).toHaveTextContent('Callback phone: no change made.');
-    expect(screen.queryByText('Entered by the reviewer')).toBeNull();
+    expect(screen.queryByText(/Entered by you/)).toBeNull();
     expect(fieldButton('callbackPhone')).toHaveTextContent('555~0151');
     expect(recorded).toEqual([]);
     expect(store.writes.length).toBe(writesBefore);
@@ -174,7 +174,7 @@ describe('review panel: unchanged Save', () => {
     await user.clear(input);
     await user.type(input, '555-0151{Enter}');
     expect(recorded).toHaveLength(1);
-    expect(screen.getByText('Entered by the reviewer')).toBeInTheDocument();
+    expect(screen.getByText('Entered by you. Read from the page: 555~0151')).toBeInTheDocument();
     expect(document.querySelector('[data-no-change]')).toBeNull();
   });
 });

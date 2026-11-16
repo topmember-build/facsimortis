@@ -85,7 +85,7 @@ describe('review panel: fax-0003, model reader', () => {
     expect(fieldOrder()[0]).toBe('callbackPhone');
     const npi = within(fieldButton('npi'));
     expect(npi.getByText('6720988041')).toBeInTheDocument();
-    // Accepted although the check failed: the label carries the message, so no history line.
+    // Accepted although the check failed: the label carries the message.
     expect(npi.getByText('Accepted although the check failed')).toBeInTheDocument();
     expect(npi.queryByText(/Was flagged/)).not.toBeInTheDocument();
     expect(ghost('npi')).toHaveAttribute('data-selected', 'true');
@@ -126,12 +126,11 @@ describe('review panel: fax-0003, model reader', () => {
     expect(screen.queryByLabelText('New value for Callback phone')).not.toBeInTheDocument();
     const phone = within(fieldButton('callbackPhone'));
     expect(phone.getByText('555-0151')).toBeInTheDocument();
-    expect(phone.getByText('Entered by the reviewer')).toBeInTheDocument();
-    expect(phone.getByText('Read from the page: 555~0151')).toBeInTheDocument();
-    expect(phone.getByText('Was flagged: The callback phone number is not in a usual format. Please check it.')).toBeInTheDocument();
+    expect(phone.getByText('Entered by you. Read from the page: 555~0151')).toBeInTheDocument();
+    expect(screen.queryByText(/Was flagged/)).toBeNull();
     expect(ghost('callbackPhone')).toHaveAttribute('data-selected', 'true');
     expect(ghost('callbackPhone')!.querySelectorAll('rect').length).toBeGreaterThan(0);
-    expect(screen.getByRole('status')).toHaveTextContent('the highlight is where the page value was read');
+    expect(screen.getByRole('status')).toHaveTextContent('the page value was 555~0151');
     expect(edit('callbackPhone')).toHaveFocus();
     expect(verify()).toHaveAccessibleDescription(withNote('1 flagged field still needs review: Provider number (NPI).'));
 
@@ -228,7 +227,7 @@ describe('review panel: other faxes', () => {
     expect(recorded.map((r) => r.action)).toEqual([
       { field: 'reason', action: 'accepted', originalValue: null, acceptedDespiteFlag: false, failedChecks: [], atUtc: expect.any(String) },
     ]);
-    expect(within(fieldButton('reason')).getByText(/Accepted as empty/)).toBeInTheDocument();
+    expect(within(fieldButton('reason')).getByText('Not on the page, confirmed by you')).toBeInTheDocument();
     expect(verify()).toHaveAccessibleDescription(
       withNote('2 flagged fields still need review: Referring provider, Provider number (NPI).'),
     );
@@ -236,7 +235,7 @@ describe('review panel: other faxes', () => {
     await user.click(edit('npi'));
     expect(screen.getByLabelText('New value for Provider number (NPI)')).toHaveValue('');
     await user.type(screen.getByLabelText('New value for Provider number (NPI)'), '1234567893{Enter}');
-    expect(within(fieldButton('npi')).getByText('Read from the page: Not read')).toBeInTheDocument();
+    expect(within(fieldButton('npi')).getByText('Entered by you. Read from the page: Not read')).toBeInTheDocument();
   });
 
   it('enables Verify at once for a fax with no flags and offers Edit but no Accept', async () => {
@@ -270,8 +269,8 @@ describe('Edit on every field', () => {
 
     const row = within(fieldButton('referringProvider'));
     expect(row.getByText('Dr Linnea Ashgrove, Willowbrook Family Clinic')).toBeInTheDocument();
-    expect(row.getByText('Entered by the reviewer')).toBeInTheDocument();
-    expect(row.getByText(`Read from the page: ${REFERRER}`)).toBeInTheDocument();
+
+    expect(row.getByText(`Entered by you. Read from the page: ${REFERRER}`)).toBeInTheDocument();
     expect(ghost('referringProvider')!.querySelectorAll('rect').length).toBeGreaterThan(0);
     expect(edit('referringProvider')).toHaveFocus();
     expect(statusLine()).toContain('Ready to verify');
@@ -317,7 +316,7 @@ describe('edits are checked again', () => {
 
     const npi = within(fieldButton('npi'));
     expect(npi.getByText('1234567890')).toBeInTheDocument();
-    expect(npi.getByText('Read from the page: 6720988041')).toBeInTheDocument();
+    expect(npi.getByText('Entered by you. Read from the page: 6720988041')).toBeInTheDocument();
     expect(flagText('npi')).toEqual([NPI_FLAG]);
     expect(accept('npi')).toBeInTheDocument();
     expect(verify()).toHaveAttribute('aria-disabled', 'true');
@@ -333,8 +332,7 @@ describe('edits are checked again', () => {
     await user.click(accept('npi'));
     expect(flagText('npi')).toEqual([]);
     expect(npi.getByText('1234567890')).toBeInTheDocument();
-    expect(npi.getByText('Entered by the reviewer')).toBeInTheDocument();
-    expect(npi.getByText('Accepted by the reviewer')).toBeInTheDocument();
+    expect(npi.getByText('Entered by you. Read from the page: 6720988041')).toBeInTheDocument();
     expect(document.querySelector('[data-accept="npi"]')).toBeNull();
     expect(verify()).toHaveAttribute('aria-disabled', 'false');
     expect(statusLine()).toContain('Ready to verify');
@@ -350,7 +348,7 @@ describe('edits are checked again', () => {
     await user.type(screen.getByLabelText('New value for Provider number (NPI)'), '1234567893{Enter}');
     expect(flagText('npi')).toEqual([]);
     expect(document.querySelector('[data-accept="npi"]')).toBeNull();
-    expect(within(fieldButton('npi')).getByText(`Was flagged: ${NPI_FLAG}`)).toBeInTheDocument();
+    expect(screen.queryByText(/Was flagged/)).toBeNull();
     expect(verify()).toHaveAccessibleDescription(
       withNote('1 flagged field still needs review: Callback phone.'),
     );
@@ -418,6 +416,79 @@ describe('edits are checked again', () => {
     await user.click(edit('npi'));
     await user.clear(screen.getByLabelText('New value for Provider number (NPI)'));
     await user.type(screen.getByLabelText('New value for Provider number (NPI)'), '1234567890{Enter}');
+    await expectNoViolations(view.container);
+  });
+});
+
+describe('condensed field cards', () => {
+  const provenance = (name: string) => Array.from(fieldButton(name).querySelectorAll('[data-provenance]')).map((n) => n.textContent);
+  const warnings = (name: string) => Array.from(fieldButton(name).querySelectorAll('.field-flag')).map((n) => n.textContent);
+
+  it('shows exactly one provenance line per card, with the right text for each state', async () => {
+    const { user } = setup();
+    await openFax(user, 'fax-0003');
+    for (const name of fieldOrder()) expect(provenance(name!)).toHaveLength(1);
+    expect(provenance('patientName')).toEqual(['Read from the page']);
+
+    await user.click(accept('npi'));
+    expect(provenance('npi')).toEqual(['Read from the page, accepted by you']);
+
+    await user.click(edit('callbackPhone'));
+    await user.clear(screen.getByLabelText('New value for Callback phone'));
+    await user.type(screen.getByLabelText('New value for Callback phone'), '555-0151{Enter}');
+    expect(provenance('callbackPhone')).toEqual(['Entered by you. Read from the page: 555~0151']);
+    expect(screen.queryByText(/Was flagged/)).toBeNull();
+    expect(fieldButton('callbackPhone').textContent).not.toMatch(/Entered by the reviewer|Accepted by the reviewer/);
+  });
+
+  it('covers empty page values: not reviewed, accepted, and edited', async () => {
+    const { user } = setup();
+    await openFax(user, 'fax-0002');
+    await user.click(screen.getByRole('button', { name: 'Rules reader' }));
+    expect(provenance('npi')).toEqual(['Nothing was read from the page']);
+    expect(provenance('reason')).toEqual(['Nothing was read from the page']);
+    await user.click(accept('reason'));
+    expect(provenance('reason')).toEqual(['Not on the page, confirmed by you']);
+    await user.click(edit('npi'));
+    await user.type(screen.getByLabelText('New value for Provider number (NPI)'), '1234567893{Enter}');
+    expect(provenance('npi')).toEqual(['Entered by you. Read from the page: Not read']);
+  });
+
+  it('shows the warning only when a flag stands or a failed check was accepted', async () => {
+    const { user } = setup();
+    await openFax(user, 'fax-0003');
+    expect(warnings('patientName')).toEqual([]);
+    expect(warnings('npi')).toHaveLength(1);
+    expect(warnings('npi')[0]).toContain('The provider number looks wrong');
+    expect(fieldButton('npi').textContent).toContain('Confidence: ');
+    await user.click(accept('npi'));
+    expect(warnings('npi')).toHaveLength(1);
+    expect(warnings('npi')[0]).toContain('Accepted although the check failed');
+    expect(warnings('npi')[0]).toContain(VALIDATOR_NPI_FLAG);
+  });
+
+  it('shows the highlight caption once, linked to the image, and no per-field caption', async () => {
+    const { user } = setup();
+    await openFax(user, 'fax-0003');
+    const caption = 'The highlight shows where the page value was read.';
+    expect(screen.getAllByText(caption)).toHaveLength(1);
+    const svg = screen.getByRole('img', { name: /Faxed referral form/ });
+    expect(svg).toHaveAccessibleDescription(caption);
+    await user.click(edit('callbackPhone'));
+    await user.clear(screen.getByLabelText('New value for Callback phone'));
+    await user.type(screen.getByLabelText('New value for Callback phone'), '555-0151{Enter}');
+    expect(document.body.textContent!.split(caption)).toHaveLength(2);
+    expect(document.querySelector('.field-list')!.textContent).not.toMatch(/highlight/i);
+  });
+
+  it('has no accessibility violations before review, with Edit open, and after review', async () => {
+    const { user, view } = setup();
+    await openFax(user, 'fax-0003');
+    await expectNoViolations(view.container);
+    await user.click(edit('callbackPhone'));
+    await expectNoViolations(view.container);
+    await user.keyboard('{Escape}');
+    await user.click(accept('npi'));
     await expectNoViolations(view.container);
   });
 });

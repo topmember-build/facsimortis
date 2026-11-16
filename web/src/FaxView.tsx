@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { Field, FieldName } from '../../src/extract/schema.js';
 import type { SampleFax } from '../../src/samples/schema.js';
 import { cropBox, viewBoxAttr, viewerBox } from './crop';
@@ -53,6 +53,9 @@ const READER_CHOICES: { name: ReaderName; label: string }[] = [
   { name: 'rules', label: 'Rules reader' },
 ];
 
+/** The one visible caption for the highlight. */
+export const HIGHLIGHT_CAPTION = 'The highlight shows where the page value was read.';
+
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 
 function usePrefersReducedMotion(): boolean {
@@ -84,7 +87,7 @@ function selectionLine(fields: readonly Field[], selection: Selection | null, re
   const entered = fieldReview(review, field.name).enteredValue;
   if (entered !== null) {
     const read = field.value === null ? 'nothing was read' : `the page value was ${field.value}`;
-    return `Showing source for ${label}: the highlight is where the page value was read (${read}). The value now shown, ${entered}, was entered by the reviewer.`;
+    return `Showing source for ${label}: ${read}. The value now shown, ${entered}, was entered by you.`;
   }
   if (field.value === null) {
     return `Showing source for ${label}: ${NOT_FOUND_TEXT.toLowerCase()}, so there is nothing to highlight.`;
@@ -98,6 +101,7 @@ function selectionLine(fields: readonly Field[], selection: Selection | null, re
  * drawn straight from OCR word boxes, found by word ID.
  */
 export function FaxView({ item, fax, reader, openedBy, referenceDate, review, onReaderChange, onReview, onVerify, verified, onDownload, now, onBack }: FaxViewProps) {
+  const captionId = useId();
   const heading = useRef<HTMLHeadingElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const bar = useRef<HTMLDivElement>(null);
@@ -280,6 +284,7 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
             style={{ aspectRatio: `${box.width} / ${box.height}` }}
             role="img"
             aria-label={imageName}
+            aria-describedby={captionId}
           >
             <image href={item.imageUrl} x={0} y={0} width={fax.width} height={fax.height} />
             {ordered.map((field) => {
@@ -307,6 +312,7 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
               );
             })}
           </svg>
+          <p id={captionId} className="viewer-caption">{HIGHLIGHT_CAPTION}</p>
           <p role="status" className="selection-line">
             {selectionLine(fields, selection, review)}
           </p>

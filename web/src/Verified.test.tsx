@@ -169,7 +169,7 @@ describe('the verified record', () => {
 
     const phone = within(fieldButton('callbackPhone'));
     expect(phone.getByText('555-0151')).toBeInTheDocument();
-    expect(phone.getByText('Read from the page: 555~0151')).toBeInTheDocument();
+    expect(phone.getByText('Entered by you. Read from the page: 555~0151')).toBeInTheDocument();
     await user.click(fieldButton('callbackPhone'));
     const ghost = document.querySelector('g[data-field="callbackPhone"]')!;
     expect(ghost).toHaveAttribute('data-selected', 'true');
@@ -180,7 +180,7 @@ describe('the verified record', () => {
     expect(rowFor('fax-0003').getByText('Laid to rest')).toBeInTheDocument();
   });
 
-  it('shows the summary counts on the card, the same as in the export, and hides the duplicate history line', async () => {
+  it('shows the summary counts on the card, the same as in the export, and shows no history line', async () => {
     stubSite();
     const store = new MemoryStore();
     const { user, saved } = session(store);
@@ -197,12 +197,12 @@ describe('the verified record', () => {
     expect(storedRecord(store).summary).toEqual({
       totalFields: 7, flagged: 2, reviewed: 2, edited: 1, acceptedDespiteFlag: 1, notFlaggedNotChecked: 5,
     });
-    // Accepted although the check failed: the label is shown, the history line is not.
+    // Accepted although the check failed: the label is shown.
     expect(within(fieldButton('npi')).getByText('Accepted although the check failed')).toBeInTheDocument();
     expect(within(fieldButton('npi')).queryByText(/Was flagged/)).not.toBeInTheDocument();
     expect(document.querySelector('.laid-to-rest')!.textContent).not.toMatch(/Was flagged/);
-    // Elsewhere the history line stays (phone was edited to a valid value).
-    expect(within(fieldButton('callbackPhone')).getByText(/Was flagged/)).toBeInTheDocument();
+    // No card shows a history line; the export keeps it.
+    expect(screen.queryByText(/Was flagged/)).toBeNull();
     // The export keeps the full history.
     await user.click(downloadButton()!);
     const exported = VerifiedRecordSchema.parse(JSON.parse(saved[0]!.text));
