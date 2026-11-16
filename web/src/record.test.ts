@@ -38,7 +38,7 @@ function reviewed(): ReviewState {
 }
 
 const build = (state: ReviewState) =>
-  buildVerifiedRecord({ fax: fax3, reader: 'model', referenceDate: REF, sampleDataVersion: SAMPLE_DATA_VERSION, state, verifiedAt: VERIFIED_AT })!;
+  buildVerifiedRecord({ fax: fax3, reader: 'model', referenceDate: REF, sampleDataVersion: SAMPLE_DATA_VERSION, state, verifiedAtUtc: VERIFIED_AT })!;
 
 describe('buildVerifiedRecord (fax-0003, model, Accept NPI, Edit phone)', () => {
   const state = reviewed();
@@ -53,7 +53,7 @@ describe('buildVerifiedRecord (fax-0003, model, Accept NPI, Edit phone)', () => 
       readerEngine: expect.any(String),
       sampleDataVersion: SAMPLE_DATA_VERSION,
       referenceDate: REF,
-      verifiedAt: VERIFIED_AT,
+      verifiedAtUtc: VERIFIED_AT,
       verifier: VERIFIER_LABEL,
     });
     expect(record.fields.map((f) => f.name)).toEqual([...FIELD_ORDER]);
@@ -93,13 +93,25 @@ describe('buildVerifiedRecord (fax-0003, model, Accept NPI, Edit phone)', () => 
 
   it('names the export file and writes the verified line', () => {
     expect(exportFileName(record)).toBe('facsimortis-fax-0003-model-verified.json');
-    expect(verifiedLine(VERIFIED_AT)).toBe('Verified on Oct 1, 09:30. This record is read-only.');
+    expect(verifiedLine(VERIFIED_AT)).toBe('Verified on Oct 1, 09:30 UTC. This record is read-only.');
+  });
+
+  it('labels times as UTC in the export: verifiedAtUtc and atUtc, ending in Z, no old keys', () => {
+    const json = JSON.parse(serialiseRecord(record)) as Record<string, unknown> & { actions: Record<string, unknown>[] };
+    expect(json['verifiedAtUtc']).toMatch(/Z$/);
+    expect(json).not.toHaveProperty('verifiedAt');
+    for (const action of json.actions) {
+      expect(action['atUtc']).toMatch(/Z$/);
+      expect(action).not.toHaveProperty('at');
+    }
+    expect(VerifiedRecordSchema.safeParse({ ...record, verifiedAtUtc: '2026-10-01T09:30:02.000+02:00' }).success).toBe(false);
+    expect(VerifiedRecordSchema.safeParse({ ...record, verifiedAtUtc: '2026-10-01T09:30:02.000' }).success).toBe(false);
   });
 
   it('returns null when the reader has no answer', () => {
     const none: SampleFax = { ...fax3, readers: { ...fax3.readers, model: { status: 'no-saved-answer', message: 'x' } } };
     expect(
-      buildVerifiedRecord({ fax: none, reader: 'model', referenceDate: REF, sampleDataVersion: 2, state: EMPTY_REVIEW, verifiedAt: VERIFIED_AT }),
+      buildVerifiedRecord({ fax: none, reader: 'model', referenceDate: REF, sampleDataVersion: 2, state: EMPTY_REVIEW, verifiedAtUtc: VERIFIED_AT }),
     ).toBeNull();
   });
 });
@@ -175,7 +187,7 @@ describe('acceptedDespiteFlag in the record', () => {
 describe('summary counts (export change b)', () => {
   const fax1: SampleFax = SampleFaxSchema.parse(committedFaxes['fax-0001.json']);
   const buildFor = (fax: SampleFax, state: ReviewState) =>
-    buildVerifiedRecord({ fax, reader: 'model', referenceDate: REF, sampleDataVersion: SAMPLE_DATA_VERSION, state, verifiedAt: VERIFIED_AT })!;
+    buildVerifiedRecord({ fax, reader: 'model', referenceDate: REF, sampleDataVersion: SAMPLE_DATA_VERSION, state, verifiedAtUtc: VERIFIED_AT })!;
   const FAILED = ['The provider number looks wrong: the last digit does not match.'];
 
   it('fax-0003 after Accept NPI (check failed) and Edit phone to 555-0151', () => {

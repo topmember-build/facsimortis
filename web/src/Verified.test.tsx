@@ -10,7 +10,7 @@ import { committedFaxes, committedIndex, json, stubSite } from './test-site';
 
 type UserApi = ReturnType<typeof userEvent.setup>;
 
-const LINE = 'Verified on Oct 1, 09:30. This record is read-only.';
+const LINE = 'Verified on Oct 1, 09:30 UTC. This record is read-only.';
 const FILE = 'facsimortis-fax-0003-model-verified.json';
 
 function clock() {
@@ -139,7 +139,9 @@ describe('the verified record', () => {
       referenceDate: (committedIndex as { referenceDate: string }).referenceDate,
       verifier: 'Demo reviewer',
     });
-    expect(record.verifiedAt).toMatch(/^2026-10-01T09:30:0\d\.000Z$/);
+    expect(record.verifiedAtUtc).toMatch(/^2026-10-01T09:30:0\d\.000Z$/);
+    expect(record).not.toHaveProperty('verifiedAt');
+    expect(record.actions.every((a) => a.atUtc.endsWith('Z') && !('at' in a))).toBe(true);
     const phone = record.fields.find((f) => f.name === 'callbackPhone')!;
     const npi = record.fields.find((f) => f.name === 'npi')!;
     expect(phone).toMatchObject({ originalValue: '555~0151', finalValue: '555-0151', source: 'reviewer', reviewed: true });

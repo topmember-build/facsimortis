@@ -3,7 +3,7 @@ import { FIELD_ORDER, FieldNameSchema } from '../../src/extract/schema.js';
 import type { SampleFax } from '../../src/samples/schema.js';
 import { FIELD_LABELS } from './field-labels';
 import type { ReaderName } from './flags';
-import { formatReceived } from './format';
+import { formatUtc } from './format';
 import { fieldReview, type ReviewAction, type ReviewState } from './review-state';
 
 /** There are no accounts. Every verified record names this one fixed demo label. */
@@ -11,7 +11,8 @@ export const VERIFIER_LABEL = 'Demo reviewer';
 
 export const SYNTHETIC_NOTICE = 'Synthetic data. Demo only.';
 
-const IsoTimeSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/);
+/** An ISO 8601 time that must end in Z, so every stored time is UTC. */
+export const IsoTimeSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/);
 const ReaderNameSchema = z.enum(['model', 'rules']);
 
 /** One recorded review action. Append-only: see review-state.ts. */
@@ -22,18 +23,18 @@ export const ReviewActionSchema = z.discriminatedUnion('action', [
     originalValue: z.string().nullable(),
     acceptedDespiteFlag: z.boolean(),
     failedChecks: z.array(z.string()),
-    at: IsoTimeSchema,
+    atUtc: IsoTimeSchema,
   }),
   z.strictObject({
     field: FieldNameSchema,
     action: z.literal('edited'),
     originalValue: z.string().nullable(),
     newValue: z.string().min(1),
-    at: IsoTimeSchema,
+    atUtc: IsoTimeSchema,
   }),
 ]);
 
-const VerifiedFieldSchema = z.strictObject({
+export const VerifiedFieldSchema = z.strictObject({
   name: FieldNameSchema,
   label: z.string(),
   /** The value as read from the page. Never changed by a later edit. */
@@ -94,7 +95,7 @@ export const VerifiedRecordSchema = z
     readerEngine: z.string().min(1),
     sampleDataVersion: z.number().int(),
     referenceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-    verifiedAt: IsoTimeSchema,
+    verifiedAtUtc: IsoTimeSchema,
     verifier: z.string().min(1),
     summary: SummarySchema,
     fields: z.array(VerifiedFieldSchema),
@@ -119,8 +120,8 @@ export interface BuildRecordInput {
   referenceDate: string;
   sampleDataVersion: number;
   state: ReviewState;
-  /** ISO time from the injected clock. */
-  verifiedAt: string;
+  /** ISO 8601 UTC time (ends in Z) from the injected clock. */
+  verifiedAtUtc: string;
 }
 
 /**
@@ -157,7 +158,7 @@ export function buildVerifiedRecord(input: BuildRecordInput): VerifiedRecord | n
     readerEngine: result.engine,
     sampleDataVersion: input.sampleDataVersion,
     referenceDate: input.referenceDate,
-    verifiedAt: input.verifiedAt,
+    verifiedAtUtc: input.verifiedAtUtc,
     verifier: VERIFIER_LABEL,
     summary: summarise(fields),
     fields,
@@ -176,11 +177,9 @@ export const ACCEPTED_DESPITE_TEXT = 'Accepted although the check failed';
 
 export const LAID_TO_REST_RULE = 'This record is read-only.';
 
-/** "Verified on Oct 1, 09:30. This record is read-only." The time is read as written (UTC), not converted. */
-export const verifiedLine = (verifiedAt: string): string =>
-  `Verified on ${formatReceived(verifiedAt)}. ${LAID_TO_REST_RULE}`;
-
-
+/** "Verified on Oct 1, 09:30 UTC. This record is read-only." The time is read as written (UTC), not converted. */
+export const verifiedLine = (verifiedAtUtc: string): string =>
+  `Verified on ${formatUtc(verifiedAtUtc)}. ${LAID_TO_REST_RULE}`;
 const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`;
 
 /**

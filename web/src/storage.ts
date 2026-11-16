@@ -1,8 +1,18 @@
 import { z } from 'zod';
+import { FieldNameSchema } from '../../src/extract/schema.js';
 import { SAMPLE_DATA_VERSION, type SampleFax } from '../../src/samples/schema.js';
 import type { InboxItem } from './data';
 import type { ReaderName } from './flags';
-import { ReviewActionSchema, VerifiedRecordSchema, type VerifiedRecord } from './record';
+import {
+  IsoTimeSchema,
+  ReviewActionSchema,
+  SYNTHETIC_NOTICE,
+  SummarySchema,
+  VerifiedFieldSchema,
+  VerifiedRecordSchema,
+  summarise,
+  type VerifiedRecord,
+} from './record';
 import { reviewKey, type ReviewState } from './review-state';
 
 /** The part of localStorage the app uses. Tests pass their own. */
@@ -13,9 +23,18 @@ export interface KeyValueStore {
 }
 
 /**
- * Every key starts with this prefix. The "v3" is the storage format. A different format
- * would use a new prefix, and old keys would simply not be read.
- * Key: `facsimortis:v3:<faxId>:<reader>`, one entry per fax and reader.
+ * Every key starts with this prefix. The "v4" is the storage format.
+ * Key: `facsimortis:v4:<faxId>:<reader>`, one entry per fax and reader.
+ *
+ * RULE: any future change to the stored format needs a migration or a clear plain-language
+ * note to the user. Never a silent reset.
+ *
+ * v4 renamed the time keys to say they are UTC: `verifiedAt` became `verifiedAtUtc` and each
+ * action's `at` became `atUtc`. A v3 entry is migrated on load (see migrateV3Entry): it is
+ * read, checked with the v3 schema, converted with the values unchanged, written as v4, and
+ * the v3 key is removed only after the v4 write worked. A v3 entry that does not pass the
+ * check is left untouched and not read, and the page shows the plain "could not be read" note.
+ * A successful migration shows no note, because nothing is lost and nothing changes for the user.
  *
  * v3 added `summary` (counts worked out from the fields) to the verified record. A v2
  * entry that holds a verified record has no summary, so it cannot pass the record check and
@@ -27,8 +46,10 @@ export interface KeyValueStore {
  * one in an export. So v1 entries are not migrated: they are left untouched and not read,
  * and the page shows the plain stale note.
  */
-export const STORAGE_PREFIX = 'facsimortis:v3:';
-export const STORAGE_FORMAT_VERSION = 3;
+export const STORAGE_PREFIX = 'facsimortis:v4:';
+export const STORAGE_FORMAT_VERSION = 4;
+/** The v3 format, which is migrated to v4 on load. */
+export const V3_PREFIX = 'facsimortis:v3:';
 /** The earlier formats. Only checked for, so the page can say they were not used. */
 export const LEGACY_PREFIXES: readonly string[] = ['facsimortis:v2:', 'facsimortis:v1:'];
 export const entryKey = (faxId: string, reader: ReaderName): string => `${STORAGE_PREFIX}${faxId}:${reader}`;
@@ -103,11 +124,24 @@ export class ReviewStorage {
     }
   }
 
-  write(key: string, value: string): void {
+  /** Keeps the value in memory, and in the store if it allows. Returns true only when the store kept it. */
+  write(key: string, value: string): boolean {
     this.memory.set(key, value);
-    if (!this.store) return;
+    if (!this.store) return false;
     try {
       this.store.setItem(key, value);
+      return true;
+    } catch {
+      this.okFlag = false;
+      return false;
+    }
+  }
+
+  remove(key: string): void {
+    this.memory.delete(key);
+    if (!this.store) return;
+    try {
+      this.store.removeItem(key);
     } catch {
       this.okFlag = false;
     }
@@ -128,6 +162,83 @@ const EntrySchema = z.strictObject({
 
 export type StoredEntry = z.infer<typeof EntrySchema>;
 
+// The v3 format, kept only so a v3 entry can be read and migrated. The time keys are the old names.
+const V3ActionSchema = z.discriminatedUnion('action', [
+  z.strictObject({
+    field: FieldNameSchema,
+    action: z.literal('accepted'),
+    originalValue: z.string().nullable(),
+    acceptedDespiteFlag: z.boolean(),
+    failedChecks: z.array(z.string()),
+    at: IsoTimeSchema,
+  }),
+  z.strictObject({
+    field: FieldNameSchema,
+    action: z.literal('edited'),
+    originalValue: z.string().nullable(),
+    newValue: z.string().min(1),
+    at: IsoTimeSchema,
+  }),
+]);
+
+const V3RecordSchema = z.strictObject({
+  synthetic: z.literal(true),
+  notice: z.literal(SYNTHETIC_NOTICE),
+  faxId: z.string().min(1),
+  reader: z.enum(['model', 'rules']),
+  readerEngine: z.string().min(1),
+  sampleDataVersion: z.number().int(),
+  referenceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  verifiedAt: IsoTimeSchema,
+  verifier: z.string().min(1),
+  summary: SummarySchema,
+  fields: z.array(VerifiedFieldSchema),
+  actions: z.array(V3ActionSchema),
+});
+
+const V3EntrySchema = z.strictObject({
+  version: z.literal(3),
+  faxId: z.string().min(1),
+  reader: z.enum(['model', 'rules']),
+  sampleDataVersion: z.number().int(),
+  referenceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  fingerprint: z.string().min(1),
+  actions: z.array(V3ActionSchema),
+  verified: V3RecordSchema.nullable(),
+});
+
+type V3Action = z.infer<typeof V3ActionSchema>;
+
+function renameActionTime(action: V3Action): StoredEntry['actions'][number] {
+  const { at, ...rest } = action;
+  return { ...rest, atUtc: at };
+}
+
+/**
+ * Pure. Converts a parsed v3 entry to v4: `at` becomes `atUtc` on every action and
+ * `verifiedAt` becomes `verifiedAtUtc`. Values are unchanged. Returns null when the input
+ * does not pass the v3 check, when its summary does not match its fields, or when the
+ * result does not pass the v4 check. Never throws.
+ */
+export function migrateV3Entry(json: unknown): StoredEntry | null {
+  const parsed = V3EntrySchema.safeParse(json);
+  if (!parsed.success) return null;
+  const v3 = parsed.data;
+  let verified: StoredEntry['verified'] = null;
+  if (v3.verified) {
+    const { verifiedAt, actions, ...rest } = v3.verified;
+    if (JSON.stringify(rest.summary) !== JSON.stringify(summarise(rest.fields))) return null;
+    verified = { ...rest, verifiedAtUtc: verifiedAt, actions: actions.map(renameActionTime) };
+  }
+  const converted = {
+    ...v3,
+    version: STORAGE_FORMAT_VERSION,
+    actions: v3.actions.map(renameActionTime),
+    verified,
+  };
+  const checked = EntrySchema.safeParse(converted);
+  return checked.success ? checked.data : null;
+}
 /** What a stored entry was made from. If any part differs, the entry is stale. */
 export interface SampleContext {
   sampleDataVersion: number;
@@ -173,6 +284,13 @@ export type LoadResult =
   | { kind: 'stale' }
   | { kind: 'corrupt' };
 
+/** The entry belongs to this key, and its verified record (if any) matches it. */
+function isConsistent(entry: StoredEntry, faxId: string, reader: ReaderName): boolean {
+  if (entry.faxId !== faxId || entry.reader !== reader) return false;
+  if (!entry.verified) return true;
+  const sameActions = JSON.stringify(entry.verified.actions) === JSON.stringify(entry.actions);
+  return entry.verified.faxId === faxId && entry.verified.reader === reader && sameActions;
+}
 /** Reads and checks one entry. Anything unexpected is ignored, never thrown. */
 export function loadEntry(
   storage: ReviewStorage,
@@ -181,24 +299,40 @@ export function loadEntry(
   context: SampleContext,
 ): LoadResult {
   const raw = storage.read(entryKey(faxId, reader));
+  let entry: StoredEntry;
   if (raw === null) {
-    const old = LEGACY_PREFIXES.some((prefix) => storage.read(`${prefix}${faxId}:${reader}`) !== null);
-    return old ? { kind: 'stale' } : { kind: 'none' };
+    const v3Key = `${V3_PREFIX}${faxId}:${reader}`;
+    const v3Raw = storage.read(v3Key);
+    if (v3Raw === null) {
+      const old = LEGACY_PREFIXES.some((prefix) => storage.read(`${prefix}${faxId}:${reader}`) !== null);
+      return old ? { kind: 'stale' } : { kind: 'none' };
+    }
+    let v3Json: unknown;
+    try {
+      v3Json = JSON.parse(v3Raw);
+    } catch {
+      return { kind: 'corrupt' };
+    }
+    // An invalid v3 entry is left untouched and not read.
+    const migrated = migrateV3Entry(v3Json);
+    if (!migrated || !isConsistent(migrated, faxId, reader)) return { kind: 'corrupt' };
+    // The v3 key goes only after the v4 write worked. If it failed, v3 stays and the page
+    // keeps the migrated entry in memory.
+    if (storage.write(entryKey(faxId, reader), JSON.stringify(migrated))) storage.remove(v3Key);
+    entry = migrated;
+  } else {
+    let json: unknown;
+    try {
+      json = JSON.parse(raw);
+    } catch {
+      return { kind: 'corrupt' };
+    }
+    const parsed = EntrySchema.safeParse(json);
+    if (!parsed.success) return { kind: 'corrupt' };
+    entry = parsed.data;
   }
-  let json: unknown;
-  try {
-    json = JSON.parse(raw);
-  } catch {
-    return { kind: 'corrupt' };
-  }
-  const parsed = EntrySchema.safeParse(json);
-  if (!parsed.success) return { kind: 'corrupt' };
-  const entry = parsed.data;
-  if (entry.faxId !== faxId || entry.reader !== reader) return { kind: 'corrupt' };
-  if (entry.verified) {
-    const sameActions = JSON.stringify(entry.verified.actions) === JSON.stringify(entry.actions);
-    if (entry.verified.faxId !== faxId || entry.verified.reader !== reader || !sameActions) return { kind: 'corrupt' };
-  }
+  if (!isConsistent(entry, faxId, reader)) return { kind: 'corrupt' };
+
   if (
     entry.sampleDataVersion !== context.sampleDataVersion ||
     entry.referenceDate !== context.referenceDate ||

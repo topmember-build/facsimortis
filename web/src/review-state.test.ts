@@ -68,7 +68,7 @@ describe('reviewReducer', () => {
   it('records an accept with the original value and the time given', () => {
     const next = reviewReducer(EMPTY_REVIEW, { type: 'accept', field: 'npi', originalValue: '6720988041', at: AT });
     expect(next.actions).toEqual([
-      { field: 'npi', action: 'accepted', originalValue: '6720988041', acceptedDespiteFlag: false, failedChecks: [], at: AT },
+      { field: 'npi', action: 'accepted', originalValue: '6720988041', acceptedDespiteFlag: false, failedChecks: [], atUtc: AT },
     ]);
     expect(fieldReview(next, 'npi')).toEqual({
       reviewed: true,
@@ -88,7 +88,7 @@ describe('reviewReducer', () => {
       originalValue: null,
       acceptedDespiteFlag: false,
       failedChecks: [],
-      at: AT,
+      atUtc: AT,
     });
   });
 

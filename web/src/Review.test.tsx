@@ -100,7 +100,7 @@ describe('review panel: fax-0003, model reader', () => {
           originalValue: '6720988041',
           acceptedDespiteFlag: true,
           failedChecks: [VALIDATOR_NPI_FLAG],
-          at: '2025-01-02T03:04:00.000Z',
+          atUtc: '2025-01-02T03:04:00.000Z',
         },
       },
     ]);
@@ -140,14 +140,14 @@ describe('review panel: fax-0003, model reader', () => {
     await user.click(verify());
     expect(onVerify).toHaveBeenCalledWith('fax-0003', 'model');
     expect(recorded.map((r) => r.action)).toEqual([
-      { field: 'callbackPhone', action: 'edited', originalValue: '555~0151', newValue: '555-0151', at: '2025-01-02T03:04:00.000Z' },
+      { field: 'callbackPhone', action: 'edited', originalValue: '555~0151', newValue: '555-0151', atUtc: '2025-01-02T03:04:00.000Z' },
       {
         field: 'npi',
         action: 'accepted',
         originalValue: '6720988041',
         acceptedDespiteFlag: true,
         failedChecks: [VALIDATOR_NPI_FLAG],
-        at: '2025-01-02T03:04:01.000Z',
+        atUtc: '2025-01-02T03:04:01.000Z',
       },
     ]);
   });
@@ -226,7 +226,7 @@ describe('review panel: other faxes', () => {
 
     await user.click(accept('reason'));
     expect(recorded.map((r) => r.action)).toEqual([
-      { field: 'reason', action: 'accepted', originalValue: null, acceptedDespiteFlag: false, failedChecks: [], at: expect.any(String) },
+      { field: 'reason', action: 'accepted', originalValue: null, acceptedDespiteFlag: false, failedChecks: [], atUtc: expect.any(String) },
     ]);
     expect(within(fieldButton('reason')).getByText(/Accepted as empty/)).toBeInTheDocument();
     expect(verify()).toHaveAccessibleDescription(
@@ -282,7 +282,7 @@ describe('Edit on every field', () => {
         action: 'edited',
         originalValue: REFERRER,
         newValue: 'Dr Linnea Ashgrove, Willowbrook Family Clinic',
-        at: '2025-01-02T03:04:00.000Z',
+        atUtc: '2025-01-02T03:04:00.000Z',
       },
     ]);
   });

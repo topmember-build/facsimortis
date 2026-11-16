@@ -26,8 +26,8 @@ export type ReviewAction =
       acceptedDespiteFlag: boolean;
       /** The exact validator messages that were failing. Empty when acceptedDespiteFlag is false. */
       failedChecks: string[];
-      /** ISO timestamp from the injected clock. */
-      at: string;
+      /** ISO 8601 UTC timestamp (ends in Z) from the injected clock. */
+      atUtc: string;
     }
   | {
       field: FieldName;
@@ -35,7 +35,7 @@ export type ReviewAction =
       originalValue: string | null;
       /** What the reviewer entered. */
       newValue: string;
-      at: string;
+      atUtc: string;
     };
 
 /** Review state for one fax and one reader. Saved in this browser only (see storage.ts). */
@@ -67,7 +67,7 @@ export function actionFromEvent(event: ReviewEvent): ReviewAction | null {
       originalValue: event.originalValue,
       acceptedDespiteFlag: failedChecks.length > 0,
       failedChecks,
-      at: event.at,
+      atUtc: event.at,
     };
   }
   if (event.type === 'edit') {
@@ -76,7 +76,7 @@ export function actionFromEvent(event: ReviewEvent): ReviewAction | null {
       action: 'edited',
       originalValue: event.originalValue,
       newValue: event.newValue,
-      at: event.at,
+      atUtc: event.at,
     };
   }
   return null;

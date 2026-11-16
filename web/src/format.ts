@@ -10,3 +10,11 @@ export function formatReceived(receivedAt: string): string {
   if (!match || !month) return receivedAt;
   return `${month} ${Number(match[2])}, ${match[3]}:${match[4]}`;
 }
+
+/**
+ * An ISO time ending in Z becomes "Oct 1, 09:30 UTC". Read from the text, never through
+ * Date, so the result does not depend on the machine's time zone.
+ */
+export function formatUtc(isoUtc: string): string {
+  return `${formatReceived(isoUtc)} UTC`;
+}

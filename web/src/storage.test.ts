@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SAMPLE_DATA_VERSION, SampleFaxSchema, type SampleFax } from '../../src/samples/schema.js';
-import { buildVerifiedRecord } from './record';
+import { buildVerifiedRecord, summarise } from './record';
 import { reviewReducer, EMPTY_REVIEW } from './review-state';
 import {
   MemoryStore,
@@ -13,6 +13,7 @@ import {
   entryKey,
   faxFingerprint,
   loadEntry,
+  migrateV3Entry,
   sampleContext,
   saveEntry,
   type KeyValueStore,
@@ -43,7 +44,7 @@ const throwing: KeyValueStore = {
 
 describe('storage', () => {
   it('uses one versioned prefix and a key per fax and reader', () => {
-    expect(entryKey('fax-0003', 'model')).toBe('facsimortis:v3:fax-0003:model');
+    expect(entryKey('fax-0003', 'model')).toBe('facsimortis:v4:fax-0003:model');
     const store = new MemoryStore();
     saveEntry(new ReviewStorage(store), fax, 'model', REF, state, null);
     expect([...store.data.keys()]).toEqual([`${STORAGE_PREFIX}fax-0003:model`]);
@@ -57,7 +58,7 @@ describe('storage', () => {
       referenceDate: REF,
       sampleDataVersion: SAMPLE_DATA_VERSION,
       state,
-      verifiedAt: '2026-10-01T09:30:02.000Z',
+      verifiedAtUtc: '2026-10-01T09:30:02.000Z',
     });
     saveEntry(new ReviewStorage(store), fax, 'model', REF, state, record);
     // A new adapter over the same store is what a reload sees.
@@ -129,7 +130,7 @@ describe('storage', () => {
   });
 });
 
-describe('acceptedDespiteFlag in storage (format v3)', () => {
+describe('acceptedDespiteFlag in storage (format v4)', () => {
   const FAILED = ['The provider number looks wrong: the last digit does not match.'];
   const despite = reviewReducer(EMPTY_REVIEW, {
     type: 'accept',
@@ -142,7 +143,7 @@ describe('acceptedDespiteFlag in storage (format v3)', () => {
   it('keeps the flag and messages through a save and a reload', () => {
     const store = new MemoryStore();
     const record = buildVerifiedRecord({
-      fax, reader: 'model', referenceDate: REF, sampleDataVersion: SAMPLE_DATA_VERSION, state: despite, verifiedAt: '2026-10-01T09:30:02.000Z',
+      fax, reader: 'model', referenceDate: REF, sampleDataVersion: SAMPLE_DATA_VERSION, state: despite, verifiedAtUtc: '2026-10-01T09:30:02.000Z',
     });
     saveEntry(new ReviewStorage(store), fax, 'model', REF, despite, record);
     const loaded = loadEntry(new ReviewStorage(store), 'fax-0003', 'model', context);
@@ -151,7 +152,7 @@ describe('acceptedDespiteFlag in storage (format v3)', () => {
   });
 
   it('does not read a v1 entry, says so with the stale note, and never throws', () => {
-    expect(STORAGE_PREFIX).toBe('facsimortis:v3:');
+    expect(STORAGE_PREFIX).toBe('facsimortis:v4:');
     expect(LEGACY_PREFIXES).toEqual(['facsimortis:v2:', 'facsimortis:v1:']);
     const store = new MemoryStore();
     const v1Entry = {
@@ -184,7 +185,7 @@ describe('acceptedDespiteFlag in storage (format v3)', () => {
     expect(store.data.has('facsimortis:v2:fax-0003:model')).toBe(true);
   });
 
-  it('treats a v3 entry whose Accept lacks the new fields as corrupt', () => {
+  it('treats a v4 entry whose Accept lacks the new fields as corrupt', () => {
     const store = new MemoryStore();
     saveEntry(new ReviewStorage(store), fax, 'model', REF, despite, null);
     const key = entryKey('fax-0003', 'model');
@@ -195,10 +196,10 @@ describe('acceptedDespiteFlag in storage (format v3)', () => {
   });
 });
 
-describe('summary in storage (format v3)', () => {
+describe('summary in storage (format v4)', () => {
   const verifiedAt = '2026-10-01T09:30:02.000Z';
   const build = () =>
-    buildVerifiedRecord({ fax, reader: 'model', referenceDate: REF, sampleDataVersion: SAMPLE_DATA_VERSION, state, verifiedAt })!;
+    buildVerifiedRecord({ fax, reader: 'model', referenceDate: REF, sampleDataVersion: SAMPLE_DATA_VERSION, state, verifiedAtUtc: verifiedAt })!;
   const item = { fax: { ok: true, value: fax } } as unknown as Parameters<typeof hydrate>[1][number];
 
   it('round-trips a record whose summary matches its fields', () => {
@@ -227,5 +228,130 @@ describe('summary in storage (format v3)', () => {
     delete entry.verified['summary'];
     store.setItem(key, JSON.stringify(entry));
     expect(loadEntry(new ReviewStorage(store), 'fax-0003', 'model', context)).toEqual({ kind: 'corrupt' });
+  });
+});
+
+describe('migration from v3 to v4', () => {
+  const item = { fax: { ok: true, value: fax } } as unknown as Parameters<typeof hydrate>[1][number];
+  const V3_KEY = 'facsimortis:v3:fax-0003:model';
+  const V4_KEY = entryKey('fax-0003', 'model');
+  const rename = (action: Record<string, unknown>, from: string, to: string) => {
+    const { [from]: time, ...rest } = action;
+    return { ...rest, [to]: time };
+  };
+
+  type StoredShape = {
+    actions: Record<string, unknown>[];
+    verified: (Record<string, unknown> & { actions: Record<string, unknown>[] }) | null;
+  };
+
+  /** A v3 entry, as the previous version of the page wrote it. */
+  function v3Entry(withRecord: boolean): Record<string, unknown> {
+    const record = buildVerifiedRecord({
+      fax, reader: 'model', referenceDate: REF, sampleDataVersion: SAMPLE_DATA_VERSION, state, verifiedAtUtc: '2026-10-01T09:30:02.000Z',
+    })!;
+    const store = new MemoryStore();
+    saveEntry(new ReviewStorage(store), fax, 'model', REF, state, withRecord ? record : null);
+    const v4 = JSON.parse(store.data.get(V4_KEY)!) as StoredShape;
+    return {
+      ...v4,
+      version: 3,
+      actions: v4.actions.map((a: Record<string, unknown>) => rename(a, 'atUtc', 'at')),
+      verified: v4.verified
+        ? {
+            ...rename(v4.verified, 'verifiedAtUtc', 'verifiedAt'),
+            actions: v4.verified.actions.map((a: Record<string, unknown>) => rename(a, 'atUtc', 'at')),
+          }
+        : null,
+    };
+  }
+
+  it('migrateV3Entry renames the time keys and keeps every value (verified record)', () => {
+    const out = migrateV3Entry(v3Entry(true))!;
+    expect(out.version).toBe(4);
+    expect(out.actions[0]).toMatchObject({ atUtc: '2026-10-01T09:30:00.000Z' });
+    expect(out.actions[0]).not.toHaveProperty('at');
+    expect(out.verified?.verifiedAtUtc).toBe('2026-10-01T09:30:02.000Z');
+    expect(out.verified).not.toHaveProperty('verifiedAt');
+    expect(out.verified?.actions).toEqual(out.actions);
+    expect(out.verified?.summary).toEqual(summarise(out.verified!.fields));
+  });
+
+  it('migrateV3Entry converts in-progress actions with no record', () => {
+    const out = migrateV3Entry(v3Entry(false))!;
+    expect(out.verified).toBeNull();
+    expect(out.actions).toEqual(state.actions);
+  });
+
+  it('migrateV3Entry returns null for invalid input and a summary that does not match', () => {
+    expect(migrateV3Entry(null)).toBeNull();
+    expect(migrateV3Entry({ ...v3Entry(false), version: 4 })).toBeNull();
+    const bad = v3Entry(true) as { verified: { summary: { reviewed: number } } };
+    bad.verified.summary.reviewed += 1;
+    expect(migrateV3Entry(bad)).toBeNull();
+    const local = v3Entry(false) as { actions: { at: string }[] };
+    local.actions[0]!.at = '2026-10-01T09:30:00.000+02:00';
+    expect(migrateV3Entry(local)).toBeNull();
+  });
+
+  it('on load writes v4, then removes v3, with no note', () => {
+    const store = new MemoryStore();
+    store.setItem(V3_KEY, JSON.stringify(v3Entry(true)));
+    const out = hydrate(new ReviewStorage(store), [item], REF);
+    expect(out.notices).toEqual([]);
+    expect(out.reviews['fax-0003|model']?.actions).toEqual(state.actions);
+    expect(out.verified['fax-0003|model']?.verifiedAtUtc).toBe('2026-10-01T09:30:02.000Z');
+    expect(store.data.has(V3_KEY)).toBe(false);
+    const written = JSON.parse(store.data.get(V4_KEY)!) as { version: number; verified: { summary: unknown; fields: never[] } };
+    expect(written.version).toBe(4);
+    expect(written.verified.summary).toEqual(out.verified['fax-0003|model']!.summary);
+    // A reload reads the v4 entry.
+    expect(loadEntry(new ReviewStorage(store), 'fax-0003', 'model', context).kind).toBe('ok');
+  });
+
+  it('keeps v3 when the v4 write fails, and still uses the migrated entry', () => {
+    const store = new MemoryStore();
+    store.setItem(V3_KEY, JSON.stringify(v3Entry(false)));
+    const removed: string[] = [];
+    const storage = new ReviewStorage({
+      getItem: (k) => store.getItem(k),
+      setItem: (k, v) => {
+        if (k.startsWith('facsimortis:v4:fax')) throw new Error('quota');
+        store.setItem(k, v);
+      },
+      removeItem: (k) => {
+        removed.push(k);
+        store.removeItem(k);
+      },
+    });
+    removed.length = 0;
+    const loaded = loadEntry(storage, 'fax-0003', 'model', context);
+    expect(loaded).toMatchObject({ kind: 'ok', actions: state.actions });
+    expect(store.data.has(V3_KEY)).toBe(true);
+    expect(store.data.has(V4_KEY)).toBe(false);
+    expect(removed).not.toContain(V3_KEY);
+    expect(storage.ok).toBe(false);
+  });
+
+  it('leaves an invalid v3 entry untouched, does not read it, and shows the plain note', () => {
+    const store = new MemoryStore();
+    const bad = v3Entry(true) as { verified: { summary: { reviewed: number } } };
+    bad.verified.summary.reviewed += 1;
+    const text = JSON.stringify(bad);
+    store.setItem(V3_KEY, text);
+    const out = hydrate(new ReviewStorage(store), [item], REF);
+    expect(out.notices).toEqual([CORRUPT_NOTE]);
+    expect(out.reviews).toEqual({});
+    expect(store.data.get(V3_KEY)).toBe(text);
+    expect(store.data.has(V4_KEY)).toBe(false);
+  });
+
+  it('leaves a v3 entry for a different key untouched', () => {
+    const store = new MemoryStore();
+    const other = { ...v3Entry(false), faxId: 'fax-0001' };
+    store.setItem(V3_KEY, JSON.stringify(other));
+    expect(loadEntry(new ReviewStorage(store), 'fax-0003', 'model', context)).toEqual({ kind: 'corrupt' });
+    expect(store.data.has(V3_KEY)).toBe(true);
+    expect(store.data.has(V4_KEY)).toBe(false);
   });
 });

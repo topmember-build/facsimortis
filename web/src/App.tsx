@@ -89,7 +89,7 @@ export function App({ now = systemClock, onReviewAction, onVerify, storage: stor
       referenceDate,
       sampleDataVersion: SAMPLE_DATA_VERSION,
       state,
-      verifiedAt: now().toISOString(),
+      verifiedAtUtc: now().toISOString(),
     });
     if (!record) return;
     setVerified((all) => ({ ...all, [key]: record }));

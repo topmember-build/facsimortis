@@ -1,9 +1,9 @@
 import fc from 'fast-check';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { FIELD_ORDER, type Field } from '../../src/extract/schema.js';
 import { NO_SAVED_ANSWER_MESSAGE, SampleFaxSchema, type ReaderResult } from '../../src/samples/schema.js';
 import { summariseFlags } from './flags';
-import { formatReceived } from './format';
+import { formatReceived, formatUtc } from './format';
 import { HELD_BACK_FAXES, initialVisibleCount, revealNext } from './inbox-state';
 import { committedFaxes } from './test-site';
 
@@ -66,6 +66,20 @@ describe('formatReceived', () => {
   it('formats the written time without any time zone', () => {
     expect(formatReceived('2026-10-01T09:00:00')).toBe('Oct 1, 09:00');
     expect(formatReceived('2026-12-25T23:59:59')).toBe('Dec 25, 23:59');
+  });
+});
+
+describe('formatUtc', () => {
+  it('adds UTC and does not depend on the machine time zone', () => {
+    expect(formatUtc('2026-10-01T09:30:02.000Z')).toBe('Oct 1, 09:30 UTC');
+    const offset = vi.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(-600);
+    const hours = vi.spyOn(Date.prototype, 'getHours').mockReturnValue(19);
+    try {
+      expect(formatUtc('2026-12-25T23:59:59.000Z')).toBe('Dec 25, 23:59 UTC');
+    } finally {
+      offset.mockRestore();
+      hours.mockRestore();
+    }
   });
 });
 

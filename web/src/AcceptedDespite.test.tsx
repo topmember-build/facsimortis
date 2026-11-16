@@ -69,7 +69,7 @@ describe('accepted although a check failed: fax-0003, model reader', () => {
         originalValue: '6720988041',
         acceptedDespiteFlag: true,
         failedChecks: [NPI_FLAG],
-        at: '2026-10-01T09:30:00.000Z',
+        atUtc: '2026-10-01T09:30:00.000Z',
       },
     ]);
 
@@ -178,7 +178,7 @@ describe('a normal accept: fax-0002, rules reader', () => {
         originalValue: null,
         acceptedDespiteFlag: false,
         failedChecks: [],
-        at: expect.any(String),
+        atUtc: expect.any(String),
       },
     ]);
     expect(screen.queryByText(DESPITE)).not.toBeInTheDocument();
