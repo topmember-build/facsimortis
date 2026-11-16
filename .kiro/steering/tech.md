@@ -30,3 +30,4 @@ inclusion: always
 - Secrets live in environment variables and `.env.example` documents them. Never commit keys.
 - One-command local start, documented in the README. Keep it working at all times.
 - Check library docs (via the docs MCP server) before using an unfamiliar API instead of guessing.
+- Any change to the stored review format needs a migration or a clear plain-language note, never a silent reset.
