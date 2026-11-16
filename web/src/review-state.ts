@@ -82,8 +82,26 @@ export function actionFromEvent(event: ReviewEvent): ReviewAction | null {
   return null;
 }
 
-/** Pure: returns a new state with the action appended. Cancel returns the same state. */
+/**
+ * True when an edit event would set the field to the value it already has: the reviewer's
+ * last value if there is one, else the page value. The text is trimmed (as Save trims it);
+ * the match is exact, with no case-folding or other changes.
+ */
+export function isUnchangedEdit(state: ReviewState, event: ReviewEvent): boolean {
+  if (event.type !== 'edit') return false;
+  let current: string | null = event.originalValue;
+  for (const action of state.actions) {
+    if (action.field === event.field && action.action === 'edited') current = action.newValue;
+  }
+  return current !== null && event.newValue.trim() === current;
+}
+
+/**
+ * Pure: returns a new state with the action appended. Cancel and an unchanged edit return
+ * the same state object.
+ */
 export function reviewReducer(state: ReviewState, event: ReviewEvent): ReviewState {
+  if (isUnchangedEdit(state, event)) return state;
   const action = actionFromEvent(event);
   if (!action) return state;
   return { actions: [...state.actions, action] };

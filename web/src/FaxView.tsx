@@ -8,13 +8,14 @@ import type { OpenedBy } from './input-modality';
 import { FIELD_LABELS, NOT_FOUND_TEXT } from './field-labels';
 import { READER_LABEL, type ReaderName } from './flags';
 import { ghostRects } from './ghost';
-import { ReviewPanel, SummaryBar } from './ReviewPanel';
+import { NO_CHANGE_TEXT, ReviewPanel, SummaryBar } from './ReviewPanel';
 import type { VerifiedRecord } from './record';
 import {
   LAID_TO_REST,
   NO_ANSWER_VERIFY_REASON,
   canVerify,
   fieldReview,
+  isUnchangedEdit,
   reviewStatus,
   sortForReview,
   unreviewedFlagged,
@@ -106,6 +107,8 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
   const [showFullPage, setShowFullPage] = useState(false);
   const [editing, setEditing] = useState<FieldName | null>(null);
   const [announcement, setAnnouncement] = useState('');
+  // The field whose last Save changed nothing. Cleared by the next action on it.
+  const [noChange, setNoChange] = useState<FieldName | null>(null);
   const [pendingFocus, setPendingFocus] = useState<FocusTarget | null>(null);
   useEffect(() => {
     heading.current?.focus();
@@ -162,6 +165,7 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
   function accept(field: Field) {
     keepSelected(field.name);
     setEditing(null);
+    setNoChange(null);
     const failedChecks = validatorFailures(field, review, referenceDate);
     onReview({ type: 'accept', field: field.name, originalValue: field.value, failedChecks, at: now().toISOString() });
     setAnnouncement(
@@ -181,13 +185,21 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
   function save(field: Field, text: string) {
     keepSelected(field.name);
     setEditing(null);
-    onReview({
+    const event: ReviewEvent = {
       type: 'edit',
       field: field.name,
       originalValue: field.value,
       newValue: text,
       at: now().toISOString(),
-    });
+    };
+    if (isUnchangedEdit(review, event)) {
+      setNoChange(field.name);
+      setAnnouncement(`${FIELD_LABELS[field.name]}: ${NO_CHANGE_TEXT.toLowerCase()}.`);
+      setPendingFocus({ kind: 'edit', field: field.name });
+      return;
+    }
+    setNoChange(null);
+    onReview(event);
     const problem = editFlag(field.name, text, referenceDate);
     setAnnouncement(
       `${FIELD_LABELS[field.name]} saved. The value you entered is shown.${problem ? ` ${problem}` : ''}`,
@@ -197,6 +209,7 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
 
   function verify() {
     setEditing(null);
+    setNoChange(null);
     onVerify();
     setAnnouncement('Record laid to rest. It is now read-only. Download JSON is available.');
     setPendingFocus({ kind: 'download' });
@@ -204,12 +217,14 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
 
   function cancel(name: FieldName) {
     setEditing(null);
+    setNoChange(null);
     onReview({ type: 'cancel' });
     setPendingFocus({ kind: 'edit', field: name });
   }
 
   function changeReader(next: ReaderName) {
     setEditing(null);
+    setNoChange(null);
     onReaderChange(next);
   }
 
@@ -305,11 +320,13 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
               referenceDate={referenceDate}
               selected={selection?.name ?? null}
               editing={editing}
+              noChange={noChange}
               panelRef={panel}
               onSelect={select}
               onAccept={accept}
               onEditOpen={(name) => {
                 keepSelected(name);
+                setNoChange(null);
                 setEditing(name);
               }}
               onSave={save}

@@ -13,6 +13,8 @@ import {
 } from './review-state';
 
 export const NOT_READ_TEXT = 'Not read';
+/** Shown beside a field after a Save that matched the value it would replace. */
+export const NO_CHANGE_TEXT = 'No change made';
 
 function ConfidenceBar({ confidence }: { confidence: number }) {
   const percent = Math.round(confidence * 100);
@@ -106,6 +108,8 @@ interface FieldRowProps {
   referenceDate: string;
   selected: boolean;
   editing: boolean;
+  /** The last Save on this field changed nothing. */
+  noChange: boolean;
   onSelect: () => void;
   onAccept: () => void;
   onEditOpen: () => void;
@@ -115,7 +119,7 @@ interface FieldRowProps {
   readOnly: boolean;
 }
 
-function FieldRow({ field, state, referenceDate, selected, editing, onSelect, onAccept, onEditOpen, onSave, onCancel, readOnly }: FieldRowProps) {
+function FieldRow({ field, state, referenceDate, selected, editing, noChange, onSelect, onAccept, onEditOpen, onSave, onCancel, readOnly }: FieldRowProps) {
   const label = FIELD_LABELS[field.name];
   const review = fieldReview(state, field.name);
   const edited = review.enteredValue !== null;
@@ -202,6 +206,9 @@ function FieldRow({ field, state, referenceDate, selected, editing, onSelect, on
           </button>
         </div>
       )}
+      {noChange && !editing && !readOnly && (
+        <p className="field-note no-change" data-no-change="true">{NO_CHANGE_TEXT}</p>
+      )}
       {editing && !readOnly && (
         <EditForm
           field={field}
@@ -222,6 +229,8 @@ export interface ReviewPanelProps {
   referenceDate: string;
   selected: FieldName | null;
   editing: FieldName | null;
+  /** The field whose last Save changed nothing, or null. */
+  noChange: FieldName | null;
   panelRef: Ref<HTMLDivElement>;
   onSelect: (name: FieldName) => void;
   onAccept: (field: Field) => void;
@@ -248,6 +257,7 @@ export function ReviewPanel(props: ReviewPanelProps) {
             referenceDate={referenceDate}
             selected={props.selected === field.name}
             editing={props.editing === field.name}
+            noChange={props.noChange === field.name}
             onSelect={() => props.onSelect(field.name)}
             onAccept={() => props.onAccept(field)}
             onEditOpen={() => props.onEditOpen(field.name)}
