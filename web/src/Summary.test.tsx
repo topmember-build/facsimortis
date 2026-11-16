@@ -24,7 +24,7 @@ const summary = () => screen.getByRole('region', { name: 'Review summary' });
 async function reviewAll(user: UserApi) {
   await user.click(accept('npi'));
   await user.click(edit('callbackPhone'));
-  const input = screen.getByLabelText('Callback phone');
+  const input = screen.getByLabelText('New value for Callback phone');
   await user.clear(input);
   await user.type(input, '555-0151{Enter}');
 }
@@ -112,7 +112,7 @@ describe('review summary bar', () => {
     await user.click(accept('npi'));
     expect((await axe.run(container)).violations).toEqual([]);
     await user.click(edit('callbackPhone'));
-    const input = screen.getByLabelText('Callback phone');
+    const input = screen.getByLabelText('New value for Callback phone');
     await user.clear(input);
     await user.type(input, '555-0151{Enter}');
     await user.click(screen.getByRole('button', { name: 'Verify record' }));

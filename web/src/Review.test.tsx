@@ -106,14 +106,14 @@ describe('review panel: fax-0003, model reader', () => {
     const { user, recorded, onVerify } = setup();
     await openFax(user, 'fax-0003');
     await user.click(edit('callbackPhone'));
-    const input = screen.getByLabelText('Callback phone');
+    const input = screen.getByLabelText('New value for Callback phone');
     expect(input).toHaveValue('555~0151');
     expect(input).toHaveFocus();
     expect(ghost('callbackPhone')).toHaveAttribute('data-selected', 'true');
 
     await user.clear(input);
     await user.type(input, '555-0151{Enter}');
-    expect(screen.queryByLabelText('Callback phone')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('New value for Callback phone')).not.toBeInTheDocument();
     const phone = within(fieldButton('callbackPhone'));
     expect(phone.getByText('555-0151')).toBeInTheDocument();
     expect(phone.getByText('Entered by the reviewer')).toBeInTheDocument();
@@ -139,9 +139,9 @@ describe('review panel: fax-0003, model reader', () => {
     const { user, recorded } = setup();
     await openFax(user, 'fax-0003');
     await user.click(edit('npi'));
-    await user.type(screen.getByLabelText('Provider number (NPI)'), '9');
+    await user.type(screen.getByLabelText('New value for Provider number (NPI)'), '9');
     await user.keyboard('{Escape}');
-    expect(screen.queryByLabelText('Provider number (NPI)')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('New value for Provider number (NPI)')).not.toBeInTheDocument();
     expect(edit('npi')).toHaveFocus();
     expect(within(fieldButton('npi')).getByText('6720988041')).toBeInTheDocument();
     expect(verify()).toHaveAccessibleDescription(withNote(BOTH));
@@ -157,12 +157,12 @@ describe('review panel: fax-0003, model reader', () => {
     const { user, recorded } = setup();
     await openFax(user, 'fax-0003');
     await user.click(edit('npi'));
-    const input = screen.getByLabelText('Provider number (NPI)');
+    const input = screen.getByLabelText('New value for Provider number (NPI)');
     await user.clear(input);
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     await user.type(input, '   {Enter}');
     expect(recorded).toEqual([]);
-    expect(screen.getByLabelText('Provider number (NPI)')).toBeInTheDocument();
+    expect(screen.getByLabelText('New value for Provider number (NPI)')).toBeInTheDocument();
   });
 
   it('keeps review state per reader and the inbox label follows the reader', async () => {
@@ -217,8 +217,8 @@ describe('review panel: other faxes', () => {
     );
     // Editing an empty field starts from an empty box and keeps "Not read" as the page value.
     await user.click(edit('npi'));
-    expect(screen.getByLabelText('Provider number (NPI)')).toHaveValue('');
-    await user.type(screen.getByLabelText('Provider number (NPI)'), '1234567893{Enter}');
+    expect(screen.getByLabelText('New value for Provider number (NPI)')).toHaveValue('');
+    await user.type(screen.getByLabelText('New value for Provider number (NPI)'), '1234567893{Enter}');
     expect(within(fieldButton('npi')).getByText('Read from the page: Not read')).toBeInTheDocument();
   });
 
@@ -245,7 +245,7 @@ describe('Edit on every field', () => {
     expect(document.querySelectorAll('[data-edit]')).toHaveLength(7);
 
     await user.click(edit('referringProvider'));
-    const input = screen.getByLabelText('Referring provider');
+    const input = screen.getByLabelText('New value for Referring provider');
     expect(input).toHaveValue(REFERRER);
     expect(input).toHaveFocus();
     await user.clear(input);
@@ -277,7 +277,7 @@ describe('Edit on every field', () => {
     await user.keyboard('{Escape}');
     expect(edit('patientName')).toHaveFocus();
     await user.click(edit('patientName'));
-    await user.clear(screen.getByLabelText('Patient name'));
+    await user.clear(screen.getByLabelText('New value for Patient name'));
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     expect(recorded).toEqual([]);
   });
@@ -295,8 +295,8 @@ describe('edits are checked again', () => {
     await openFax(user, 'fax-0003');
     await user.click(accept('callbackPhone'));
     await user.click(edit('npi'));
-    await user.clear(screen.getByLabelText('Provider number (NPI)'));
-    await user.type(screen.getByLabelText('Provider number (NPI)'), '1234567890{Enter}');
+    await user.clear(screen.getByLabelText('New value for Provider number (NPI)'));
+    await user.type(screen.getByLabelText('New value for Provider number (NPI)'), '1234567890{Enter}');
 
     const npi = within(fieldButton('npi'));
     expect(npi.getByText('1234567890')).toBeInTheDocument();
@@ -329,8 +329,8 @@ describe('edits are checked again', () => {
     const { user } = setup();
     await openFax(user, 'fax-0003');
     await user.click(edit('npi'));
-    await user.clear(screen.getByLabelText('Provider number (NPI)'));
-    await user.type(screen.getByLabelText('Provider number (NPI)'), '1234567893{Enter}');
+    await user.clear(screen.getByLabelText('New value for Provider number (NPI)'));
+    await user.type(screen.getByLabelText('New value for Provider number (NPI)'), '1234567893{Enter}');
     expect(flagText('npi')).toEqual([]);
     expect(document.querySelector('[data-accept="npi"]')).toBeNull();
     expect(within(fieldButton('npi')).getByText(`Was flagged: ${NPI_FLAG}`)).toBeInTheDocument();
@@ -344,8 +344,8 @@ describe('edits are checked again', () => {
     await openFax(user, 'fax-0002');
     expect(verify()).toHaveAttribute('aria-disabled', 'false');
     await user.click(edit('dob'));
-    await user.clear(screen.getByLabelText('Date of birth'));
-    await user.type(screen.getByLabelText('Date of birth'), '10/02/2026{Enter}');
+    await user.clear(screen.getByLabelText('New value for Date of birth'));
+    await user.type(screen.getByLabelText('New value for Date of birth'), '10/02/2026{Enter}');
     expect(flagText('dob')).toEqual([FUTURE]);
     expect(accept('dob')).toBeInTheDocument();
     expect(verify()).toHaveAttribute('aria-disabled', 'true');
@@ -354,9 +354,9 @@ describe('edits are checked again', () => {
 
     // The reference day itself is fine.
     await user.click(edit('dob'));
-    expect(screen.getByLabelText('Date of birth')).toHaveValue('10/02/2026');
-    await user.clear(screen.getByLabelText('Date of birth'));
-    await user.type(screen.getByLabelText('Date of birth'), '10/01/2026{Enter}');
+    expect(screen.getByLabelText('New value for Date of birth')).toHaveValue('10/02/2026');
+    await user.clear(screen.getByLabelText('New value for Date of birth'));
+    await user.type(screen.getByLabelText('New value for Date of birth'), '10/01/2026{Enter}');
     expect(flagText('dob')).toEqual([]);
     expect(verify()).toHaveAttribute('aria-disabled', 'false');
   });
@@ -368,8 +368,8 @@ describe('edits are checked again', () => {
     render(<App now={() => new Date(Date.UTC(2025, 0, 2, 3, 4, 5))} />);
     await openFax(user, 'fax-0002');
     await user.click(edit('dob'));
-    await user.clear(screen.getByLabelText('Date of birth'));
-    await user.type(screen.getByLabelText('Date of birth'), '01/02/2001{Enter}');
+    await user.clear(screen.getByLabelText('New value for Date of birth'));
+    await user.type(screen.getByLabelText('New value for Date of birth'), '01/02/2001{Enter}');
     expect(flagText('dob')).toEqual([FUTURE]);
   });
 
@@ -377,16 +377,16 @@ describe('edits are checked again', () => {
     const { user } = setup();
     await openFax(user, 'fax-0003');
     await user.click(edit('callbackPhone'));
-    await user.clear(screen.getByLabelText('Callback phone'));
-    await user.type(screen.getByLabelText('Callback phone'), '555~0152{Enter}');
+    await user.clear(screen.getByLabelText('New value for Callback phone'));
+    await user.type(screen.getByLabelText('New value for Callback phone'), '555~0152{Enter}');
     expect(flagText('callbackPhone')).toEqual([PHONE_FLAG]);
     expect(accept('callbackPhone')).toBeInTheDocument();
     expect(verify()).toHaveAttribute('aria-disabled', 'true');
 
     await user.click(edit('callbackPhone'));
-    expect(screen.getByLabelText('Callback phone')).toHaveValue('555~0152');
-    await user.clear(screen.getByLabelText('Callback phone'));
-    await user.type(screen.getByLabelText('Callback phone'), '555-0151{Enter}');
+    expect(screen.getByLabelText('New value for Callback phone')).toHaveValue('555~0152');
+    await user.clear(screen.getByLabelText('New value for Callback phone'));
+    await user.type(screen.getByLabelText('New value for Callback phone'), '555-0151{Enter}');
     expect(flagText('callbackPhone')).toEqual([]);
     expect(verify()).toHaveAccessibleDescription(
       withNote('1 flagged field still needs review: Provider number (NPI).'),
@@ -399,8 +399,8 @@ describe('edits are checked again', () => {
     expect(screen.getByText(NOTE)).toBeVisible();
     expect(verify().getAttribute('aria-describedby')).toBe('verify-reason verify-note');
     await user.click(edit('npi'));
-    await user.clear(screen.getByLabelText('Provider number (NPI)'));
-    await user.type(screen.getByLabelText('Provider number (NPI)'), '1234567890{Enter}');
+    await user.clear(screen.getByLabelText('New value for Provider number (NPI)'));
+    await user.type(screen.getByLabelText('New value for Provider number (NPI)'), '1234567890{Enter}');
     await expectNoViolations(view.container);
   });
 });

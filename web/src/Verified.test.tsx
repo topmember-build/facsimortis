@@ -46,7 +46,7 @@ const downloadButton = () => screen.queryByRole('button', { name: 'Download JSON
 async function reviewAll(user: UserApi) {
   await user.click(accept('npi'));
   await user.click(edit('callbackPhone'));
-  const input = screen.getByLabelText('Callback phone');
+  const input = screen.getByLabelText('New value for Callback phone');
   await user.clear(input);
   await user.type(input, '555-0151{Enter}');
 }

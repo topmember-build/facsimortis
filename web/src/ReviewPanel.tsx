@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type Ref } from 'react';
 import type { Field, FieldName } from '../../src/extract/schema.js';
+import { FORMAT_HINTS, editLabel } from './edit-hints';
 import { FIELD_LABELS, NOT_FOUND_TEXT } from './field-labels';
 import { verifiedLine, type VerifiedRecord } from './record';
 import {
@@ -38,12 +39,16 @@ function EditForm({
   onCancel: () => void;
 }) {
   const inputId = useId();
+  const hintId = `${inputId}-hint`;
+  const emptyId = `${inputId}-empty`;
+  const hint = FORMAT_HINTS[field.name];
   const input = useRef<HTMLInputElement>(null);
   const [text, setText] = useState(initial);
   useEffect(() => {
     input.current?.focus();
   }, []);
   const canSave = text.trim() !== '';
+  const describedBy = [hint ? hintId : null, canSave ? null : emptyId].filter(Boolean).join(' ') || undefined;
 
   function onKeyDown(event: KeyboardEvent<HTMLFormElement>) {
     if (event.key === 'Escape') {
@@ -61,24 +66,36 @@ function EditForm({
         if (canSave) onSave(text.trim());
       }}
     >
-      <label htmlFor={inputId}>{FIELD_LABELS[field.name]}</label>
+      <label htmlFor={inputId} className="edit-label">
+        {editLabel(FIELD_LABELS[field.name])}
+      </label>
       <input
         id={inputId}
         ref={input}
         type="text"
         value={text}
         autoComplete="off"
+        aria-describedby={describedBy}
         onChange={(event) => setText(event.target.value)}
       />
+      {hint && (
+        <p id={hintId} className="format-hint">
+          {hint.text}
+        </p>
+      )}
+      {!canSave && (
+        <p id={emptyId} className="edit-hint">
+          Type a value to save it. To keep the field empty, use Accept.
+        </p>
+      )}
       <div className="edit-buttons">
-        <button type="submit" className="button" disabled={!canSave}>
+        <button type="submit" className="button button-strong" disabled={!canSave}>
           Save
         </button>
         <button type="button" className="button" onClick={onCancel}>
           Cancel
         </button>
       </div>
-      {!canSave && <p className="edit-hint">Type a value to save it. To keep the field empty, use Accept.</p>}
     </form>
   );
 }
@@ -241,7 +258,7 @@ export function LaidToRest({ record, onDownload }: { record: VerifiedRecord; onD
       <h3 className="rest-title">{LAID_TO_REST}</h3>
       <p>{verifiedLine(record.verifiedAt)}</p>
       <p className="rest-note">Verifier: {record.verifier}. This is a fixed demo label; there are no accounts.</p>
-      <button type="button" className="button button-primary" data-download="true" onClick={onDownload}>
+      <button type="button" className="button button-strong" data-download="true" onClick={onDownload}>
         Download JSON
       </button>
       <p className="rest-note">The record and its edit history are kept only in this browser.</p>
