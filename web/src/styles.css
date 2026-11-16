@@ -610,6 +610,13 @@ button.row-button:hover {
   font-weight: 400;
 }
 
+.rest-summary {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
 .rest-despite {
   display: grid;
   gap: 0.5rem;

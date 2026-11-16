@@ -14,4 +14,11 @@ describe('wording', () => {
     const offenders = files('web/src').filter((file) => phrase.test(readFileSync(file, 'utf8')));
     expect(offenders).toEqual([]);
   });
+
+  it('the summary lines make no claim that values are right', () => {
+    const text = readFileSync('web/src/record.ts', 'utf8');
+    for (const claim of ['verified as correct', 'no errors', 'everything looks good', 'all good']) {
+      expect(text.toLowerCase()).not.toContain(claim);
+    }
+  });
 });

@@ -13,19 +13,24 @@ export interface KeyValueStore {
 }
 
 /**
- * Every key starts with this prefix. The "v2" is the storage format. A different format
+ * Every key starts with this prefix. The "v3" is the storage format. A different format
  * would use a new prefix, and old keys would simply not be read.
- * Key: `facsimortis:v2:<faxId>:<reader>`, one entry per fax and reader.
+ * Key: `facsimortis:v3:<faxId>:<reader>`, one entry per fax and reader.
+ *
+ * v3 added `summary` (counts worked out from the fields) to the verified record. A v2
+ * entry that holds a verified record has no summary, so it cannot pass the record check and
+ * would look corrupt. Entries from v1 and v2 are not migrated: they are left untouched and not
+ * read, and the page shows the plain stale note.
  *
  * v2 added acceptedDespiteFlag and failedChecks to each Accept. A v1 entry cannot say
  * whether an Accept was made despite a failed check, and defaulting it to false could hide
  * one in an export. So v1 entries are not migrated: they are left untouched and not read,
  * and the page shows the plain stale note.
  */
-export const STORAGE_PREFIX = 'facsimortis:v2:';
-export const STORAGE_FORMAT_VERSION = 2;
-/** The earlier format. Only checked for, so the page can say it was not used. */
-export const LEGACY_PREFIX = 'facsimortis:v1:';
+export const STORAGE_PREFIX = 'facsimortis:v3:';
+export const STORAGE_FORMAT_VERSION = 3;
+/** The earlier formats. Only checked for, so the page can say they were not used. */
+export const LEGACY_PREFIXES: readonly string[] = ['facsimortis:v2:', 'facsimortis:v1:'];
 export const entryKey = (faxId: string, reader: ReaderName): string => `${STORAGE_PREFIX}${faxId}:${reader}`;
 
 export const STALE_NOTE = 'Saved progress was made with different sample data, so it was not used.';
@@ -177,7 +182,8 @@ export function loadEntry(
 ): LoadResult {
   const raw = storage.read(entryKey(faxId, reader));
   if (raw === null) {
-    return storage.read(`${LEGACY_PREFIX}${faxId}:${reader}`) !== null ? { kind: 'stale' } : { kind: 'none' };
+    const old = LEGACY_PREFIXES.some((prefix) => storage.read(`${prefix}${faxId}:${reader}`) !== null);
+    return old ? { kind: 'stale' } : { kind: 'none' };
   }
   let json: unknown;
   try {

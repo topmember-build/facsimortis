@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent, type Ref } from
 import type { Field, FieldName } from '../../src/extract/schema.js';
 import { FORMAT_HINTS, editLabel } from './edit-hints';
 import { FIELD_LABELS, NOT_FOUND_TEXT } from './field-labels';
-import { ACCEPTED_DESPITE_TEXT, verifiedLine, type VerifiedRecord } from './record';
+import { ACCEPTED_DESPITE_TEXT, summaryLines, verifiedLine, type VerifiedRecord } from './record';
 import {
   LAID_TO_REST,
   VERIFY_NOTE,
@@ -175,7 +175,8 @@ function FieldRow({ field, state, referenceDate, selected, editing, onSelect, on
             ))}
           </span>
         )}
-        {field.flags
+        {/* The same message is already shown under the accepted-although label, so the history line is left out then. */}
+        {(review.acceptedDespiteFlag ? [] : field.flags)
           .filter((message) => !standing.includes(message))
           .map((message) => (
             <span key={message} className="field-history">
@@ -269,6 +270,11 @@ export function LaidToRest({ record, onDownload }: { record: VerifiedRecord; onD
       <h3 className="rest-title">{LAID_TO_REST}</h3>
       <p>{verifiedLine(record.verifiedAt)}</p>
       <p className="rest-note">Verifier: {record.verifier}. This is a fixed demo label; there are no accounts.</p>
+      <ul className="rest-summary" aria-label="Summary of this review" data-summary="true">
+        {summaryLines(record.summary).map((line) => (
+          <li key={line}>{line}</li>
+        ))}
+      </ul>
       {despite.length > 0 && (
         <ul className="rest-despite" aria-label="Fields accepted although a check failed">
           {despite.map((field) => (

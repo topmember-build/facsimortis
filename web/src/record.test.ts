@@ -9,6 +9,8 @@ import {
   buildVerifiedRecord,
   exportFileName,
   serialiseRecord,
+  summarise,
+  summaryLines,
   verifiedLine,
 } from './record';
 import { EMPTY_REVIEW, reviewReducer, type ReviewState } from './review-state';
@@ -168,5 +170,85 @@ describe('acceptedDespiteFlag in the record', () => {
     expect(record.fields.find((f) => f.name === 'npi')).toMatchObject({ acceptedDespiteFlag: false, failedChecks: [] });
     expect(record.actions.map((a) => a.action)).toEqual(['accepted', 'edited']);
     expect(record.actions[0]).toMatchObject({ acceptedDespiteFlag: true });
+  });
+});
+describe('summary counts (export change b)', () => {
+  const fax1: SampleFax = SampleFaxSchema.parse(committedFaxes['fax-0001.json']);
+  const buildFor = (fax: SampleFax, state: ReviewState) =>
+    buildVerifiedRecord({ fax, reader: 'model', referenceDate: REF, sampleDataVersion: SAMPLE_DATA_VERSION, state, verifiedAt: VERIFIED_AT })!;
+  const FAILED = ['The provider number looks wrong: the last digit does not match.'];
+
+  it('fax-0003 after Accept NPI (check failed) and Edit phone to 555-0151', () => {
+    let state = reviewReducer(EMPTY_REVIEW, {
+      type: 'accept', field: 'npi', originalValue: '6720988041', failedChecks: FAILED, at: '2026-10-01T09:30:00.000Z',
+    });
+    state = reviewReducer(state, {
+      type: 'edit', field: 'callbackPhone', originalValue: '555~0151', newValue: '555-0151', at: '2026-10-01T09:30:01.000Z',
+    });
+    const record = buildFor(fax3, state);
+    expect(record.summary).toEqual({
+      totalFields: 7, flagged: 2, reviewed: 2, edited: 1, acceptedDespiteFlag: 1, notFlaggedNotChecked: 5,
+    });
+    expect(summaryLines(record.summary)).toEqual([
+      '7 fields',
+      '2 were flagged',
+      '2 reviewed by you',
+      '1 edited by you',
+      '1 accepted although the check failed',
+      '5 not flagged and not checked by a reviewer',
+    ]);
+  });
+
+  it('fax-0001 verified with no action', () => {
+    const record = buildFor(fax1, EMPTY_REVIEW);
+    expect(record.summary).toEqual({
+      totalFields: 7, flagged: 0, reviewed: 0, edited: 0, acceptedDespiteFlag: 0, notFlaggedNotChecked: 7,
+    });
+    expect(summaryLines(record.summary)[1]).toBe('0 were flagged');
+  });
+
+  it('uses singular forms for one', () => {
+    expect(summaryLines({ totalFields: 1, flagged: 1, reviewed: 1, edited: 1, acceptedDespiteFlag: 1, notFlaggedNotChecked: 1 })[0]).toBe('1 field');
+    expect(summaryLines({ totalFields: 7, flagged: 1, reviewed: 0, edited: 0, acceptedDespiteFlag: 0, notFlaggedNotChecked: 0 })[1]).toBe('1 was flagged');
+  });
+
+  it('property: the counts are consistent for any sequence of accepts and edits', () => {
+    const step = fc.record({
+      field: fc.constantFrom<FieldName>(...FIELD_ORDER),
+      kind: fc.constantFrom('accept', 'acceptDespite', 'edit'),
+      newValue: fc.string({ minLength: 1 }).filter((s) => s.trim() !== ''),
+    });
+    fc.assert(
+      fc.property(fc.array(step, { maxLength: 10 }), (steps) => {
+        let state = EMPTY_REVIEW;
+        steps.forEach((s, i) => {
+          const at = `2026-10-01T09:30:${String(i).padStart(2, '0')}.000Z`;
+          const read = fax3.readers.model.status === 'ok' ? fax3.readers.model.fields : [];
+          const originalValue = read.find((f) => f.name === s.field)!.value;
+          state =
+            s.kind === 'edit'
+              ? reviewReducer(state, { type: 'edit', field: s.field, originalValue, newValue: s.newValue, at })
+              : reviewReducer(state, {
+                  type: 'accept', field: s.field, originalValue, at,
+                  ...(s.kind === 'acceptDespite' ? { failedChecks: FAILED } : {}),
+                });
+        });
+        const record = buildFor(fax3, state);
+        const sum = record.summary;
+        expect(sum).toEqual(summarise(record.fields));
+        expect(sum.totalFields).toBe(7);
+        const flagged = new Set(record.fields.filter((f) => f.originalFlags.length > 0).map((f) => f.name));
+        const reviewedSet = new Set(record.fields.filter((f) => f.reviewed).map((f) => f.name));
+        const neither = new Set(record.fields.filter((f) => !flagged.has(f.name) && !reviewedSet.has(f.name)).map((f) => f.name));
+        for (const f of record.fields) {
+          expect(flagged.has(f.name) || reviewedSet.has(f.name) || neither.has(f.name)).toBe(true);
+        }
+        expect(sum.notFlaggedNotChecked).toBe(7 - new Set([...flagged, ...reviewedSet]).size);
+        expect(sum.flagged).toBe(flagged.size);
+        expect(sum.reviewed).toBe(reviewedSet.size);
+        expect(sum.edited).toBeLessThanOrEqual(sum.reviewed);
+        expect(sum.acceptedDespiteFlag).toBeLessThanOrEqual(sum.reviewed);
+      }),
+    );
   });
 });

@@ -52,6 +52,39 @@ const VerifiedFieldSchema = z.strictObject({
   failedChecks: z.array(z.string()),
 });
 
+/**
+ * Counts over the seven fields. Derived from the record's fields by summarise(); never
+ * entered by hand. Categories overlap, except notFlaggedNotChecked, which is disjoint from
+ * flagged and reviewed.
+ */
+export const SummarySchema = z.strictObject({
+  totalFields: z.number().int().nonnegative(),
+  /** Fields whose original reader result had at least one flag. */
+  flagged: z.number().int().nonnegative(),
+  /** Fields the reviewer accepted or edited. */
+  reviewed: z.number().int().nonnegative(),
+  /** Fields whose final value came from the reviewer. */
+  edited: z.number().int().nonnegative(),
+  acceptedDespiteFlag: z.number().int().nonnegative(),
+  /** Fields that were not flagged and that no reviewer acted on. */
+  notFlaggedNotChecked: z.number().int().nonnegative(),
+});
+
+export type Summary = z.infer<typeof SummarySchema>;
+
+/** Pure. The one place the summary counts are worked out, for the export and the card. */
+export function summarise(fields: readonly VerifiedField[]): Summary {
+  const count = (test: (field: VerifiedField) => boolean) => fields.filter(test).length;
+  return {
+    totalFields: fields.length,
+    flagged: count((f) => f.originalFlags.length > 0),
+    reviewed: count((f) => f.reviewed),
+    edited: count((f) => f.source === 'reviewer'),
+    acceptedDespiteFlag: count((f) => f.acceptedDespiteFlag),
+    notFlaggedNotChecked: count((f) => f.originalFlags.length === 0 && !f.reviewed),
+  };
+}
+
 export const VerifiedRecordSchema = z
   .strictObject({
     synthetic: z.literal(true),
@@ -63,6 +96,7 @@ export const VerifiedRecordSchema = z
     referenceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     verifiedAt: IsoTimeSchema,
     verifier: z.string().min(1),
+    summary: SummarySchema,
     fields: z.array(VerifiedFieldSchema),
     actions: z.array(ReviewActionSchema),
   })
@@ -71,10 +105,13 @@ export const VerifiedRecordSchema = z
     if (names.length !== FIELD_ORDER.length || !FIELD_ORDER.every((n, i) => names[i] === n)) {
       ctx.addIssue({ code: 'custom', path: ['fields'], message: 'Expected the seven fields in schema order.' });
     }
+    if (JSON.stringify(record.summary) !== JSON.stringify(summarise(record.fields))) {
+      ctx.addIssue({ code: 'custom', path: ['summary'], message: 'The summary does not match the fields.' });
+    }
   });
 
 export type VerifiedRecord = z.infer<typeof VerifiedRecordSchema>;
-export type VerifiedField = VerifiedRecord['fields'][number];
+export type VerifiedField = z.infer<typeof VerifiedFieldSchema>;
 
 export interface BuildRecordInput {
   fax: SampleFax;
@@ -95,6 +132,23 @@ export function buildVerifiedRecord(input: BuildRecordInput): VerifiedRecord | n
   const result = input.fax.readers[input.reader];
   if (result.status !== 'ok') return null;
   const actions: ReviewAction[] = input.state.actions.map((action) => ({ ...action }));
+  const fields: VerifiedField[] = result.fields.map((field) => {
+    const review = fieldReview(input.state, field.name);
+    const edited = review.enteredValue !== null;
+    return {
+      name: field.name,
+      label: FIELD_LABELS[field.name],
+      originalValue: field.value,
+      wordIds: [...field.wordIds],
+      confidence: field.confidence,
+      originalFlags: [...field.flags],
+      finalValue: edited ? review.enteredValue : field.value,
+      source: edited ? ('reviewer' as const) : ('page' as const),
+      reviewed: review.reviewed,
+      acceptedDespiteFlag: review.acceptedDespiteFlag,
+      failedChecks: [...review.failedChecks],
+    };
+  });
   return {
     synthetic: true,
     notice: SYNTHETIC_NOTICE,
@@ -105,23 +159,8 @@ export function buildVerifiedRecord(input: BuildRecordInput): VerifiedRecord | n
     referenceDate: input.referenceDate,
     verifiedAt: input.verifiedAt,
     verifier: VERIFIER_LABEL,
-    fields: result.fields.map((field) => {
-      const review = fieldReview(input.state, field.name);
-      const edited = review.enteredValue !== null;
-      return {
-        name: field.name,
-        label: FIELD_LABELS[field.name],
-        originalValue: field.value,
-        wordIds: [...field.wordIds],
-        confidence: field.confidence,
-        originalFlags: [...field.flags],
-        finalValue: edited ? review.enteredValue : field.value,
-        source: edited ? ('reviewer' as const) : ('page' as const),
-        reviewed: review.reviewed,
-        acceptedDespiteFlag: review.acceptedDespiteFlag,
-        failedChecks: [...review.failedChecks],
-      };
-    }),
+    summary: summarise(fields),
+    fields,
     actions,
   };
 }
@@ -140,3 +179,21 @@ export const LAID_TO_REST_RULE = 'This record is read-only.';
 /** "Verified on Oct 1, 09:30. This record is read-only." The time is read as written (UTC), not converted. */
 export const verifiedLine = (verifiedAt: string): string =>
   `Verified on ${formatReceived(verifiedAt)}. ${LAID_TO_REST_RULE}`;
+
+
+const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`;
+
+/**
+ * The summary as short plain lines for the verified card. They count what happened and
+ * never say the values are right.
+ */
+export function summaryLines(summary: Summary): string[] {
+  return [
+    plural(summary.totalFields, 'field', 'fields'),
+    `${summary.flagged} ${summary.flagged === 1 ? 'was' : 'were'} flagged`,
+    `${summary.reviewed} reviewed by you`,
+    `${summary.edited} edited by you`,
+    `${summary.acceptedDespiteFlag} accepted although the check failed`,
+    `${summary.notFlaggedNotChecked} not flagged and not checked by a reviewer`,
+  ];
+}

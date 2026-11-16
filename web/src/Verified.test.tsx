@@ -178,7 +178,36 @@ describe('the verified record', () => {
     expect(rowFor('fax-0003').getByText('Laid to rest')).toBeInTheDocument();
   });
 
-  it('has no accessibility violations in the verified state', async () => {
+  it('shows the summary counts on the card, the same as in the export, and hides the duplicate history line', async () => {
+    stubSite();
+    const store = new MemoryStore();
+    const { user, saved } = session(store);
+    await verifyFax3(user);
+    const lines = [...document.querySelectorAll('[data-summary] li')].map((li) => li.textContent);
+    expect(lines).toEqual([
+      '7 fields',
+      '2 were flagged',
+      '2 reviewed by you',
+      '1 edited by you',
+      '1 accepted although the check failed',
+      '5 not flagged and not checked by a reviewer',
+    ]);
+    expect(storedRecord(store).summary).toEqual({
+      totalFields: 7, flagged: 2, reviewed: 2, edited: 1, acceptedDespiteFlag: 1, notFlaggedNotChecked: 5,
+    });
+    // Accepted although the check failed: the label is shown, the history line is not.
+    expect(within(fieldButton('npi')).getByText('Accepted although the check failed')).toBeInTheDocument();
+    expect(within(fieldButton('npi')).queryByText(/Was flagged/)).not.toBeInTheDocument();
+    expect(document.querySelector('.laid-to-rest')!.textContent).not.toMatch(/Was flagged/);
+    // Elsewhere the history line stays (phone was edited to a valid value).
+    expect(within(fieldButton('callbackPhone')).getByText(/Was flagged/)).toBeInTheDocument();
+    // The export keeps the full history.
+    await user.click(downloadButton()!);
+    const exported = VerifiedRecordSchema.parse(JSON.parse(saved[0]!.text));
+    expect(exported.summary).toEqual(storedRecord(store).summary);
+    expect(exported.fields.find((f) => f.name === 'npi')!.originalFlags.length).toBeGreaterThan(0);
+    expect(exported.actions).toHaveLength(2);
+  });  it('has no accessibility violations in the verified state', async () => {
     stubSite();
     const { user, view } = session(new MemoryStore());
     await verifyFax3(user);

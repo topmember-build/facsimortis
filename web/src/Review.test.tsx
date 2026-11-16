@@ -85,7 +85,9 @@ describe('review panel: fax-0003, model reader', () => {
     expect(fieldOrder()[0]).toBe('callbackPhone');
     const npi = within(fieldButton('npi'));
     expect(npi.getByText('6720988041')).toBeInTheDocument();
-    expect(npi.getByText('Was flagged: The provider number looks wrong: the last digit does not match.')).toBeInTheDocument();
+    // Accepted although the check failed: the label carries the message, so no history line.
+    expect(npi.getByText('Accepted although the check failed')).toBeInTheDocument();
+    expect(npi.queryByText(/Was flagged/)).not.toBeInTheDocument();
     expect(ghost('npi')).toHaveAttribute('data-selected', 'true');
     expect(screen.getByText('Provider number (NPI) accepted although the check failed.')).toBeInTheDocument();
     expect(recorded).toEqual([

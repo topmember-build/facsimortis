@@ -5,7 +5,8 @@ import { reviewReducer, EMPTY_REVIEW } from './review-state';
 import {
   MemoryStore,
   ReviewStorage,
-  LEGACY_PREFIX,
+  LEGACY_PREFIXES,
+  CORRUPT_NOTE,
   STALE_NOTE,
   STORAGE_PREFIX,
   hydrate,
@@ -42,7 +43,7 @@ const throwing: KeyValueStore = {
 
 describe('storage', () => {
   it('uses one versioned prefix and a key per fax and reader', () => {
-    expect(entryKey('fax-0003', 'model')).toBe('facsimortis:v2:fax-0003:model');
+    expect(entryKey('fax-0003', 'model')).toBe('facsimortis:v3:fax-0003:model');
     const store = new MemoryStore();
     saveEntry(new ReviewStorage(store), fax, 'model', REF, state, null);
     expect([...store.data.keys()]).toEqual([`${STORAGE_PREFIX}fax-0003:model`]);
@@ -128,7 +129,7 @@ describe('storage', () => {
   });
 });
 
-describe('acceptedDespiteFlag in storage (format v2)', () => {
+describe('acceptedDespiteFlag in storage (format v3)', () => {
   const FAILED = ['The provider number looks wrong: the last digit does not match.'];
   const despite = reviewReducer(EMPTY_REVIEW, {
     type: 'accept',
@@ -150,7 +151,8 @@ describe('acceptedDespiteFlag in storage (format v2)', () => {
   });
 
   it('does not read a v1 entry, says so with the stale note, and never throws', () => {
-    expect(STORAGE_PREFIX).toBe('facsimortis:v2:');
+    expect(STORAGE_PREFIX).toBe('facsimortis:v3:');
+    expect(LEGACY_PREFIXES).toEqual(['facsimortis:v2:', 'facsimortis:v1:']);
     const store = new MemoryStore();
     const v1Entry = {
       version: 1, faxId: 'fax-0003', reader: 'model', sampleDataVersion: context.sampleDataVersion,
@@ -158,22 +160,71 @@ describe('acceptedDespiteFlag in storage (format v2)', () => {
       actions: [{ field: 'npi', action: 'accepted', originalValue: '6720988041', at: '2026-10-01T09:30:00.000Z' }],
       verified: null,
     };
-    store.setItem(`${LEGACY_PREFIX}fax-0003:model`, JSON.stringify(v1Entry));
+    store.setItem('facsimortis:v1:fax-0003:model', JSON.stringify(v1Entry));
     expect(loadEntry(new ReviewStorage(store), 'fax-0003', 'model', context)).toEqual({ kind: 'stale' });
     const item = { fax: { ok: true, value: fax } } as unknown as Parameters<typeof hydrate>[1][number];
     const out = hydrate(new ReviewStorage(store), [item], REF);
     expect(out.notices).toEqual([STALE_NOTE]);
     expect(out.reviews).toEqual({});
     // The old entry is left alone.
-    expect(store.data.has(`${LEGACY_PREFIX}fax-0003:model`)).toBe(true);
+    expect(store.data.has('facsimortis:v1:fax-0003:model')).toBe(true);
   });
 
-  it('treats a v2 entry whose Accept lacks the new fields as corrupt', () => {
+  it('does not read a v2 entry, says so with the stale note, and leaves it alone', () => {
+    const store = new MemoryStore();
+    store.setItem(
+      'facsimortis:v2:fax-0003:model',
+      JSON.stringify({ version: 2, faxId: 'fax-0003', reader: 'model', actions: [], verified: {} }),
+    );
+    expect(loadEntry(new ReviewStorage(store), 'fax-0003', 'model', context)).toEqual({ kind: 'stale' });
+    const item = { fax: { ok: true, value: fax } } as unknown as Parameters<typeof hydrate>[1][number];
+    const out = hydrate(new ReviewStorage(store), [item], REF);
+    expect(out.notices).toEqual([STALE_NOTE]);
+    expect(out.reviews).toEqual({});
+    expect(store.data.has('facsimortis:v2:fax-0003:model')).toBe(true);
+  });
+
+  it('treats a v3 entry whose Accept lacks the new fields as corrupt', () => {
     const store = new MemoryStore();
     saveEntry(new ReviewStorage(store), fax, 'model', REF, despite, null);
     const key = entryKey('fax-0003', 'model');
     const entry = JSON.parse(store.data.get(key)!) as { actions: Record<string, unknown>[] };
     delete entry.actions[0]!['acceptedDespiteFlag'];
+    store.setItem(key, JSON.stringify(entry));
+    expect(loadEntry(new ReviewStorage(store), 'fax-0003', 'model', context)).toEqual({ kind: 'corrupt' });
+  });
+});
+
+describe('summary in storage (format v3)', () => {
+  const verifiedAt = '2026-10-01T09:30:02.000Z';
+  const build = () =>
+    buildVerifiedRecord({ fax, reader: 'model', referenceDate: REF, sampleDataVersion: SAMPLE_DATA_VERSION, state, verifiedAt })!;
+  const item = { fax: { ok: true, value: fax } } as unknown as Parameters<typeof hydrate>[1][number];
+
+  it('round-trips a record whose summary matches its fields', () => {
+    const store = new MemoryStore();
+    saveEntry(new ReviewStorage(store), fax, 'model', REF, state, build());
+    const loaded = loadEntry(new ReviewStorage(store), 'fax-0003', 'model', context);
+    expect(loaded.kind === 'ok' && loaded.verified?.summary).toEqual(build().summary);
+  });
+
+  it('treats a stored record whose summary disagrees with its fields as corrupt', () => {
+    const store = new MemoryStore();
+    const key = entryKey('fax-0003', 'model');
+    saveEntry(new ReviewStorage(store), fax, 'model', REF, state, build());
+    const entry = JSON.parse(store.data.get(key)!) as { verified: { summary: { reviewed: number } } };
+    entry.verified.summary.reviewed += 1;
+    store.setItem(key, JSON.stringify(entry));
+    expect(loadEntry(new ReviewStorage(store), 'fax-0003', 'model', context)).toEqual({ kind: 'corrupt' });
+    expect(hydrate(new ReviewStorage(store), [item], REF).notices).toEqual([CORRUPT_NOTE]);
+  });
+
+  it('treats a stored record with no summary as corrupt', () => {
+    const store = new MemoryStore();
+    const key = entryKey('fax-0003', 'model');
+    saveEntry(new ReviewStorage(store), fax, 'model', REF, state, build());
+    const entry = JSON.parse(store.data.get(key)!) as { verified: Record<string, unknown> };
+    delete entry.verified['summary'];
     store.setItem(key, JSON.stringify(entry));
     expect(loadEntry(new ReviewStorage(store), 'fax-0003', 'model', context)).toEqual({ kind: 'corrupt' });
   });
