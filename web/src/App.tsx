@@ -48,6 +48,8 @@ export function App({ now = systemClock, onReviewAction, onVerify, storage: stor
   const [storage] = useState(() => new ReviewStorage(storageProp === undefined ? browserStore() : storageProp));
   const [kept, setKept] = useState(storage.ok);
   const [notices, setNotices] = useState<string[]>([]);
+  // Keys of stale saved progress. Removed in an effect, after the note has been rendered.
+  const [toDiscard, setToDiscard] = useState<string[]>([]);
   const [load, setLoad] = useState<Load>({ state: 'loading' });
   const [attempt, setAttempt] = useState(0);
   // App-level, so the inbox flag counts follow the reader chosen on the fax screen.
@@ -114,6 +116,7 @@ export function App({ now = systemClock, onReviewAction, onVerify, storage: stor
           setReviews(restored.reviews);
           setVerified(restored.verified);
           setNotices((current) => [...current, ...restored.notices.filter((note) => !current.includes(note))]);
+          setToDiscard(restored.discard);
           setKept(storage.ok);
           setLoad({ state: 'ready', items: result.value.items, referenceDate: result.value.referenceDate });
           setVisible((current) => current ?? initialVisibleCount(result.value.items.length));
@@ -128,6 +131,14 @@ export function App({ now = systemClock, onReviewAction, onVerify, storage: stor
     })();
     return () => controller.abort();
   }, [attempt, storage]);
+
+  // Runs after the commit that shows the note. If removal fails, the page carries on; the note
+  // is already in `notices`, so it is not added again in this session.
+  useEffect(() => {
+    if (toDiscard.length === 0 || load.state !== 'ready') return;
+    storage.discardKeys(toDiscard);
+    setToDiscard([]);
+  }, [toDiscard, load.state, storage]);
 
   function retry() {
     setLoad({ state: 'loading' });

@@ -33,18 +33,26 @@ export interface KeyValueStore {
  * action's `at` became `atUtc`. A v3 entry is migrated on load (see migrateV3Entry): it is
  * read, checked with the v3 schema, converted with the values unchanged, written as v4, and
  * the v3 key is removed only after the v4 write worked. A v3 entry that does not pass the
- * check is left untouched and not read, and the page shows the plain "could not be read" note.
+ * check is not read, and the page shows the plain "could not be read" note.
  * A successful migration shows no note, because nothing is lost and nothing changes for the user.
+ *
+ * Stale saved progress is reported once and then removed. Stale means an entry from v1 or v2
+ * (not migrated), or an entry whose sample data version, reference date or fax fingerprint no
+ * longer matches. An entry that cannot be read (v3 that fails migration, v4 that fails the
+ * check) is treated the same way. `hydrate` lists these keys in `discard`; the page removes them
+ * with `discardKeys` only after the note has been rendered, so the note does not come back on
+ * the next load. If removal fails, nothing else changes and the note is not shown again in
+ * that session. Migrated entries, current valid entries and other keys are never removed.
  *
  * v3 added `summary` (counts worked out from the fields) to the verified record. A v2
  * entry that holds a verified record has no summary, so it cannot pass the record check and
- * would look corrupt. Entries from v1 and v2 are not migrated: they are left untouched and not
- * read, and the page shows the plain stale note.
+ * would look corrupt. Entries from v1 and v2 are not migrated: they are not read, and the page
+ * shows the plain stale note.
  *
  * v2 added acceptedDespiteFlag and failedChecks to each Accept. A v1 entry cannot say
  * whether an Accept was made despite a failed check, and defaulting it to false could hide
- * one in an export. So v1 entries are not migrated: they are left untouched and not read,
- * and the page shows the plain stale note.
+ * one in an export. So v1 entries are not migrated: they are not read, and the page shows
+ * the plain stale note.
  */
 export const STORAGE_PREFIX = 'facsimortis:v4:';
 export const STORAGE_FORMAT_VERSION = 4;
@@ -135,6 +143,26 @@ export class ReviewStorage {
       this.okFlag = false;
       return false;
     }
+  }
+
+  /**
+   * Removes stale entries after their note was shown. Only keys under `facsimortis:` (never the
+   * probe key). A refusal is swallowed and does not change `ok`: the page keeps working.
+   * Returns true when every key was removed.
+   */
+  discardKeys(keys: readonly string[]): boolean {
+    let all = true;
+    for (const key of keys) {
+      if (!key.startsWith('facsimortis:') || key === `${STORAGE_PREFIX}probe`) continue;
+      this.memory.delete(key);
+      if (!this.store) continue;
+      try {
+        this.store.removeItem(key);
+      } catch {
+        all = false;
+      }
+    }
+    return all;
   }
 
   remove(key: string): void {
@@ -297,47 +325,73 @@ export function loadEntry(
   faxId: string,
   reader: ReaderName,
   context: SampleContext,
+  /** Collects keys of entries that were not used (stale or unreadable). The caller removes them after the note. */
+  discard?: string[],
 ): LoadResult {
-  const raw = storage.read(entryKey(faxId, reader));
+  const v4Key = entryKey(faxId, reader);
+  const v3Key = `${V3_PREFIX}${faxId}:${reader}`;
+  const drop = (...keys: string[]) => {
+    discard?.push(...keys);
+  };
+  const raw = storage.read(v4Key);
   let entry: StoredEntry;
+  let migratedNow = false;
   if (raw === null) {
-    const v3Key = `${V3_PREFIX}${faxId}:${reader}`;
     const v3Raw = storage.read(v3Key);
     if (v3Raw === null) {
-      const old = LEGACY_PREFIXES.some((prefix) => storage.read(`${prefix}${faxId}:${reader}`) !== null);
-      return old ? { kind: 'stale' } : { kind: 'none' };
+      const old = LEGACY_PREFIXES.map((prefix) => `${prefix}${faxId}:${reader}`).filter(
+        (key) => storage.read(key) !== null,
+      );
+      if (old.length === 0) return { kind: 'none' };
+      drop(...old);
+      return { kind: 'stale' };
     }
     let v3Json: unknown;
     try {
       v3Json = JSON.parse(v3Raw);
     } catch {
+      drop(v3Key);
       return { kind: 'corrupt' };
     }
-    // An invalid v3 entry is left untouched and not read.
+    // An invalid v3 entry is not read. It is reported, then removed by the caller.
     const migrated = migrateV3Entry(v3Json);
-    if (!migrated || !isConsistent(migrated, faxId, reader)) return { kind: 'corrupt' };
+    if (!migrated || !isConsistent(migrated, faxId, reader)) {
+      drop(v3Key);
+      return { kind: 'corrupt' };
+    }
     // The v3 key goes only after the v4 write worked. If it failed, v3 stays and the page
     // keeps the migrated entry in memory.
     if (storage.write(entryKey(faxId, reader), JSON.stringify(migrated))) storage.remove(v3Key);
     entry = migrated;
+    migratedNow = true;
   } else {
     let json: unknown;
     try {
       json = JSON.parse(raw);
     } catch {
+      drop(v4Key);
       return { kind: 'corrupt' };
     }
     const parsed = EntrySchema.safeParse(json);
-    if (!parsed.success) return { kind: 'corrupt' };
+    if (!parsed.success) {
+      drop(v4Key);
+      return { kind: 'corrupt' };
+    }
     entry = parsed.data;
   }
-  if (!isConsistent(entry, faxId, reader)) return { kind: 'corrupt' };
+  if (!isConsistent(entry, faxId, reader)) {
+    drop(v4Key);
+    return { kind: 'corrupt' };
+  }
 
   if (
     entry.sampleDataVersion !== context.sampleDataVersion ||
     entry.referenceDate !== context.referenceDate ||
     entry.fingerprint !== context.fingerprint
   ) {
+    // If the v4 write failed during migration, the v3 key is still there and is just as stale.
+    drop(v4Key);
+    if (migratedNow && storage.read(v3Key) !== null) drop(v3Key);
     return { kind: 'stale' };
   }
   return { kind: 'ok', actions: entry.actions, verified: entry.verified };
@@ -368,13 +422,15 @@ export interface Hydrated {
   verified: Record<string, VerifiedRecord>;
   /** Plain notes about ignored data. Each message appears at most once. */
   notices: string[];
+  /** Keys of stale or unreadable entries. Remove them with `ReviewStorage.discardKeys` after the notes are shown. */
+  discard: string[];
 }
 
 const READERS: ReaderName[] = ['model', 'rules'];
 
 /** Restores review state and verified records for every fax and reader that has an answer. */
 export function hydrate(storage: ReviewStorage, items: readonly InboxItem[], referenceDate: string): Hydrated {
-  const out: Hydrated = { reviews: {}, verified: {}, notices: [] };
+  const out: Hydrated = { reviews: {}, verified: {}, notices: [], discard: [] };
   const note = (message: string) => {
     if (!out.notices.includes(message)) out.notices.push(message);
   };
@@ -383,7 +439,7 @@ export function hydrate(storage: ReviewStorage, items: readonly InboxItem[], ref
     const fax = item.fax.value;
     for (const reader of READERS) {
       if (fax.readers[reader].status !== 'ok') continue;
-      const loaded = loadEntry(storage, fax.id, reader, sampleContext(fax, referenceDate));
+      const loaded = loadEntry(storage, fax.id, reader, sampleContext(fax, referenceDate), out.discard);
       if (loaded.kind === 'stale') note(STALE_NOTE);
       else if (loaded.kind === 'corrupt') note(CORRUPT_NOTE);
       else if (loaded.kind === 'ok') {

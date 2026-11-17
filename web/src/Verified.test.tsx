@@ -351,3 +351,135 @@ describe('data that cannot be used', () => {
     expect(screen.queryByText(NOT_KEPT_NOTE)).not.toBeInTheDocument();
   });
 });
+
+describe('stale saved progress is reported once, then removed', () => {
+  const V1 = 'facsimortis:v1:fax-0001:model';
+  const V2 = 'facsimortis:v2:fax-0001:rules';
+  const OTHER = 'someone-else:setting';
+
+  /** A current, valid v4 entry for fax-0003 (model), made by really using the page. */
+  async function makeValidEntry(store: MemoryStore) {
+    stubSite();
+    const first = session(store);
+    await openFax(first.user, 'fax-0003');
+    await first.user.click(accept('npi'));
+    first.view.unmount();
+  }
+
+  it('shows the note once for v1 and v2 entries, removes them, and keeps everything else', async () => {
+    const store = new MemoryStore();
+    await makeValidEntry(store);
+    const valid = store.data.get(entryKey('fax-0003', 'model'));
+    store.setItem(V1, JSON.stringify({ version: 1 }));
+    store.setItem(V2, JSON.stringify({ version: 2 }));
+    store.setItem(OTHER, 'keep');
+
+    const second = session(store);
+    await screen.findByRole('heading', { level: 2, name: 'Inbox' });
+    expect(screen.getAllByText(STALE_NOTE)).toHaveLength(1);
+    expect(store.data.has(V1)).toBe(false);
+    expect(store.data.has(V2)).toBe(false);
+    expect(store.data.get(entryKey('fax-0003', 'model'))).toBe(valid);
+    expect(store.data.get(OTHER)).toBe('keep');
+    second.view.unmount();
+
+    // The next load has nothing stale left, so no note, and the valid progress is still restored.
+    const third = session(store);
+    await screen.findByRole('heading', { level: 2, name: 'Inbox' });
+    expect(screen.queryByText(STALE_NOTE)).not.toBeInTheDocument();
+    await third.user.click(screen.getByRole('button', { name: 'Incoming fax' }));
+    expect(rowFor('fax-0003').getByText('Review in progress')).toBeInTheDocument();
+  });
+
+  it('removes a v4 entry made from different sample data after showing the note', async () => {
+    const store = new MemoryStore();
+    await makeValidEntry(store);
+    const changed = structuredClone(committedFaxes['fax-0003.json']) as { ocr: { words: { text: string }[] } };
+    changed.ocr.words[0]!.text = 'changed';
+    stubSite({ 'fax-0003.json': () => json(changed) });
+    const second = session(store);
+    await screen.findByRole('heading', { level: 2, name: 'Inbox' });
+    expect(screen.getAllByText(STALE_NOTE)).toHaveLength(1);
+    expect(store.data.has(entryKey('fax-0003', 'model'))).toBe(false);
+    second.view.unmount();
+
+    session(store);
+    await screen.findByRole('heading', { level: 2, name: 'Inbox' });
+    expect(screen.queryByText(STALE_NOTE)).not.toBeInTheDocument();
+  });
+
+  it('shows the could-not-be-read note once for unreadable entries, then removes them', async () => {
+    stubSite();
+    const store = new MemoryStore();
+    store.setItem(entryKey('fax-0003', 'model'), '{not json');
+    store.setItem('facsimortis:v3:fax-0003:rules', JSON.stringify({ version: 3, nope: true }));
+    const second = session(store);
+    await screen.findByRole('heading', { level: 2, name: 'Inbox' });
+    expect(screen.getAllByText(CORRUPT_NOTE)).toHaveLength(1);
+    expect(store.data.size).toBe(0);
+    second.view.unmount();
+
+    session(store);
+    await screen.findByRole('heading', { level: 2, name: 'Inbox' });
+    expect(screen.queryByText(CORRUPT_NOTE)).not.toBeInTheDocument();
+  });
+
+  it('keeps working, and does not repeat the note, when removal fails', async () => {
+    stubSite();
+    const inner = new MemoryStore();
+    inner.setItem(V1, JSON.stringify({ version: 1 }));
+    const refusing: KeyValueStore = {
+      getItem: (k) => inner.getItem(k),
+      setItem: (k, v) => inner.setItem(k, v),
+      removeItem: (k) => {
+        if (k === V1) throw new Error('denied');
+        inner.removeItem(k);
+      },
+    };
+    const { user } = session(refusing);
+    await screen.findByRole('heading', { level: 2, name: 'Inbox' });
+    expect(screen.getAllByText(STALE_NOTE)).toHaveLength(1);
+    expect(inner.data.has(V1)).toBe(true);
+    await openFax(user, 'fax-0003');
+    await user.click(accept('npi'));
+    expect(statusLine()).toContain('Review in progress');
+    expect(screen.getAllByText(STALE_NOTE)).toHaveLength(1);
+    expect(screen.queryByText(NOT_KEPT_NOTE)).not.toBeInTheDocument();
+  });
+
+  it('migrates a v3 entry, keeps it, and shows no note', async () => {
+    stubSite();
+    const store = new MemoryStore();
+    const first = session(store);
+    await openFax(first.user, 'fax-0003');
+    await first.user.click(accept('npi'));
+    first.view.unmount();
+    const key = entryKey('fax-0003', 'model');
+    const v4 = JSON.parse(store.data.get(key)!) as { version: number; actions: Record<string, unknown>[] };
+    const v3 = {
+      ...v4,
+      version: 3,
+      actions: v4.actions.map(({ atUtc, ...rest }) => ({ ...rest, at: atUtc })),
+    };
+    store.data.delete(key);
+    store.setItem('facsimortis:v3:fax-0003:model', JSON.stringify(v3));
+
+    const second = session(store);
+    await screen.findByRole('heading', { level: 2, name: 'Inbox' });
+    expect(screen.queryByText(STALE_NOTE)).not.toBeInTheDocument();
+    expect(screen.queryByText(CORRUPT_NOTE)).not.toBeInTheDocument();
+    expect(store.data.has(key)).toBe(true);
+    await second.user.click(screen.getByRole('button', { name: 'Incoming fax' }));
+    expect(rowFor('fax-0003').getByText('Review in progress')).toBeInTheDocument();
+  });
+
+  it('has no accessibility violations while the note is showing', async () => {
+    stubSite();
+    const store = new MemoryStore();
+    store.setItem(V1, JSON.stringify({ version: 1 }));
+    const { view } = session(store);
+    await screen.findByRole('heading', { level: 2, name: 'Inbox' });
+    expect(screen.getAllByText(STALE_NOTE)).toHaveLength(1);
+    expect((await axe.run(view.container)).violations).toEqual([]);
+  });
+});
