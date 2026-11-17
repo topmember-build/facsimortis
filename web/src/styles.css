@@ -2,8 +2,8 @@
    --text #e8eaf0 16.2 and 14.3, --muted #b4bbcb 10.1 and 9.0,
    --flag #ffb86b 11.4 and 10.1, --edge #8a94aa 6.4 and 5.7 (borders of controls),
    --focus #ffffff 19.4 and 17.2.
-   --ghost #8fd8ff (12.4 and 11.0) is RESERVED for source ghosts (.ghost rules below). Nothing else may
-   use it: not the inbox, not focus rings, not buttons, not the notice. */
+   --ghost #8fd8ff (12.4 and 11.0) and --ghost-edge #1f6fb5 (5.25 on white, 3.7 and 3.3) are RESERVED
+   for source ghosts (.ghost rules below). Nothing else may use them: not the inbox, not focus rings, not buttons, not the notice. */
 :root {
   color-scheme: dark;
   --bg: #0b0d12;
@@ -14,6 +14,7 @@
   --muted: #b4bbcb;
   --focus: #ffffff;
   --ghost: #8fd8ff;
+  --ghost-edge: #1f6fb5;
   --flag: #ffb86b;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
@@ -35,8 +36,7 @@ body {
 }
 
 .page-header,
-.page-main,
-.synthetic-notice {
+.page-main {
   max-width: 48rem;
   margin: 0 auto;
   padding: 1.5rem;
@@ -52,23 +52,16 @@ body {
   color: var(--muted);
 }
 
-.synthetic-notice {
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
+/* One slim notice at the very top. Not sticky: it scrolls away so the review summary bar keeps the top.
+   --text on --panel is 14.3:1. Neutral colours only; never the ghost or flag colours. */
+.synthetic-banner {
+  padding: 0.375rem 1rem;
   background: var(--panel);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--edge);
-  border-radius: 0.5rem;
-  max-width: calc(48rem - 3rem);
-}
-
-.synthetic-notice h2 {
-  margin: 0 0 0.25rem;
-  font-size: 1rem;
-}
-
-.synthetic-notice p {
-  margin: 0;
+  color: var(--text);
+  border-bottom: 1px solid var(--edge);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  text-align: center;
 }
 
 h2 {
@@ -223,9 +216,66 @@ button.row-button:hover {
   color: var(--flag);
 }
 
-.flag-none {
-  color: var(--muted);
+/* Inbox status pill. Each state differs in icon shape AND border or fill, never colour alone.
+   Warm accent only while flagged fields wait; the ghost colour is not used here. */
+.status-pill {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-self: start;
+  gap: 0.125rem 0.5rem;
+  padding: 0.125rem 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+}
+
+.pill-icon {
+  font-size: 1.0625rem;
+  line-height: 1;
+}
+
+.pill-review {
   font-weight: 400;
+}
+
+.pill-review::before {
+  content: '\00b7';
+  margin-right: 0.5rem;
+}
+
+.pill-flagged {
+  color: var(--flag);
+  border: 2px solid var(--flag);
+}
+
+.pill-in-progress {
+  color: var(--flag);
+  border: 2px dashed var(--flag);
+}
+
+.pill-reviewed {
+  border: 2px solid var(--edge);
+}
+
+.pill-laid-to-rest {
+  color: var(--bg);
+  background: var(--text);
+  border-color: var(--text);
+}
+
+.pill-no-flags {
+  color: var(--muted);
+  border: 1px dotted var(--edge);
+}
+
+.pill-no-answer {
+  color: var(--muted);
+  border-color: transparent;
+  padding-left: 0;
 }
 
 .incoming {
@@ -411,33 +461,45 @@ button.row-button:hover {
   border: 1px solid var(--edge);
 }
 
+.viewer-caption {
+  margin: 0;
+  color: var(--muted);
+}
+
 .selection-line {
   margin: 0;
   min-height: 1.5rem;
   color: var(--muted);
 }
 
-/* Source ghosts. --ghost is used here and nowhere else. Strokes keep a constant
-   on-screen width however the image is scaled. */
+/* Source ghosts. --ghost and --ghost-edge are used here and nowhere else. Strokes keep a
+   constant on-screen width however the image is scaled. The page is black on white, so the
+   outline is the deep blue --ghost-edge (5.25:1 on white, 3.70:1 on --bg). The light --ghost
+   colour is the fill and the glow. Reduced motion only removes the pulse; the thick outline
+   and the glow stay. */
 .ghost rect {
   fill: var(--ghost);
-  fill-opacity: 0.12;
-  stroke: var(--ghost);
-  stroke-opacity: 0.4;
-  stroke-width: 1px;
+  fill-opacity: 0.18;
+  stroke: var(--ghost-edge);
+  stroke-opacity: 0.7;
+  stroke-width: 1.5px;
   vector-effect: non-scaling-stroke;
 }
 
 .ghost-selected rect {
   fill-opacity: 0.4;
   stroke-opacity: 1;
-  stroke-width: 3px;
+  stroke-width: 4px;
+}
+
+.ghost-glow-flood {
+  flood-color: var(--ghost);
+  flood-opacity: 1;
 }
 
 .ghost-pulse rect {
   animation: ghost-pulse 1.2s ease-out 1;
 }
-
 @keyframes ghost-pulse {
   0% {
     fill-opacity: 0.15;
@@ -468,19 +530,37 @@ button.row-button:hover {
 .field-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  gap: 0.25rem;
 }
 
-.field-actions .button {
-  min-height: 2.75rem;
+/* Compact buttons: 24px minimum hit area, 0.875rem text. */
+.button.button-compact {
+  min-height: 1.5rem;
+  min-width: 1.5rem;
+  padding: 0 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25;
+}
+
+/* Accept stays clearly visible on flagged fields: light border, heavier text. */
+.button.button-accept {
+  border-color: var(--text);
+  font-weight: 600;
+}
+
+/* Wide and narrow: Accept and Edit sit top right inside the card, beside the field name. */
+.field-card .field-actions {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.5rem;
+  z-index: 1;
 }
 
 /* The edit form is an inset panel under the field it edits. */
 .edit-form {
   display: grid;
   gap: 0.75rem;
-  margin-top: 0.75rem;
+  margin: 0.25rem 0.5rem 0.5rem;
   padding: 1rem;
   background: var(--bg);
   border: 1px solid var(--edge);
@@ -534,31 +614,76 @@ button.row-button:hover {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 0.5rem;
+  gap: 0.25rem;
+}
+
+/* The li is the card: it holds the select button, the Accept/Edit buttons and the edit form.
+   Text is never below 0.875rem. Height budget is in the 2.10 task report. */
+.field-card {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.3;
+}
+
+.field-card:hover {
+  border-color: var(--edge);
+}
+
+.field-card.field-selected,
+.field-card.field-selected:hover {
+  border-color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--text);
 }
 
 .field-item {
   display: grid;
   gap: 0.125rem;
   width: 100%;
-  padding: 0.625rem 0.875rem;
+  padding: 0.25rem 0.5rem;
   font: inherit;
   color: inherit;
   text-align: left;
-  background: var(--panel);
-  border: 1px solid var(--border);
+  background: transparent;
+  border: 0;
   border-radius: 0.5rem;
   cursor: pointer;
 }
 
-.field-item:hover {
-  border-color: var(--edge);
+/* The ring stays inside the card so the scrolling list never clips it. */
+.field-item:focus-visible {
+  outline-offset: -3px;
 }
 
-.field-selected,
-.field-selected:hover {
-  border: 2px solid var(--text);
-  padding: calc(0.625rem - 1px) calc(0.875rem - 1px);
+.field-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 0.5rem;
+  min-height: 1.5rem;
+  /* Room for Accept and Edit at the top right of the card. */
+  padding-right: 7.5rem;
+}
+
+.field-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 0.75rem;
+}
+
+.field-meta .field-note {
+  color: var(--muted);
+}
+
+.no-change {
+  color: var(--muted);
+  font-size: 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0 0.5rem;
 }
 
 .field-name {
@@ -567,7 +692,7 @@ button.row-button:hover {
 }
 
 .field-value {
-  font-size: 1.0625rem;
+  font-size: 1rem;
   font-weight: 600;
   overflow-wrap: anywhere;
 }
@@ -579,15 +704,17 @@ button.row-button:hover {
 
 .confidence {
   display: flex;
+  flex: 1 1 8rem;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   color: var(--muted);
   font-size: 0.875rem;
 }
 
 .confidence-bar {
   flex: 1;
-  height: 0.5rem;
+  min-width: 2rem;
+  height: 0.375rem;
   background: var(--bg);
   border: 1px solid var(--edge);
   border-radius: 999px;

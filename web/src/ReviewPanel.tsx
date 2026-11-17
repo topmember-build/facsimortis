@@ -16,6 +16,12 @@ export const NOT_READ_TEXT = 'Not read';
 /** Shown beside a field after a Save that matched the value it would replace. */
 export const NO_CHANGE_TEXT = 'No change made';
 
+/** The one provenance line on a field card. Plain statements about where the value came from. */
+export function provenanceLine(pageValue: string | null, entered: string | null, accepted: boolean): string {
+  if (entered !== null) return `Entered by you. Read from the page: ${pageValue ?? NOT_READ_TEXT}`;
+  if (pageValue === null) return accepted ? 'Not on the page, confirmed by you' : 'Nothing was read from the page';
+  return accepted ? 'Read from the page, accepted by you' : 'Read from the page';
+}
 function ConfidenceBar({ confidence }: { confidence: number }) {
   const percent = Math.round(confidence * 100);
   return (
@@ -128,42 +134,33 @@ function FieldRow({ field, state, referenceDate, selected, editing, noChange, on
   const pending = standing.length > 0;
 
   return (
-    <li className="field-row">
+    <li className={selected ? 'field-row field-card field-selected' : 'field-row field-card'}>
       <button
         type="button"
-        className={selected ? 'field-item field-selected' : 'field-item'}
+        className="field-item"
         aria-pressed={selected}
         data-field={field.name}
         onClick={onSelect}
       >
-        <span className="field-name">{label}</span>
-        {edited ? (
-          <>
-            <span className="field-value">{review.enteredValue}</span>
-            <span className="field-note">Entered by the reviewer</span>
-            {review.accepted && <span className="field-note">Accepted by the reviewer</span>}
-            <span className="field-note">Read from the page: {field.value ?? NOT_READ_TEXT}</span>
-            <span className="field-note">The highlight shows where the page value was read.</span>
-          </>
-        ) : (
-          <>
-            <span className={field.value === null ? 'field-value field-empty' : 'field-value'}>
-              {field.value ?? NOT_FOUND_TEXT}
-            </span>
-            {review.accepted && (
-              <span className="field-note">
-                {field.value === null
-                  ? 'Accepted as empty: the reviewer confirmed it is not on the page.'
-                  : 'Accepted by the reviewer'}
-              </span>
-            )}
-          </>
-        )}
-        {field.value === null ? (
-          !edited && <span className="confidence">{NOT_READ_TEXT}</span>
-        ) : (
-          <ConfidenceBar confidence={field.confidence} />
-        )}
+        <span className="field-head">
+          <span className="field-name">{label}</span>
+          {noChange && !editing && !readOnly && (
+            <span className="field-note no-change" data-no-change="true">{NO_CHANGE_TEXT}</span>
+          )}
+        </span>
+        <span className={!edited && field.value === null ? 'field-value field-empty' : 'field-value'}>
+          {edited ? review.enteredValue : (field.value ?? NOT_FOUND_TEXT)}
+        </span>
+        <span className="field-meta">
+          <span className="field-note" data-provenance="true">
+            {provenanceLine(field.value, review.enteredValue, review.accepted)}
+          </span>
+          {field.value === null ? (
+            !edited && <span className="confidence">{NOT_READ_TEXT}</span>
+          ) : (
+            <ConfidenceBar confidence={field.confidence} />
+          )}
+        </span>
         {standing.map((message) => (
           <span key={message} className="field-flag">
             <span aria-hidden="true">⚑</span> <span>{message}</span>
@@ -179,35 +176,24 @@ function FieldRow({ field, state, referenceDate, selected, editing, noChange, on
             ))}
           </span>
         )}
-        {/* The same message is already shown under the accepted-although label, so the history line is left out then. */}
-        {(review.acceptedDespiteFlag ? [] : field.flags)
-          .filter((message) => !standing.includes(message))
-          .map((message) => (
-            <span key={message} className="field-history">
-              <span aria-hidden="true">✓</span> <span>Was flagged: {message}</span>
-            </span>
-          ))}
       </button>
       {!readOnly && (
         <div className="field-actions">
           {pending && (
-            <button type="button" className="button" data-accept={field.name} onClick={onAccept}>
-              Accept<span className="sr-only"> {label}</span>
+            <button type="button" className="button button-compact button-accept" data-accept={field.name} onClick={onAccept}>
+              Accept{' '}<span className="sr-only">{label}</span>
             </button>
           )}
           <button
             type="button"
-            className="button"
+            className="button button-compact"
             data-edit={field.name}
             aria-expanded={editing}
             onClick={onEditOpen}
           >
-            Edit<span className="sr-only"> {label}</span>
+            Edit{' '}<span className="sr-only">{label}</span>
           </button>
         </div>
-      )}
-      {noChange && !editing && !readOnly && (
-        <p className="field-note no-change" data-no-change="true">{NO_CHANGE_TEXT}</p>
       )}
       {editing && !readOnly && (
         <EditForm

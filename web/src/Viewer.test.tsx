@@ -163,6 +163,74 @@ describe('viewer', () => {
     expect(group).not.toHaveClass('ghost-pulse');
   });
 
+  describe('source glow', () => {
+    const glowRefs = (c: HTMLElement) => Array.from(c.querySelectorAll('[filter]'));
+
+    it('defines the glow filter once; only the selected ghost uses it; rects stay on the word boxes', async () => {
+      stubMotion(false);
+      stubSite();
+      const user = userEvent.setup();
+      const { container } = await openFax(user, 'fax-0003');
+      const filters = container.querySelectorAll('svg defs filter');
+      expect(filters).toHaveLength(1);
+      const id = filters[0]!.id;
+      expect(glowRefs(container)).toHaveLength(0);
+
+      for (const name of ['patientName', 'dob']) {
+        await user.click(fieldButton(name));
+        const refs = glowRefs(container);
+        expect(refs).toHaveLength(1);
+        expect(refs[0]).toBe(ghostGroup(container, name));
+        expect(refs[0]).toHaveAttribute('filter', `url(#${id})`);
+        expect(container.querySelectorAll('svg defs filter')).toHaveLength(1);
+      }
+      // Quiet ghosts carry no filter.
+      expect(ghostGroup(container, 'npi')).not.toHaveAttribute('filter');
+
+      // Cropped and full views: rects equal the word boxes; the glow adds no rects.
+      await user.click(fieldButton('patientName'));
+      const check = () => {
+        const rects = Array.from(ghostGroup(container, 'patientName')!.querySelectorAll('rect'));
+        expect(rects).toHaveLength(2);
+        for (const rect of rects) {
+          const box = wordBox('fax-0003', rect.dataset['wordId']!);
+          expect(rect).toHaveAttribute('x', String(box.x));
+          expect(rect).toHaveAttribute('y', String(box.y));
+          expect(rect).toHaveAttribute('width', String(box.width));
+          expect(rect).toHaveAttribute('height', String(box.height));
+        }
+      };
+      const viewBox = container.querySelector('svg')!.getAttribute('viewBox');
+      check();
+      await user.click(screen.getByRole('button', { name: 'Show full page' }));
+      check();
+      await user.click(screen.getByRole('button', { name: 'Show cropped view' }));
+      expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe(viewBox);
+    });
+
+    it('keeps the glow with reduced motion, with the static class and no pulse', async () => {
+      stubMotion(true);
+      stubSite();
+      const user = userEvent.setup();
+      const { container } = await openFax(user, 'fax-0003');
+      await user.click(fieldButton('npi'));
+      const group = ghostGroup(container, 'npi')!;
+      expect(group).toHaveClass('ghost-static');
+      expect(container.querySelector('.ghost-pulse')).toBeNull();
+      expect(group).toHaveAttribute('filter', expect.stringMatching(/^url\(#.+\)$/));
+      expect(container.querySelectorAll('svg defs filter')).toHaveLength(1);
+    });
+
+    it('has no axe violations with a selected ghost', async () => {
+      stubMotion(false);
+      stubSite();
+      const user = userEvent.setup();
+      const { container } = await openFax(user, 'fax-0003');
+      await user.click(fieldButton('patientName'));
+      await expectNoViolations(container);
+    });
+  });
+
   it('shows value, confidence and flags exactly as stored for fax-0003', async () => {
     stubSite();
     const user = userEvent.setup();
@@ -181,7 +249,7 @@ describe('viewer', () => {
     expect(within(fieldButton('patientName')).getByText('Nell Copperfield')).toBeInTheDocument();
     expect(within(fieldButton('patientName')).queryByText(/⚑/)).not.toBeInTheDocument();
     expect(document.querySelectorAll('button[data-field]')).toHaveLength(7);
-    expect(screen.getByRole('region', { name: 'Synthetic data' })).toBeVisible();
+    expect(screen.getByRole('region', { name: 'Synthetic data notice' })).toBeVisible();
     expect(screen.getByText('Not yet reviewed')).toBeInTheDocument();
   });
 
@@ -216,7 +284,7 @@ describe('viewer', () => {
     await user.click(screen.getByRole('button', { name: 'Back to inbox' }));
     const row = within(screen.getAllByRole('button').find((b) => b.dataset['faxId'] === 'fax-0002')!);
     expect(screen.getByText('Reader: rules')).toBeInTheDocument();
-    expect(row.getByText('3 flagged fields')).toBeInTheDocument();
+    expect(row.getByText('3 flagged')).toBeInTheDocument();
     expect(row.getByText('Not yet reviewed')).toBeInTheDocument();
   });
 
@@ -226,7 +294,7 @@ describe('viewer', () => {
     await openFax(user, 'fax-0002');
     await user.click(screen.getByRole('button', { name: 'Back to inbox' }));
     const row = within(screen.getAllByRole('button').find((b) => b.dataset['faxId'] === 'fax-0002')!);
-    expect(row.getByText(/No flagged fields/)).toBeInTheDocument();
+    expect(row.getByText('No flags raised')).toBeInTheDocument();
   });
 
   it('says plainly when there is no saved model answer and offers the rules reader', async () => {

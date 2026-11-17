@@ -34,11 +34,11 @@ describe('inbox', () => {
 
     const first = within(rowNames()[0]!);
     expect(first.getByText('Oct 1, 09:00')).toBeInTheDocument();
-    expect(first.getByText(/No flagged fields/)).toBeInTheDocument();
+    expect(first.getByText('No flags raised')).toBeInTheDocument();
     expect(within(rowNames()[1]!).getByText('Oct 1, 09:07')).toBeInTheDocument();
 
     expect(screen.getByText('Reader: model (saved answers)')).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Synthetic data' })).toBeVisible();
+    expect(screen.getByRole('region', { name: 'Synthetic data notice' })).toBeVisible();
   });
 
   it('reveals the next fax with Incoming fax, then stops after the last', async () => {
@@ -53,7 +53,7 @@ describe('inbox', () => {
     expect(rowNames().map((row) => row.dataset['faxId'])).toEqual(['fax-0001', 'fax-0002', 'fax-0003']);
     const third = within(rowNames()[2]!);
     expect(third.getByText('Oct 1, 09:14')).toBeInTheDocument();
-    expect(third.getByText('2 flagged fields')).toBeInTheDocument();
+    expect(third.getByText('2 flagged')).toBeInTheDocument();
     expect(screen.getByText('Fax fax-0003 arrived.')).toBeInTheDocument();
     expect(button).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByText('No more sample faxes.')).toBeInTheDocument();
@@ -143,7 +143,7 @@ describe('opened fax', () => {
     expect(screen.getByRole('img', { name: /Faxed referral form, fax fax-0001/ })).toBeInTheDocument();
     expect(container.querySelector('image')).toHaveAttribute('href', expect.stringMatching(/fax-0001\.png$/));
     expect(screen.getByText('Reader: model (saved answers)')).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Synthetic data' })).toBeVisible();
+    expect(screen.getByRole('region', { name: 'Synthetic data notice' })).toBeVisible();
     await expectNoViolations(container);
 
     await user.click(screen.getByRole('button', { name: 'Back to inbox' }));
@@ -201,7 +201,7 @@ describe('states', () => {
     stubSite({ 'index.json': () => new Promise<Response>(() => {}) });
     render(<App />);
     expect(screen.getByRole('status')).toHaveTextContent('Loading the sample faxes');
-    expect(screen.getByRole('region', { name: 'Synthetic data' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Synthetic data notice' })).toBeInTheDocument();
   });
 
   it('shows an empty state when the index has no faxes', async () => {

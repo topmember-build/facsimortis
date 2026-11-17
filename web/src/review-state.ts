@@ -226,13 +226,20 @@ export function reviewStatus(fields: readonly Field[], state: ReviewState, refer
   return anyReviewed ? REVIEW_IN_PROGRESS : NOT_YET_REVIEWED;
 }
 
+/** Fields whose current state is "accepted although a check failed" (same rule as the record summary). */
+const acceptedDespiteCount = (fields: readonly Field[], state: ReviewState): number =>
+  fields.filter((field) => fieldReview(state, field.name).acceptedDespiteFlag).length;
+
 /** Plain reason shown beside the Verify record button. */
 export function verifyReason(fields: readonly Field[], state: ReviewState, referenceDate: string): string {
   const waiting = unreviewedFlagged(fields, state, referenceDate);
   if (waiting.length === 0) {
-    return fields.some(isOriginallyFlagged)
-      ? 'Every flagged field has been reviewed. You can verify the record.'
-      : 'No fields are flagged. You can verify the record.';
+    if (!fields.some(isOriginallyFlagged)) return 'No fields are flagged. You can verify the record.';
+    const despite = acceptedDespiteCount(fields, state);
+    if (despite === 0) return 'Every flagged field has been reviewed. You can verify the record.';
+    return despite === 1
+      ? '1 field was accepted although checks failed. You can verify the record.'
+      : `${despite} fields were accepted although checks failed. You can verify the record.`;
   }
   const names = waiting.map((field) => FIELD_LABELS[field.name]).join(', ');
   return waiting.length === 1

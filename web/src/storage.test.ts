@@ -355,3 +355,47 @@ describe('migration from v3 to v4', () => {
     expect(store.data.has(V4_KEY)).toBe(false);
   });
 });
+
+describe('stale keys are listed for removal (2.12)', () => {
+  const item = { fax: { ok: true, value: fax } } as unknown as Parameters<typeof hydrate>[1][number];
+  const V4_KEY = entryKey('fax-0003', 'model');
+
+  it('lists v1 and v2 keys, and does not remove anything itself', () => {
+    const store = new MemoryStore();
+    store.setItem('facsimortis:v1:fax-0003:model', '{}');
+    store.setItem('facsimortis:v2:fax-0003:rules', '{}');
+    const out = hydrate(new ReviewStorage(store), [item], REF);
+    expect(out.discard.sort()).toEqual(['facsimortis:v1:fax-0003:model', 'facsimortis:v2:fax-0003:rules']);
+    expect(store.data.size).toBe(2);
+  });
+
+  it('lists a v4 entry with a different fingerprint, but not a current one', () => {
+    const store = new MemoryStore();
+    saveEntry(new ReviewStorage(store), fax, 'model', REF, state, null);
+    expect(hydrate(new ReviewStorage(store), [item], REF).discard).toEqual([]);
+    expect(hydrate(new ReviewStorage(store), [item], '2026-10-02').discard).toEqual([V4_KEY]);
+  });
+
+  it('lists unreadable v4 and v3 entries, and does not list a v3 entry that migrates', () => {
+    const store = new MemoryStore();
+    store.setItem(V4_KEY, '{not json');
+    store.setItem('facsimortis:v3:fax-0003:rules', JSON.stringify({ version: 3 }));
+    expect(hydrate(new ReviewStorage(store), [item], REF).discard.sort()).toEqual(
+      [V4_KEY, 'facsimortis:v3:fax-0003:rules'].sort(),
+    );
+  });
+
+  it('discardKeys removes only facsimortis keys, never the probe, and reports a refusal', () => {
+    const store = new MemoryStore();
+    store.setItem('facsimortis:v1:a:model', '1');
+    store.setItem('other:key', '2');
+    store.setItem(`${STORAGE_PREFIX}probe`, '3');
+    const storage = new ReviewStorage(store);
+    store.setItem(`${STORAGE_PREFIX}probe`, '3');
+    expect(storage.discardKeys(['facsimortis:v1:a:model', 'other:key', `${STORAGE_PREFIX}probe`])).toBe(true);
+    expect([...store.data.keys()].sort()).toEqual(['other:key', `${STORAGE_PREFIX}probe`].sort());
+    const refusing = new ReviewStorage({ getItem: () => null, setItem: () => undefined, removeItem: (k) => { if (k.includes(':v1:')) throw new Error('no'); } });
+    expect(refusing.discardKeys(['facsimortis:v1:a:model'])).toBe(false);
+    expect(refusing.ok).toBe(true);
+  });
+});

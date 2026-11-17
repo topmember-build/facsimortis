@@ -150,6 +150,40 @@ describe('accepted although a check failed: fax-0003, model reader', () => {
     expect(document.querySelector('.rest-despite')).toBeNull();
   });
 
+  it('says how many fields were accepted although checks failed, in the live region and the Verify description', async () => {
+    const one = setup();
+    await openFax(one.user, 'fax-0003');
+    await one.user.click(accept('npi'));
+    await editTo(one.user, 'Callback phone', 'callbackPhone', '555-0151');
+    const ONE = '1 field was accepted although checks failed. You can verify the record.';
+    expect(document.querySelector('#verify-reason')).toHaveTextContent(ONE);
+    expect(document.querySelector('#verify-reason')).toHaveAttribute('aria-live', 'polite');
+    expect(verify().getAttribute('aria-describedby')).toContain('verify-reason');
+    expect(verify()).toHaveAccessibleDescription(expect.stringContaining(ONE));
+    expect((await axe.run(one.view.container)).violations).toEqual([]);
+    one.view.unmount();
+
+    const two = setup();
+    await openFax(two.user, 'fax-0003');
+    await two.user.click(accept('npi'));
+    await editTo(two.user, 'Callback phone', 'callbackPhone', '555~0152');
+    await two.user.click(accept('callbackPhone'));
+    expect(document.querySelector('#verify-reason')).toHaveTextContent(
+      '2 fields were accepted although checks failed. You can verify the record.',
+    );
+  });
+
+  it('does not count a field accepted despite a failed check and then edited to a valid value', async () => {
+    const { user } = setup();
+    await openFax(user, 'fax-0003');
+    await user.click(accept('npi'));
+    await editTo(user, 'Provider number (NPI)', 'npi', '1234567893');
+    await editTo(user, 'Callback phone', 'callbackPhone', '555-0151');
+    expect(document.querySelector('#verify-reason')).toHaveTextContent(
+      'Every flagged field has been reviewed. You can verify the record.',
+    );
+  });
+
   it('has no accessibility violations with the label shown, in review and when laid to rest', async () => {
     const { user, view } = setup();
     await openFax(user, 'fax-0003');

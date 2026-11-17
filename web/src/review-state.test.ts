@@ -186,3 +186,31 @@ describe('validatorFailures and acceptedDespiteFlag', () => {
     expect(fieldReview(accepted, 'npi').acceptedDespiteFlag).toBe(false);
   });
 });
+
+describe('verifyReason after accepted-although-failed fields', () => {
+  const fields = [field('npi', 0.9, true, '6720988041'), field('callbackPhone', 0.8, true, '555~0151')];
+  const done = (...failed: Array<[FieldName, string[]]>) =>
+    failed.reduce<ReviewState>(
+      (state, [name, failedChecks]) =>
+        reviewReducer(state, { type: 'accept', field: name, originalValue: 'x', failedChecks, at: AT }),
+      EMPTY_REVIEW,
+    );
+
+  it('keeps the plain text when no accepted field had a failed check', () => {
+    expect(verifyReason(fields, done(['npi', []], ['callbackPhone', []]), REF)).toBe(
+      'Every flagged field has been reviewed. You can verify the record.',
+    );
+  });
+
+  it('names one field in the singular', () => {
+    expect(verifyReason(fields, done(['npi', [NPI_FLAG], ], ['callbackPhone', []]), REF)).toBe(
+      '1 field was accepted although checks failed. You can verify the record.',
+    );
+  });
+
+  it('names two fields in the plural', () => {
+    expect(verifyReason(fields, done(['npi', [NPI_FLAG]], ['callbackPhone', [PHONE_FLAG]]), REF)).toBe(
+      '2 fields were accepted although checks failed. You can verify the record.',
+    );
+  });
+});
