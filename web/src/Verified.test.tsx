@@ -174,7 +174,7 @@ describe('the verified record', () => {
     const ghost = document.querySelector('g[data-field="callbackPhone"]')!;
     expect(ghost).toHaveAttribute('data-selected', 'true');
     expect(ghost.querySelectorAll('rect').length).toBeGreaterThan(0);
-    expect(screen.getByRole('region', { name: 'Synthetic data' })).toBeVisible();
+    expect(screen.getByRole('region', { name: 'Synthetic data notice' })).toBeVisible();
 
     await user.click(screen.getByRole('button', { name: 'Back to inbox' }));
     expect(rowFor('fax-0003').getByText('Laid to rest')).toBeInTheDocument();

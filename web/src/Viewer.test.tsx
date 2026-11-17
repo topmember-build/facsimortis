@@ -249,7 +249,7 @@ describe('viewer', () => {
     expect(within(fieldButton('patientName')).getByText('Nell Copperfield')).toBeInTheDocument();
     expect(within(fieldButton('patientName')).queryByText(/⚑/)).not.toBeInTheDocument();
     expect(document.querySelectorAll('button[data-field]')).toHaveLength(7);
-    expect(screen.getByRole('region', { name: 'Synthetic data' })).toBeVisible();
+    expect(screen.getByRole('region', { name: 'Synthetic data notice' })).toBeVisible();
     expect(screen.getByText('Not yet reviewed')).toBeInTheDocument();
   });
 

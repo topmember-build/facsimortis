@@ -18,6 +18,18 @@ function block(source: string, prelude: string): string {
   throw new Error(`${prelude} is not closed`);
 }
 
+describe('Synthetic data banner rules in styles.css', () => {
+  const banner = block(css, '.synthetic-banner');
+
+  it('is at least 0.875rem, scrolls away (not sticky) and uses neutral colours', () => {
+    const size = /font-size:\s*([\d.]+)rem/.exec(banner);
+    expect(size).not.toBeNull();
+    expect(Number(size![1])).toBeGreaterThanOrEqual(0.875);
+    expect(banner).not.toMatch(/position:\s*(sticky|fixed)/);
+    expect(banner).not.toMatch(/--ghost|--flag/);
+  });
+});
+
 describe('sticky layout rules in styles.css', () => {
   const wide = block(css, '@media (min-width: 60rem)');
 

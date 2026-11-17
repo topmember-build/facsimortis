@@ -42,6 +42,8 @@ interface AppProps {
   download?: (fileName: string, text: string) => void;
 }
 
+export const SYNTHETIC_BANNER_TEXT = 'Synthetic data. Demo only, no real patient information.';
+
 const systemClock = () => new Date();
 
 export function App({ now = systemClock, onReviewAction, onVerify, storage: storageProp, download = downloadText }: AppProps = {}) {
@@ -214,6 +216,9 @@ export function App({ now = systemClock, onReviewAction, onVerify, storage: stor
 
   return (
     <>
+      <div className="synthetic-banner" role="region" aria-label="Synthetic data notice">
+        {SYNTHETIC_BANNER_TEXT}
+      </div>
       <header className="page-header">
         <h1>Facsimortis</h1>
         <p>
@@ -232,10 +237,6 @@ export function App({ now = systemClock, onReviewAction, onVerify, storage: stor
         )}
         {screen}
       </main>
-      <section className="synthetic-notice" aria-labelledby="synthetic-notice-title">
-        <h2 id="synthetic-notice-title">Synthetic data</h2>
-        <p>Every fax, person, provider and number in this demo is made up.</p>
-      </section>
     </>
   );
 }
