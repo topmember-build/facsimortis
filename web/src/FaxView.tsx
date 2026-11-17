@@ -102,6 +102,7 @@ function selectionLine(fields: readonly Field[], selection: Selection | null, re
  */
 export function FaxView({ item, fax, reader, openedBy, referenceDate, review, onReaderChange, onReview, onVerify, verified, onDownload, now, onBack }: FaxViewProps) {
   const captionId = useId();
+  const glowId = `ghost-glow-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   const heading = useRef<HTMLHeadingElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const bar = useRef<HTMLDivElement>(null);
@@ -286,6 +287,13 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
             aria-label={imageName}
             aria-describedby={captionId}
           >
+            <defs>
+              {/* One soft glow in the ghost colour, used only by the selected ghost. It paints outside the
+                  rects and changes no geometry. The region covers the whole page so it is never clipped. */}
+              <filter id={glowId} filterUnits="userSpaceOnUse" x={0} y={0} width={fax.width} height={fax.height}>
+                <feDropShadow className="ghost-glow-flood" dx={0} dy={0} stdDeviation={5} />
+              </filter>
+            </defs>
             <image href={item.imageUrl} x={0} y={0} width={fax.width} height={fax.height} />
             {ordered.map((field) => {
               const selected = selection?.name === field.name;
@@ -297,6 +305,7 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
                   className={ghostClass(selected)}
                   data-field={field.name}
                   data-selected={selected}
+                  filter={selected ? `url(#${glowId})` : undefined}
                 >
                   {rects.map((rect) => (
                     <rect

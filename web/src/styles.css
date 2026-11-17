@@ -2,8 +2,8 @@
    --text #e8eaf0 16.2 and 14.3, --muted #b4bbcb 10.1 and 9.0,
    --flag #ffb86b 11.4 and 10.1, --edge #8a94aa 6.4 and 5.7 (borders of controls),
    --focus #ffffff 19.4 and 17.2.
-   --ghost #8fd8ff (12.4 and 11.0) is RESERVED for source ghosts (.ghost rules below). Nothing else may
-   use it: not the inbox, not focus rings, not buttons, not the notice. */
+   --ghost #8fd8ff (12.4 and 11.0) and --ghost-edge #1f6fb5 (5.25 on white, 3.7 and 3.3) are RESERVED
+   for source ghosts (.ghost rules below). Nothing else may use them: not the inbox, not focus rings, not buttons, not the notice. */
 :root {
   color-scheme: dark;
   --bg: #0b0d12;
@@ -14,6 +14,7 @@
   --muted: #b4bbcb;
   --focus: #ffffff;
   --ghost: #8fd8ff;
+  --ghost-edge: #1f6fb5;
   --flag: #ffb86b;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
@@ -479,27 +480,34 @@ button.row-button:hover {
   color: var(--muted);
 }
 
-/* Source ghosts. --ghost is used here and nowhere else. Strokes keep a constant
-   on-screen width however the image is scaled. */
+/* Source ghosts. --ghost and --ghost-edge are used here and nowhere else. Strokes keep a
+   constant on-screen width however the image is scaled. The page is black on white, so the
+   outline is the deep blue --ghost-edge (5.25:1 on white, 3.70:1 on --bg). The light --ghost
+   colour is the fill and the glow. Reduced motion only removes the pulse; the thick outline
+   and the glow stay. */
 .ghost rect {
   fill: var(--ghost);
-  fill-opacity: 0.12;
-  stroke: var(--ghost);
-  stroke-opacity: 0.4;
-  stroke-width: 1px;
+  fill-opacity: 0.18;
+  stroke: var(--ghost-edge);
+  stroke-opacity: 0.7;
+  stroke-width: 1.5px;
   vector-effect: non-scaling-stroke;
 }
 
 .ghost-selected rect {
   fill-opacity: 0.4;
   stroke-opacity: 1;
-  stroke-width: 3px;
+  stroke-width: 4px;
+}
+
+.ghost-glow-flood {
+  flood-color: var(--ghost);
+  flood-opacity: 1;
 }
 
 .ghost-pulse rect {
   animation: ghost-pulse 1.2s ease-out 1;
 }
-
 @keyframes ghost-pulse {
   0% {
     fill-opacity: 0.15;
