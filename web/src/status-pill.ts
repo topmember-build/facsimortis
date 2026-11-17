@@ -1,4 +1,5 @@
 import type { SampleFax } from '../../src/samples/schema.js';
+import { formatReceived } from './format';
 import { NO_SAVED_ANSWER_LABEL, type ReaderName } from './flags';
 import type { VerifiedRecord } from './record';
 import { reviewLabel } from './review';
@@ -41,6 +42,21 @@ export interface StatusPill {
   reviewText: string;
   /** The whole status in words, for screen readers. */
   sentence: string;
+}
+
+/**
+ * The accessible name of an inbox row, for example
+ * "fax-0003, received Oct 1, 09:14, 2 flagged, reviewed, Laid to rest".
+ * The time is the visible one (formatReceived). `status` is the pill sentence, or for a fax
+ * that failed to load, "Could not be read. <error>". Pure.
+ */
+export function rowAccessibleName(id: string, receivedAt: string, status: string): string {
+  return `${id}, received ${formatReceived(receivedAt)}, ${status}`;
+}
+
+/** The status part of a row's name when its fax failed to load. */
+export function failedRowStatus(error: string): string {
+  return `Could not be read. ${error}`;
 }
 
 /**

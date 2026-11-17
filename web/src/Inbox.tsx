@@ -7,7 +7,7 @@ import { NO_MORE_FAXES_MESSAGE } from './inbox-state';
 import type { VerifiedRecord } from './record';
 import type { ReviewState } from './review-state';
 import { READER_LABEL, type ReaderName } from './flags';
-import { statusPill, type StatusPill } from './status-pill';
+import { failedRowStatus, rowAccessibleName, statusPill, type StatusPill } from './status-pill';
 
 function StatusPillView({ pill }: { pill: StatusPill }) {
   return (
@@ -142,7 +142,11 @@ export function Inbox({ items, total, reader, reviews, verified, referenceDate, 
                   type="button"
                   className="row-button"
                   data-fax-id={item.entry.id}
-                  aria-label={`${item.entry.id}, ${statusPill(item.fax.value, reader, reviews, referenceDate, verified).sentence}`}
+                  aria-label={rowAccessibleName(
+                    item.entry.id,
+                    item.entry.receivedAt,
+                    statusPill(item.fax.value, reader, reviews, referenceDate, verified).sentence,
+                  )}
                   onPointerDown={markPointer}
                   onMouseDown={markPointer}
                   onKeyDown={(event) => {
@@ -158,7 +162,11 @@ export function Inbox({ items, total, reader, reviews, verified, referenceDate, 
                   <RowText item={item} reader={reader} reviews={reviews} verified={verified} referenceDate={referenceDate} />
                 </button>
               ) : (
-                <div className="row-button row-failed">
+                <div
+                  className="row-button row-failed"
+                  role="group"
+                  aria-label={rowAccessibleName(item.entry.id, item.entry.receivedAt, failedRowStatus(item.fax.error))}
+                >
                   <Thumbnail item={item} />
                   <RowText item={item} reader={reader} reviews={reviews} verified={verified} referenceDate={referenceDate} />
                 </div>
