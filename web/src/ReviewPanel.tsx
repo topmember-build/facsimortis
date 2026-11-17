@@ -134,26 +134,33 @@ function FieldRow({ field, state, referenceDate, selected, editing, noChange, on
   const pending = standing.length > 0;
 
   return (
-    <li className="field-row">
+    <li className={selected ? 'field-row field-card field-selected' : 'field-row field-card'}>
       <button
         type="button"
-        className={selected ? 'field-item field-selected' : 'field-item'}
+        className="field-item"
         aria-pressed={selected}
         data-field={field.name}
         onClick={onSelect}
       >
-        <span className="field-name">{label}</span>
+        <span className="field-head">
+          <span className="field-name">{label}</span>
+          {noChange && !editing && !readOnly && (
+            <span className="field-note no-change" data-no-change="true">{NO_CHANGE_TEXT}</span>
+          )}
+        </span>
         <span className={!edited && field.value === null ? 'field-value field-empty' : 'field-value'}>
           {edited ? review.enteredValue : (field.value ?? NOT_FOUND_TEXT)}
         </span>
-        <span className="field-note" data-provenance="true">
-          {provenanceLine(field.value, review.enteredValue, review.accepted)}
+        <span className="field-meta">
+          <span className="field-note" data-provenance="true">
+            {provenanceLine(field.value, review.enteredValue, review.accepted)}
+          </span>
+          {field.value === null ? (
+            !edited && <span className="confidence">{NOT_READ_TEXT}</span>
+          ) : (
+            <ConfidenceBar confidence={field.confidence} />
+          )}
         </span>
-        {field.value === null ? (
-          !edited && <span className="confidence">{NOT_READ_TEXT}</span>
-        ) : (
-          <ConfidenceBar confidence={field.confidence} />
-        )}
         {standing.map((message) => (
           <span key={message} className="field-flag">
             <span aria-hidden="true">⚑</span> <span>{message}</span>
@@ -173,23 +180,20 @@ function FieldRow({ field, state, referenceDate, selected, editing, noChange, on
       {!readOnly && (
         <div className="field-actions">
           {pending && (
-            <button type="button" className="button" data-accept={field.name} onClick={onAccept}>
-              Accept<span className="sr-only"> {label}</span>
+            <button type="button" className="button button-compact button-accept" data-accept={field.name} onClick={onAccept}>
+              Accept{' '}<span className="sr-only">{label}</span>
             </button>
           )}
           <button
             type="button"
-            className="button"
+            className="button button-compact"
             data-edit={field.name}
             aria-expanded={editing}
             onClick={onEditOpen}
           >
-            Edit<span className="sr-only"> {label}</span>
+            Edit{' '}<span className="sr-only">{label}</span>
           </button>
         </div>
-      )}
-      {noChange && !editing && !readOnly && (
-        <p className="field-note no-change" data-no-change="true">{NO_CHANGE_TEXT}</p>
       )}
       {editing && !readOnly && (
         <EditForm

@@ -141,6 +141,15 @@ describe('review panel: unchanged Save', () => {
     expect(editButton('callbackPhone')).toHaveFocus();
     const note = document.querySelector('[data-no-change]')!;
     expect(note).toHaveTextContent('No change made');
+    // The note sits inside that field's card, in the same row as the field name.
+    const card = fieldButton('callbackPhone').closest('li')!;
+    expect(card.contains(note)).toBe(true);
+    expect(note.previousElementSibling).toHaveTextContent('Callback phone');
+    expect(note.parentElement).toBe(card.querySelector('.field-head'));
+    // Edit is a compact button inside the same card, named with the field.
+    expect(card.contains(editButton('callbackPhone'))).toBe(true);
+    expect(editButton('callbackPhone')).toHaveClass('button-compact');
+    expect(editButton('callbackPhone')).toHaveAccessibleName('Edit Callback phone');
     expect(live()).toHaveTextContent('Callback phone: no change made.');
     expect(screen.queryByText(/Entered by you/)).toBeNull();
     expect(fieldButton('callbackPhone')).toHaveTextContent('555~0151');
