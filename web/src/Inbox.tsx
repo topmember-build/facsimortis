@@ -5,30 +5,18 @@ import type { OpenedBy } from './input-modality';
 import { formatReceived } from './format';
 import { NO_MORE_FAXES_MESSAGE } from './inbox-state';
 import type { VerifiedRecord } from './record';
-import { reviewLabel } from './review';
 import type { ReviewState } from './review-state';
-import { NO_SAVED_ANSWER_LABEL, READER_LABEL, summariseFlags, type ReaderName } from './flags';
+import { READER_LABEL, type ReaderName } from './flags';
+import { statusPill, type StatusPill } from './status-pill';
 
-function FlagSummaryLine({ item, reader }: { item: InboxItem; reader: ReaderName }) {
-  if (!item.fax.ok) return null;
-  const summary = summariseFlags(item.fax.value.readers[reader]);
-  if (summary.status === 'no-saved-answer') {
-    return (
-      <span className="flag-line flag-none">
-        <span aria-hidden="true">–</span> {NO_SAVED_ANSWER_LABEL}
-      </span>
-    );
-  }
-  if (summary.count === 0) {
-    return (
-      <span className="flag-line flag-none">
-        <span aria-hidden="true">✓</span> No flagged fields
-      </span>
-    );
-  }
+function StatusPillView({ pill }: { pill: StatusPill }) {
   return (
-    <span className="flag-line flag-on">
-      <span aria-hidden="true">⚑</span> {summary.count} flagged {summary.count === 1 ? 'field' : 'fields'}
+    <span className={`status-pill pill-${pill.kind}`} data-pill={pill.kind}>
+      <span className="pill-icon" aria-hidden="true">
+        {pill.icon}
+      </span>
+      <span className="pill-flags">{pill.flagText}</span>
+      <span className="pill-review">{pill.reviewText}</span>
     </span>
   );
 }
@@ -76,10 +64,7 @@ function RowText({
       </span>
       {item.fax.ok ? (
         <>
-          <FlagSummaryLine item={item} reader={reader} />
-          <span className="review-status">
-            <span aria-hidden="true">○</span> {reviewLabel(item.fax.value, reader, reviews, referenceDate, verified)}
-          </span>
+          <StatusPillView pill={statusPill(item.fax.value, reader, reviews, referenceDate, verified)} />
         </>
       ) : (
         <span className="flag-line flag-on">
@@ -157,6 +142,7 @@ export function Inbox({ items, total, reader, reviews, verified, referenceDate, 
                   type="button"
                   className="row-button"
                   data-fax-id={item.entry.id}
+                  aria-label={`${item.entry.id}, ${statusPill(item.fax.value, reader, reviews, referenceDate, verified).sentence}`}
                   onPointerDown={markPointer}
                   onMouseDown={markPointer}
                   onKeyDown={(event) => {

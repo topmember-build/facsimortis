@@ -15,6 +15,13 @@ describe('wording', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('the inbox status pill makes no claim that values are right', () => {
+    const text = readFileSync('web/src/status-pill.ts', 'utf8').toLowerCase();
+    for (const claim of ['all good', 'looks good', 'clean', 'verified as correct', 'no errors', 'all clear']) {
+      expect(text).not.toContain(claim);
+    }
+  });
+
   it('the summary lines make no claim that values are right', () => {
     const text = readFileSync('web/src/record.ts', 'utf8');
     for (const claim of ['verified as correct', 'no errors', 'everything looks good', 'all good']) {

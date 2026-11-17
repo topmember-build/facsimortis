@@ -34,7 +34,7 @@ describe('inbox', () => {
 
     const first = within(rowNames()[0]!);
     expect(first.getByText('Oct 1, 09:00')).toBeInTheDocument();
-    expect(first.getByText(/No flagged fields/)).toBeInTheDocument();
+    expect(first.getByText('No flags raised')).toBeInTheDocument();
     expect(within(rowNames()[1]!).getByText('Oct 1, 09:07')).toBeInTheDocument();
 
     expect(screen.getByText('Reader: model (saved answers)')).toBeInTheDocument();
@@ -53,7 +53,7 @@ describe('inbox', () => {
     expect(rowNames().map((row) => row.dataset['faxId'])).toEqual(['fax-0001', 'fax-0002', 'fax-0003']);
     const third = within(rowNames()[2]!);
     expect(third.getByText('Oct 1, 09:14')).toBeInTheDocument();
-    expect(third.getByText('2 flagged fields')).toBeInTheDocument();
+    expect(third.getByText('2 flagged')).toBeInTheDocument();
     expect(screen.getByText('Fax fax-0003 arrived.')).toBeInTheDocument();
     expect(button).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByText('No more sample faxes.')).toBeInTheDocument();

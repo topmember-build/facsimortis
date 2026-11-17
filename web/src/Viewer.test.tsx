@@ -216,7 +216,7 @@ describe('viewer', () => {
     await user.click(screen.getByRole('button', { name: 'Back to inbox' }));
     const row = within(screen.getAllByRole('button').find((b) => b.dataset['faxId'] === 'fax-0002')!);
     expect(screen.getByText('Reader: rules')).toBeInTheDocument();
-    expect(row.getByText('3 flagged fields')).toBeInTheDocument();
+    expect(row.getByText('3 flagged')).toBeInTheDocument();
     expect(row.getByText('Not yet reviewed')).toBeInTheDocument();
   });
 
@@ -226,7 +226,7 @@ describe('viewer', () => {
     await openFax(user, 'fax-0002');
     await user.click(screen.getByRole('button', { name: 'Back to inbox' }));
     const row = within(screen.getAllByRole('button').find((b) => b.dataset['faxId'] === 'fax-0002')!);
-    expect(row.getByText(/No flagged fields/)).toBeInTheDocument();
+    expect(row.getByText('No flags raised')).toBeInTheDocument();
   });
 
   it('says plainly when there is no saved model answer and offers the rules reader', async () => {
