@@ -1054,6 +1054,18 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1795164653728
       }
+    ],
+    "D4b D3 follow-ups: scanline overlay about half as strong so fax text stays clearly readable at 100% zoom; summary bar in two rows (top: id, received time, urgency, status pill, counts; bottom: reminder line left, Verify record right, with the verify reason such as \"accepted although checks failed\" above Verify); lamp glow slightly more visible and paper slightly darker, text on paper above 4.5:1. No wording, behaviour, accessible-name or tab-order change. (R10)": [
+      {
+        "executionId": "443056b4-9163-4d15-bdb8-42e92d0bb3b8",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1795165112828
+      },
+      {
+        "executionId": "443056b4-9163-4d15-bdb8-42e92d0bb3b8",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1795165552801
+      }
     ]
   }
 }
