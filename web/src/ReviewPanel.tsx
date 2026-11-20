@@ -8,6 +8,7 @@ import {
   LAID_TO_REST,
   VERIFY_NOTE,
   fieldReview,
+  isOriginallyFlagged,
   sortForReview,
   standingFlags,
   type ReviewState,
@@ -16,6 +17,14 @@ import {
 export const NOT_READ_TEXT = 'Not read';
 /** Shown beside a field after a Save that matched the value it would replace. */
 export const NO_CHANGE_TEXT = 'No change made';
+
+/** Field column section headings and their plain lines. */
+export const NEEDS_EYES_HEADING = 'Needs your eyes';
+export const NO_FLAGGED_TEXT = 'No fields are flagged.';
+export const READ_CLEANLY_HEADING = 'Read cleanly';
+export const READ_CLEANLY_NOTE = 'Read by the reader. Not checked by a person.';
+export const NO_CLEAN_TEXT = 'None.';
+export const ACCEPT_LABEL = 'Accept anyway';
 
 /** The one provenance line on a field card. Plain statements about where the value came from. */
 export function provenanceLine(pageValue: string | null, entered: string | null, accepted: boolean): string {
@@ -113,6 +122,8 @@ interface FieldRowProps {
   field: Field;
   state: ReviewState;
   referenceDate: string;
+  /** The reader flagged this field (it sits under "Needs your eyes"). */
+  flagged: boolean;
   selected: boolean;
   editing: boolean;
   /** The last Save on this field changed nothing. */
@@ -126,7 +137,7 @@ interface FieldRowProps {
   readOnly: boolean;
 }
 
-function FieldRow({ field, state, referenceDate, selected, editing, noChange, onSelect, onAccept, onEditOpen, onSave, onCancel, readOnly }: FieldRowProps) {
+function FieldRow({ field, state, referenceDate, flagged, selected, editing, noChange, onSelect, onAccept, onEditOpen, onSave, onCancel, readOnly }: FieldRowProps) {
   const label = FIELD_LABELS[field.name];
   const review = fieldReview(state, field.name);
   const edited = review.enteredValue !== null;
@@ -134,8 +145,20 @@ function FieldRow({ field, state, referenceDate, selected, editing, noChange, on
   const standing = standingFlags(field, state, referenceDate);
   const pending = standing.length > 0;
 
+  // Flagged cards are compact until selected; the selected flagged card is expanded.
+  const classes = ['field-row', 'field-card', flagged ? 'field-flagged' : 'field-clean'];
+  if (selected) classes.push('field-selected');
+  if (selected && flagged) classes.push('field-expanded');
+  const expanded = selected && flagged;
+
   return (
-    <li className={selected ? 'field-row field-card field-selected' : 'field-row field-card'}>
+    <li className={classes.join(' ')}>
+      {selected && (
+        // Text cue for the selected card (not colour alone). The button itself says it with aria-pressed.
+        <span className="selected-tag" aria-hidden="true">
+          Selected
+        </span>
+      )}
       <button
         type="button"
         className="field-item"
@@ -182,12 +205,12 @@ function FieldRow({ field, state, referenceDate, selected, editing, noChange, on
         <div className="field-actions">
           {pending && (
             <button type="button" className="button button-compact button-accept" data-accept={field.name} onClick={onAccept}>
-              Accept{' '}<span className="sr-only">{label}</span>
+              {ACCEPT_LABEL}{' '}<span className="sr-only">{label}</span>
             </button>
           )}
           <button
             type="button"
-            className="button button-compact"
+            className={expanded ? 'button button-compact button-fill' : 'button button-compact'}
             data-edit={field.name}
             aria-expanded={editing}
             onClick={onEditOpen}
@@ -232,28 +255,60 @@ export interface ReviewPanelProps {
 /** The review panel: sorted fields with their actions (Verify record lives in the summary bar). */
 export function ReviewPanel(props: ReviewPanelProps) {
   const { fields, state, referenceDate } = props;
+  const headingBase = useId();
+  const flaggedId = `${headingBase}-flagged`;
+  const cleanId = `${headingBase}-clean`;
+  // Same order as before: flagged fields first, then the rest. Flagged means flagged as read, so a
+  // card does not change section while it is reviewed.
   const sorted = sortForReview(fields);
+  const flagged = sorted.filter(isOriginallyFlagged);
+  const clean = sorted.filter((field) => !isOriginallyFlagged(field));
+  const rows = (list: readonly Field[], isFlagged: boolean) =>
+    list.map((field) => (
+      <FieldRow
+        key={field.name}
+        field={field}
+        state={state}
+        referenceDate={referenceDate}
+        flagged={isFlagged}
+        selected={props.selected === field.name}
+        editing={props.editing === field.name}
+        noChange={props.noChange === field.name}
+        onSelect={() => props.onSelect(field.name)}
+        onAccept={() => props.onAccept(field)}
+        onEditOpen={() => props.onEditOpen(field.name)}
+        onSave={(text) => props.onSave(field, text)}
+        onCancel={() => props.onCancel(field.name)}
+        readOnly={props.verified !== null}
+      />
+    ));
   return (
     <div ref={props.panelRef} className="review-panel">
-      <ul className="field-list" aria-label="Fields read from this fax, flagged fields first">
-        {sorted.map((field) => (
-          <FieldRow
-            key={field.name}
-            field={field}
-            state={state}
-            referenceDate={referenceDate}
-            selected={props.selected === field.name}
-            editing={props.editing === field.name}
-            noChange={props.noChange === field.name}
-            onSelect={() => props.onSelect(field.name)}
-            onAccept={() => props.onAccept(field)}
-            onEditOpen={() => props.onEditOpen(field.name)}
-            onSave={(text) => props.onSave(field, text)}
-            onCancel={() => props.onCancel(field.name)}
-            readOnly={props.verified !== null}
-          />
-        ))}
-      </ul>
+      <div className="field-section" data-section="needs-your-eyes">
+        <h3 id={flaggedId} className="field-section-title">
+          {NEEDS_EYES_HEADING}
+        </h3>
+        {flagged.length > 0 ? (
+          <ul className="field-list" aria-labelledby={flaggedId}>
+            {rows(flagged, true)}
+          </ul>
+        ) : (
+          <p className="field-section-empty">{NO_FLAGGED_TEXT}</p>
+        )}
+      </div>
+      <div className="field-section" data-section="read-cleanly">
+        <h3 id={cleanId} className="field-section-title">
+          {READ_CLEANLY_HEADING}
+        </h3>
+        <p className="field-section-note">{READ_CLEANLY_NOTE}</p>
+        {clean.length > 0 ? (
+          <ul className="field-list" aria-labelledby={cleanId}>
+            {rows(clean, false)}
+          </ul>
+        ) : (
+          <p className="field-section-empty">{NO_CLEAN_TEXT}</p>
+        )}
+      </div>
       {props.verified && <LaidToRest record={props.verified} onDownload={props.onDownload} />}
     </div>
   );
