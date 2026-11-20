@@ -148,6 +148,8 @@ export function App({ now = systemClock, onReviewAction, onVerify, storage: stor
   }
 
   let screen;
+  // The fax screen has a compact header: the wordmark and tagline are hidden by CSS (see .page-header-review).
+  let reviewing = false;
   if (load.state === 'loading') {
     screen = <p role="status">Loading the sample faxes…</p>;
   } else if (load.state === 'error') {
@@ -166,6 +168,7 @@ export function App({ now = systemClock, onReviewAction, onVerify, storage: stor
     const shown = items.slice(0, Math.min(visible ?? 0, items.length));
     const opened = openId === null ? undefined : shown.find((item) => item.entry.id === openId);
     if (opened && opened.fax.ok) {
+      reviewing = true;
       screen = (
         <FaxView
           item={opened}
@@ -219,7 +222,7 @@ export function App({ now = systemClock, onReviewAction, onVerify, storage: stor
       <div className="synthetic-banner" role="region" aria-label="Synthetic data notice">
         {SYNTHETIC_BANNER_TEXT}
       </div>
-      <header className="page-header">
+      <header className={reviewing ? 'page-header page-header-review' : 'page-header'}>
         <h1>Facsimortis</h1>
         <p>
           A demo that turns faxed referrals into checked records. It is built on synthetic data only.

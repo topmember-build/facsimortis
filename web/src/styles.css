@@ -10,6 +10,7 @@
   --edge: #8a94aa;
   --focus: #ffffff;
   --ghost-edge: #1f6fb5;
+  --flag-edge: #8a4b00;
   line-height: 1.5;
 }
 * {
@@ -43,6 +44,26 @@ body {
   color: var(--muted);
 }
 
+/* Review screen only: the large wordmark and the tagline are hidden so the fax gets the space.
+   The h1 stays in the page, visually hidden, so the heading levels (h1, then the h2 "Fax id") and the
+   banner landmark stay as they are. The tagline is removed from view and from the accessibility tree. */
+.page-header.page-header-review {
+  padding: 0;
+}
+
+.page-header.page-header-review h1 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.page-header.page-header-review p {
+  display: none;
+}
 /* One slim (32px) notice at the very top. Not sticky: it scrolls away so the review summary bar keeps the top.
    --text-muted on --panel is 6.9:1. Neutral colours only; never the ghost or flag colours. */
 .synthetic-banner {
@@ -300,7 +321,7 @@ button.row-button:hover {
 }
 
 .fax-view .back-button {
-  align-self: flex-start;
+  align-self: center;
 }
 
 .summary-bar {
@@ -414,8 +435,22 @@ button.row-button:hover {
   scroll-margin-bottom: 0.75rem;
 }
 
-.fax-view .reader-name {
-  margin-bottom: 0.25rem;
+/* Review screen header: one compact row (Back to inbox, Fax id, reader line, reader toggle) that
+   wraps on narrow screens. DOM order is unchanged, so the tab order is too. */
+.fax-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.fax-header .reader-name,
+.fax-header .reader-toggle {
+  margin: 0;
+}
+
+.fax-header .reader-toggle {
+  margin-left: auto;
 }
 
 .fax-title-row {
@@ -593,23 +628,27 @@ button.row-button:hover {
 }
 
 /* Source ghosts. --ghost and --ghost-edge are used here and nowhere else. Strokes keep a
-   constant on-screen width however the image is scaled. The page is black on white, so the
-   outline is the deep blue --ghost-edge (5.25:1 on white, 3.70:1 on --bg). The light --ghost
-   colour is the fill and the glow. Reduced motion only removes the pulse; the thick outline
-   and the glow stay. */
+   constant on-screen width however the image is scaled. A pale colour cannot be seen on a white
+   fax (--ghost and --flag are 1.8:1 on white), so every highlight has two parts: a tint in the
+   pale colour (never more than 20% opaque, so the words stay readable) and a darker outline that
+   reaches 3:1 on the paper sheet and on white. Ghost words: tint --ghost, solid --ghost-edge
+   outline (5.25:1 on white, 3.7:1 on the sheet). Words cited by a field the reader flagged (the same
+   rule as the "Needs your eyes" section: isOriginallyFlagged): tint --flag, dashed --flag-edge outline
+   (6.8:1 on white, 4.8:1 on the sheet), so the difference is not colour alone. The glow is --ghost, or
+   --flag for flagged words. Reduced motion only removes the pulse; the outline, tint and glow stay. */
 .ghost rect {
   fill: var(--ghost);
-  fill-opacity: 0.18;
+  fill-opacity: 0.1;
   stroke: var(--ghost-edge);
-  stroke-opacity: 0.7;
+  stroke-opacity: 0.9;
   stroke-width: 1.5px;
   vector-effect: non-scaling-stroke;
 }
 
 .ghost-selected rect {
-  fill-opacity: 0.4;
+  fill-opacity: 0.2;
   stroke-opacity: 1;
-  stroke-width: 4px;
+  stroke-width: 3px;
 }
 
 .ghost-glow-flood {
@@ -617,21 +656,32 @@ button.row-button:hover {
   flood-opacity: 1;
 }
 
+.ghost-flag rect {
+  fill: var(--flag);
+  stroke: var(--flag-edge);
+  stroke-dasharray: 6 4;
+}
+
+/* The one glow filter is defined in the SVG with the ghost colour. For flagged words a CSS filter
+   replaces it, in the flag colour. */
+.ghost-flag.ghost-selected {
+  filter: drop-shadow(0 0 5px var(--flag));
+}
+
 .ghost-pulse rect {
   animation: ghost-pulse 1.2s ease-out 1;
 }
 @keyframes ghost-pulse {
   0% {
-    fill-opacity: 0.15;
+    fill-opacity: 0.05;
   }
   40% {
-    fill-opacity: 0.8;
+    fill-opacity: 0.2;
   }
   100% {
-    fill-opacity: 0.4;
+    fill-opacity: 0.2;
   }
 }
-
 /* Text for screen readers only (live announcements, the field name after Accept/Edit). */
 .sr-only {
   position: absolute;
@@ -924,6 +974,21 @@ button.row-button:hover {
 
 .field-card .field-head {
   padding-right: 0;
+}
+
+/* Compact flagged cards: "Confidence: N%" stays on one line and the bar has a fixed width. */
+.field-card.field-flagged:not(.field-expanded) .confidence {
+  flex: 0 0 auto;
+}
+
+.field-card.field-flagged:not(.field-expanded) .confidence > span:first-child {
+  white-space: nowrap;
+}
+
+.field-card.field-flagged:not(.field-expanded) .confidence-bar {
+  flex: 0 0 4.5rem;
+  width: 4.5rem;
+  min-width: 0;
 }
 
 /* Read cleanly rows are a compact list: no confidence bar, just the grey number. */
