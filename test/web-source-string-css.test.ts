@@ -43,4 +43,19 @@ describe('source string stylesheet', () => {
     expect(block('.ghost-string')).not.toMatch(/animation/);
     expect(block('.ghost-string-draw')).toMatch(/animation:\s*ghost-string-draw 300ms/);
   });
+  it('D5b: thin lines at 90% opacity, dots of the line colour, and a lighter selected tint', () => {
+    const num = (s: string, prop: string) => Number(new RegExp(prop + ':\\s*([\\d.]+)').exec(s)![1]);
+    expect(num(block('.ghost-string'), 'stroke-width')).toBe(1.25);
+    expect(num(block('.ghost-string-flag'), 'stroke-width')).toBe(1.5);
+    expect(num(block('.ghost-string'), 'stroke-opacity')).toBe(0.9);
+    expect(block('.ghost-string-dot')).toMatch(/fill:\s*var\(--ghost\)/);
+    expect(block('.ghost-string-dot-flag')).toMatch(/fill:\s*var\(--flag\)/);
+    expect(num(block('.ghost-selected rect'), 'fill-opacity')).toBeLessThanOrEqual(0.12);
+    expect(block('.ghost-selected rect')).toMatch(/stroke-width:\s*3px/);
+    const keyframes = css.slice(css.indexOf('@keyframes ghost-pulse'), css.indexOf('/* Text for screen readers'));
+    const peaks = [...keyframes.matchAll(/fill-opacity:\s*([\d.]+)/g)].map((m) => Number(m[1]));
+    expect(peaks.length).toBeGreaterThan(0);
+    for (const v of peaks) expect(v).toBeLessThanOrEqual(0.12);
+    expect(num(block('.ghost rect'), 'fill-opacity')).toBeLessThanOrEqual(0.12);
+  });
 });

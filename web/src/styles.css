@@ -646,7 +646,7 @@ button.row-button:hover {
 }
 
 .ghost-selected rect {
-  fill-opacity: 0.2;
+  fill-opacity: 0.12;
   stroke-opacity: 1;
   stroke-width: 3px;
 }
@@ -676,10 +676,10 @@ button.row-button:hover {
     fill-opacity: 0.05;
   }
   40% {
-    fill-opacity: 0.2;
+    fill-opacity: 0.12;
   }
   100% {
-    fill-opacity: 0.2;
+    fill-opacity: 0.12;
   }
 }
 /* Text for screen readers only (live announcements, the field name after Accept/Edit). */
@@ -1151,7 +1151,8 @@ button.row-button:hover {
 
 .ghost-string {
   stroke: var(--ghost);
-  stroke-width: 1.5px;
+  stroke-width: 1.25px;
+  stroke-opacity: 0.9;
   stroke-linecap: round;
   stroke-linejoin: round;
   fill: none;
@@ -1159,8 +1160,19 @@ button.row-button:hover {
 
 .ghost-string-flag {
   stroke: var(--flag);
-  stroke-width: 2px;
+  stroke-width: 1.5px;
   filter: drop-shadow(0 0 4px var(--flag));
+}
+
+/* End dots (r=4, set in the component): filled in the line colour. Their 0.9 opacity is the fill-opacity attribute in the component (the D4c\n   test reads every fill-opacity in this file as a highlight tint). The glow
+   stays on the flagged line only; the dots have none. */
+.ghost-string-dot {
+  fill: var(--ghost);
+  stroke: none;
+}
+
+.ghost-string-dot-flag {
+  fill: var(--flag);
 }
 
 .ghost-string-draw {

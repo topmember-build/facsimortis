@@ -214,6 +214,25 @@ describe('source string overlay', () => {
     expect(paths()).toHaveLength(0);
   });
 
+  it('draws a dot (r=4) at both ends of the string, in the line class', async () => {
+    const user = userEvent.setup();
+    await openFax(user, 'fax-0003');
+    for (const [name, flagged] of [['npi', true], ['patientName', false]] as const) {
+      await user.click(fieldButton(name));
+      const [sx, sy, , , , , ex, ey] = numbers(paths()[0]!.getAttribute('d')!);
+      const dots = Array.from(overlay().querySelectorAll('circle'));
+      expect(dots).toHaveLength(2);
+      for (const d of dots) {
+        expect(d.getAttribute('r')).toBe('4');
+        expect(d.getAttribute('fill-opacity')).toBe('0.9');
+        expect(d).toHaveClass('ghost-string-dot');
+        expect(d.classList.contains('ghost-string-dot-flag')).toBe(flagged);
+      }
+      expect([Number(dots[0]!.getAttribute('cx')), Number(dots[0]!.getAttribute('cy'))]).toEqual([sx, sy]);
+      expect([Number(dots[1]!.getAttribute('cx')), Number(dots[1]!.getAttribute('cy'))]).toEqual([ex, ey]);
+    }
+  });
+
   it('has no axe violations with the overlay present', async () => {
     const user = userEvent.setup();
     const view = await openFax(user, 'fax-0003');

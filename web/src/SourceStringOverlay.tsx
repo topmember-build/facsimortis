@@ -29,6 +29,9 @@ export interface SourceStringOverlayProps {
   panelRef: RefObject<HTMLDivElement | null>;
 }
 
+/** Radius of the dots at both ends of the string, in pixels. */
+const DOT_RADIUS = 4;
+
 const toRect = (r: DOMRect | Rect): Rect => ({ x: r.x, y: r.y, width: r.width, height: r.height });
 
 /** True while the two-column layout is showing. Without matchMedia (old test DOMs) the layout counts as wide. */
@@ -131,18 +134,23 @@ export function SourceStringOverlay(props: SourceStringOverlayProps) {
     .filter(Boolean)
     .join(' ');
 
+  const dotClass = flagged ? 'ghost-string-dot ghost-string-dot-flag' : 'ghost-string-dot';
   return (
     <svg className="source-string-overlay" aria-hidden="true" focusable="false" style={{ pointerEvents: 'none' }}>
       {shape && field && (
-        <path
-          key={selectionKey}
-          className={className}
-          data-source-field={field}
-          data-clamped={shape.clamped}
-          d={shape.marker ? `${shape.path} ${shape.marker}` : shape.path}
-          pathLength={1}
-          fill="none"
-        />
+        <g key={selectionKey}>
+          <path
+            className={className}
+            data-source-field={field}
+            data-clamped={shape.clamped}
+            d={shape.marker ? `${shape.path} ${shape.marker}` : shape.path}
+            pathLength={1}
+            fill="none"
+          />
+          {/* End dots. When clamped, the word-end dot sits at the clamped point, under the chevron tip. */}
+          <circle className={dotClass} cx={shape.start.x} cy={shape.start.y} r={DOT_RADIUS} fillOpacity={0.9} />
+          <circle className={dotClass} cx={shape.end.x} cy={shape.end.y} r={DOT_RADIUS} fillOpacity={0.9} />
+        </g>
       )}
     </svg>
   );
