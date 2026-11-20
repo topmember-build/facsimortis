@@ -1042,6 +1042,18 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1795163612260
       }
+    ],
+    "D4 Field column: \"Needs your eyes\" flagged cards with the selected one expanded, then \"Read cleanly\" compact list; unflagged fields labelled \"read cleanly, not checked by a person\"; buttons at least 44px; selected state with a non-colour cue. (R5, R6, R10)": [
+      {
+        "executionId": "82fa2718-1708-43b1-8e04-51694ddfa560",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1795164014064
+      },
+      {
+        "executionId": "82fa2718-1708-43b1-8e04-51694ddfa560",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1795164653728
+      }
     ]
   }
 }
