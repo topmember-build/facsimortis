@@ -9,12 +9,14 @@ import { FIELD_LABELS, NOT_FOUND_TEXT } from './field-labels';
 import { READER_LABEL, type ReaderName } from './flags';
 import { ghostRects } from './ghost';
 import { NO_CHANGE_TEXT, ReviewPanel, SummaryBar } from './ReviewPanel';
+import { SourceStringOverlay } from './SourceStringOverlay';
 import { liveSummary, type VerifiedRecord } from './record';
 import {
   LAID_TO_REST,
   NO_ANSWER_VERIFY_REASON,
   canVerify,
   fieldReview,
+  isOriginallyFlagged,
   isUnchangedEdit,
   reviewStatus,
   sortForReview,
@@ -115,6 +117,8 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
   const panel = useRef<HTMLDivElement>(null);
   const bar = useRef<HTMLDivElement>(null);
   const root = useRef<HTMLElement>(null);
+  const faxSvg = useRef<SVGSVGElement>(null);
+  const sheet = useRef<HTMLDivElement>(null);
   const reducedMotion = usePrefersReducedMotion();
   const [selection, setSelection] = useState<Selection | null>(null);
   const [showFullPage, setShowFullPage] = useState(false);
@@ -165,9 +169,12 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
       : 'Not yet reviewed';
   const imageName = `Faxed referral form, fax ${item.entry.id}, with source highlights`;
 
-  function ghostClass(selected: boolean): string {
-    if (!selected) return 'ghost';
-    return reducedMotion ? 'ghost ghost-selected ghost-static' : 'ghost ghost-selected ghost-pulse';
+  // Words cited by a field the reader flagged are drawn in the flag colour with a dashed outline. This is the
+  // same rule as the "Needs your eyes" section (isOriginallyFlagged), so a card keeps its look once reviewed.
+  function ghostClass(selected: boolean, flagged: boolean): string {
+    const base = flagged ? 'ghost ghost-flag' : 'ghost';
+    if (!selected) return base;
+    return reducedMotion ? `${base} ghost-selected ghost-static` : `${base} ghost-selected ghost-pulse`;
   }
 
   // Choosing a field again pulses its ghost again; acting on the selected field does not.
@@ -252,33 +259,35 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
 
   return (
     <section aria-labelledby="fax-title" className="fax-view" ref={root}>
-      <button type="button" className="button back-button" onClick={onBack}>
-        Back to inbox
-      </button>
-      <div className="fax-title-row">
-        <h2
-          id="fax-title"
-          className="fax-heading"
-          data-opened-by={openedBy}
-          tabIndex={-1}
-          ref={heading}
-        >
-          Fax {item.entry.id}
-        </h2>
-      </div>
-      <p className="reader-name">{READER_LABEL[reader]}</p>
-      <div role="group" aria-label="Which reader to show" className="reader-toggle">
-        {READER_CHOICES.map((choice) => (
-          <button
-            key={choice.name}
-            type="button"
-            className="button toggle-button"
-            aria-pressed={reader === choice.name}
-            onClick={() => changeReader(choice.name)}
+      <div className="fax-header">
+        <button type="button" className="button back-button" onClick={onBack}>
+          Back to inbox
+        </button>
+        <div className="fax-title-row">
+          <h2
+            id="fax-title"
+            className="fax-heading"
+            data-opened-by={openedBy}
+            tabIndex={-1}
+            ref={heading}
           >
-            {choice.label}
-          </button>
-        ))}
+            Fax {item.entry.id}
+          </h2>
+        </div>
+        <p className="reader-name">{READER_LABEL[reader]}</p>
+        <div role="group" aria-label="Which reader to show" className="reader-toggle">
+          {READER_CHOICES.map((choice) => (
+            <button
+              key={choice.name}
+              type="button"
+              className="button toggle-button"
+              aria-pressed={reader === choice.name}
+              onClick={() => changeReader(choice.name)}
+            >
+              {choice.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="viewer">
@@ -286,7 +295,10 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
           <button type="button" className="button page-toggle" onClick={() => setShowFullPage((v) => !v)}>
             {showFullPage ? 'Show cropped view' : 'Show full page'}
           </button>
+          <div className="fax-stage">
+          <div className="fax-sheet" ref={sheet}>
           <svg
+            ref={faxSvg}
             className="fax-image"
             viewBox={viewBoxAttr(box)}
             preserveAspectRatio="xMidYMid meet"
@@ -310,7 +322,7 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
               return (
                 <g
                   key={selected ? `${field.name}-${selection?.count}` : field.name}
-                  className={ghostClass(selected)}
+                  className={ghostClass(selected, isOriginallyFlagged(field))}
                   data-field={field.name}
                   data-selected={selected}
                   filter={selected ? `url(#${glowId})` : undefined}
@@ -329,10 +341,25 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
               );
             })}
           </svg>
+          </div>
+          </div>
           <p id={captionId} className="viewer-caption">{HIGHLIGHT_CAPTION}</p>
           <p role="status" className="selection-line">
             {selectionLine(fields, selection, review)}
           </p>
+          {/* Decoration only (aria-hidden, fixed, no pointer events). Placed here so the DOM order of the fax, the field column and the summary bar is unchanged. */}
+          <SourceStringOverlay
+            field={selectedField?.name ?? null}
+            selectionKey={`${selection?.name ?? ''}-${selection?.count ?? 0}`}
+            flagged={selectedField ? isOriginallyFlagged(selectedField) : false}
+            word={ghostRects(selectedField, fax.ocr.words)[0] ?? null}
+            viewBox={box}
+            reducedMotion={reducedMotion}
+            svgRef={faxSvg}
+            sheetRef={sheet}
+            barRef={bar}
+            panelRef={panel}
+          />
         </div>
 
         <div className="viewer-side">

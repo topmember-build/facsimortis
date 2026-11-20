@@ -64,7 +64,7 @@ describe('top bar: id, received time and urgency', () => {
     expect(b.getByText('Fax fax-0003')).toBeInTheDocument();
     const time = document.querySelector('[data-summary-received] time')!;
     expect(inboxTime).toBeTruthy();
-    expect(time.textContent).toBe(`${inboxTime} UTC`);
+    expect(time.textContent).toBe(`${inboxTime} (demo clock)`);
     expect(document.querySelector('[data-summary-urgency]')!.textContent).toBe('Urgency: urgent');
   });
 
