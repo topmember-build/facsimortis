@@ -4,6 +4,8 @@ Facsimortis revives fax for clinics that still receive referrals that way. A fax
 
 This is a demo built on synthetic data only. It makes no compliance or certification claims.
 
+Live demo: https://topmember-build.github.io/facsimortis/ (published from main by GitHub Pages; synthetic data only). Placeholder: available after the first deploy.
+
 > Status: scaffold only (task 0.1). Nothing is implemented yet.
 
 ## Requirements
@@ -129,7 +131,7 @@ npm run dev
 
 Starts the dev server at http://localhost:5173/. `npm run build` writes the static site to `dist/web/` (git-ignored; it holds `index.html`, `assets/` and a copy of `samples/`). `npm run preview` serves that folder at http://localhost:4173/. Run `npm run build` first.
 
-The site is static: there is no server and no network call beyond loading its own files. It reads the sample data in `web/public/samples/`, which `npm run precompute` writes. The build uses relative paths, so the folder works from any subpath; set `SITE_BASE` (for example `/facsimortis/`) to build for a fixed one. Site code in `web/src/` shares the Zod schemas from `src/samples/schema.ts` and `src/extract/schema.ts`; ESLint blocks it from importing anything else in `src/` or any Node module. Site tests run with `npm test` (jsdom, web files only).
+The site is static: there is no server and no network call beyond loading its own files. It reads the sample data in `web/public/samples/`, which `npm run precompute` writes. The build uses relative paths, so the folder works from any subpath; set `SITE_BASE` (for example `/facsimortis/`) to build for a fixed one. Site code in `web/src/` shares the Zod schemas from `src/samples/schema.ts` and `src/extract/schema.ts`; ESLint blocks it from importing anything else in `src/` or any Node module. Site tests run with `npm test` (jsdom, web files only). The GitHub Pages build (`.github/workflows/pages.yml`) uses `SITE_BASE=/facsimortis/`.
 
 ### Saved progress, verified records and export
 
