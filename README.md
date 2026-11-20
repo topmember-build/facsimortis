@@ -4,7 +4,7 @@ Facsimortis revives fax for clinics that still receive referrals that way. A fax
 
 This is a demo built on synthetic data only. It makes no compliance or certification claims.
 
-Live demo: https://topmember-build.github.io/facsimortis/ (published from main by GitHub Pages; synthetic data only). Placeholder: available after the first deploy.
+Live demo: https://topmember-build.github.io/facsimortis/ (synthetic data only)
 
 > Status: scaffold only (task 0.1). Nothing is implemented yet.
 
