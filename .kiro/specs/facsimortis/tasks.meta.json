@@ -1066,6 +1066,25 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1795165552801
       }
+    ],
+    "D4c Legible highlights and compact review header: selected OCR highlight uses a 3px outline and a tint of at most 20% opacity, never a solid fill; words cited by a flagged field use --flag (and --flag-text where text is involved) with a dashed outline, all other cited words use --ghost with a solid outline; on the review screen only, one compact header row (Back to inbox, \"Fax <id>\", reader line, Model answers / Rules reader toggle) wrapping on narrow screens, large wordmark and tagline hidden there, Synthetic banner kept, inbox header unchanged; \"Confidence: N%\" never wraps on compact flagged cards and the bar has a fixed width. No wording, behaviour, accessible-name or tab-order change. (R3.3, R10)": [
+      {
+        "executionId": "220e05b5-7930-4825-8d6f-fa1171b8d520",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1795166524208
+      },
+      {
+        "executionId": "ce0f56d9-305a-44b8-a61b-6bb1d145963c",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1795167588728
+      }
+    ],
+    "D5 Source string: one curved SVG line from the selected card to its cited words, amber for flagged and teal for clean, aria-hidden, recomputed on resize, full-page toggle and stage scroll, no animation under reduced motion. Tests for endpoints, aria-hidden and reduced motion. (R3.3, R10)": [
+      {
+        "executionId": "a5ec6cb4-e4f9-49f6-82f6-868a89cdd535",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1795168033997
+      }
     ]
   }
 }
