@@ -4,3 +4,6 @@ assets/tessdata/*.traineddata binary
 web/public/samples/*.png binary
 web/public/samples/*.json text eol=lf
 .github/workflows/*.yml text eol=lf
+web/public/fonts/**/*.woff2 binary
+web/public/fonts/**/*.txt text eol=lf
+web/public/fonts/*.md text eol=lf

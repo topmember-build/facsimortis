@@ -2,7 +2,8 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent, type Ref } from
 import type { Field, FieldName } from '../../src/extract/schema.js';
 import { FORMAT_HINTS, editLabel } from './edit-hints';
 import { FIELD_LABELS, NOT_FOUND_TEXT } from './field-labels';
-import { ACCEPTED_DESPITE_TEXT, summaryLines, verifiedLine, type VerifiedRecord } from './record';
+import { formatReceived } from './format';
+import { ACCEPTED_DESPITE_TEXT, summaryLines, verifiedLine, type Summary, type VerifiedRecord } from './record';
 import {
   LAID_TO_REST,
   VERIFY_NOTE,
@@ -293,8 +294,17 @@ export function LaidToRest({ record, onDownload }: { record: VerifiedRecord; onD
   );
 }
 
+/** The inbox's received time followed by " UTC". The sample data has no zone; the demo clock is shown as UTC. */
+export const receivedLine = (receivedAt: string): string => `${formatReceived(receivedAt)} UTC`;
+
 export interface SummaryBarProps {
   faxId: string;
+  /** The inbox entry's receivedAt. Omitted: no received time is shown. */
+  receivedAt?: string;
+  /** The urgency now shown: the reviewer's value, else the page value; null when empty. Undefined: reader has no answer. */
+  urgency?: string | null | undefined;
+  /** Counts from summarise() (see record.ts). Omitted when the reader has no answer. */
+  counts?: Pick<Summary, 'flagged' | 'reviewed' | 'edited'> | undefined;
   status: string;
   /** Verified: the bar shows the status only. No reason, note or Verify button. */
   verified: boolean;
@@ -309,14 +319,41 @@ export interface SummaryBarProps {
  * button. FaxView puts it LAST in the DOM and CSS shows it first (flex order), so the tab
  * order is: fields, then Verify.
  */
-export function SummaryBar({ faxId, status, verified, enabled, reason, onVerify, barRef }: SummaryBarProps) {
+export function SummaryBar({ faxId, receivedAt, urgency, counts, status, verified, enabled, reason, onVerify, barRef }: SummaryBarProps) {
   return (
     <div className="summary-bar" role="region" aria-label="Review summary" ref={barRef}>
       <div className="summary-row">
         <span className="summary-id">Fax {faxId}</span>
+        {receivedAt !== undefined && (
+          <span className="summary-meta" data-summary-received="true">
+            Received{' '}
+            <time className="summary-value" dateTime={receivedAt}>
+              {receivedLine(receivedAt)}
+            </time>
+          </span>
+        )}
+        {urgency !== undefined && (
+          <span className="summary-meta" data-summary-urgency="true">
+            Urgency: <span className="summary-value">{urgency ?? NOT_READ_TEXT}</span>
+          </span>
+        )}
         <span className="review-status">
           <span aria-hidden="true">○</span> {status}
         </span>
+        {counts && (
+          <span className="summary-counts" data-summary-counts="true">
+            <span className={counts.flagged > 0 ? 'summary-count count-flag' : 'summary-count'} data-count="flagged">
+              {counts.flagged > 0 && <span aria-hidden="true">⚑ </span>}
+              {counts.flagged} flagged
+            </span>
+            <span className="summary-count" data-count="reviewed">
+              {counts.reviewed} reviewed
+            </span>
+            <span className="summary-count" data-count="edited">
+              {counts.edited} edited
+            </span>
+          </span>
+        )}
         {!verified && (
           <p id="verify-reason" className="verify-reason" aria-live="polite">
             {reason}

@@ -9,7 +9,7 @@ import { FIELD_LABELS, NOT_FOUND_TEXT } from './field-labels';
 import { READER_LABEL, type ReaderName } from './flags';
 import { ghostRects } from './ghost';
 import { NO_CHANGE_TEXT, ReviewPanel, SummaryBar } from './ReviewPanel';
-import type { VerifiedRecord } from './record';
+import { liveSummary, type VerifiedRecord } from './record';
 import {
   LAID_TO_REST,
   NO_ANSWER_VERIFY_REASON,
@@ -93,6 +93,14 @@ function selectionLine(fields: readonly Field[], selection: Selection | null, re
     return `Showing source for ${label}: ${NOT_FOUND_TEXT.toLowerCase()}, so there is nothing to highlight.`;
   }
   return `Showing source for ${label}: ${field.value}`;
+}
+
+/** The urgency now shown for the chosen reader: the reviewer's value, else the page value; null when empty. */
+function shownUrgency(fields: readonly Field[], review: ReviewState): string | null {
+  const entered = fieldReview(review, 'urgency').enteredValue;
+  if (entered !== null) return entered.trim() === '' ? null : entered;
+  const page = fields.find((f) => f.name === 'urgency')?.value ?? null;
+  return page === null || page.trim() === '' ? null : page;
 }
 
 /**
@@ -370,6 +378,9 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
       {/* Last in the DOM so Verify follows the fields in tab order; CSS (flex order) shows it first. */}
       <SummaryBar
         faxId={item.entry.id}
+        receivedAt={item.entry.receivedAt}
+        urgency={result.status === 'ok' ? shownUrgency(fields, review) : undefined}
+        counts={result.status === 'ok' ? liveSummary(fields, review) : undefined}
         status={status}
         verified={verified !== null}
         enabled={result.status === 'ok' && canVerify(fields, review, referenceDate)}

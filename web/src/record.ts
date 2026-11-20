@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { FIELD_ORDER, FieldNameSchema } from '../../src/extract/schema.js';
+import { FIELD_ORDER, FieldNameSchema, type Field } from '../../src/extract/schema.js';
 import type { SampleFax } from '../../src/samples/schema.js';
 import { FIELD_LABELS } from './field-labels';
 import type { ReaderName } from './flags';
@@ -114,6 +114,31 @@ export const VerifiedRecordSchema = z
 export type VerifiedRecord = z.infer<typeof VerifiedRecordSchema>;
 export type VerifiedField = z.infer<typeof VerifiedFieldSchema>;
 
+/** Pure. The record's fields for a reader's fields and a review state. Used by the export and the live counts. */
+export function verifiedFields(readerFields: readonly Field[], state: ReviewState): VerifiedField[] {
+  return readerFields.map((field) => {
+    const review = fieldReview(state, field.name);
+    const edited = review.enteredValue !== null;
+    return {
+      name: field.name,
+      label: FIELD_LABELS[field.name],
+      originalValue: field.value,
+      wordIds: [...field.wordIds],
+      confidence: field.confidence,
+      originalFlags: [...field.flags],
+      finalValue: edited ? review.enteredValue : field.value,
+      source: edited ? ('reviewer' as const) : ('page' as const),
+      reviewed: review.reviewed,
+      acceptedDespiteFlag: review.acceptedDespiteFlag,
+      failedChecks: [...review.failedChecks],
+    };
+  });
+}
+
+/** Pure. The counts shown in the summary bar: the same summarise() the export uses. */
+export const liveSummary = (readerFields: readonly Field[], state: ReviewState): Summary =>
+  summarise(verifiedFields(readerFields, state));
+
 export interface BuildRecordInput {
   fax: SampleFax;
   reader: ReaderName;
@@ -133,23 +158,7 @@ export function buildVerifiedRecord(input: BuildRecordInput): VerifiedRecord | n
   const result = input.fax.readers[input.reader];
   if (result.status !== 'ok') return null;
   const actions: ReviewAction[] = input.state.actions.map((action) => ({ ...action }));
-  const fields: VerifiedField[] = result.fields.map((field) => {
-    const review = fieldReview(input.state, field.name);
-    const edited = review.enteredValue !== null;
-    return {
-      name: field.name,
-      label: FIELD_LABELS[field.name],
-      originalValue: field.value,
-      wordIds: [...field.wordIds],
-      confidence: field.confidence,
-      originalFlags: [...field.flags],
-      finalValue: edited ? review.enteredValue : field.value,
-      source: edited ? ('reviewer' as const) : ('page' as const),
-      reviewed: review.reviewed,
-      acceptedDespiteFlag: review.acceptedDespiteFlag,
-      failedChecks: [...review.failedChecks],
-    };
-  });
+  const fields = verifiedFields(result.fields, input.state);
   return {
     synthetic: true,
     notice: SYNTHETIC_NOTICE,
