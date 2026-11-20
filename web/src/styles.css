@@ -1129,3 +1129,58 @@ button.row-button:hover {
     scroll-behavior: auto !important;
   }
 }
+
+/* Source string (D5): one curved line from the selected card to its first cited word. Decoration
+   only: the overlay is aria-hidden and takes no pointer events. It is fixed over the viewport and sits
+   BELOW the sticky summary bar (z-index 10), so it can never cover the bar. The component draws nothing
+   when the layout stacks to one column; the 60rem here must equal WIDE_LAYOUT_QUERY in source-string.ts
+   (test/web-source-string-css.test.ts checks it). Both strings are solid (the dashed look is for the
+   highlights). Contrast on the page background is 10.7:1 for the flag colour and 10.7:1 for the ghost
+   colour (3:1 needed for a line). Under reduced motion the string appears with no animation. */
+.source-string-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.ghost-string {
+  stroke: var(--ghost);
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.ghost-string-flag {
+  stroke: var(--flag);
+  stroke-width: 2px;
+  filter: drop-shadow(0 0 4px var(--flag));
+}
+
+.ghost-string-draw {
+  animation: ghost-string-draw 300ms ease-out 1 both;
+}
+
+@keyframes ghost-string-draw {
+  from {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+
+  to {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (max-width: 59.99rem) {
+  .source-string-overlay {
+    display: none;
+  }
+}

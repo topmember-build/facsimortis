@@ -9,6 +9,7 @@ import { FIELD_LABELS, NOT_FOUND_TEXT } from './field-labels';
 import { READER_LABEL, type ReaderName } from './flags';
 import { ghostRects } from './ghost';
 import { NO_CHANGE_TEXT, ReviewPanel, SummaryBar } from './ReviewPanel';
+import { SourceStringOverlay } from './SourceStringOverlay';
 import { liveSummary, type VerifiedRecord } from './record';
 import {
   LAID_TO_REST,
@@ -116,6 +117,8 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
   const panel = useRef<HTMLDivElement>(null);
   const bar = useRef<HTMLDivElement>(null);
   const root = useRef<HTMLElement>(null);
+  const faxSvg = useRef<SVGSVGElement>(null);
+  const sheet = useRef<HTMLDivElement>(null);
   const reducedMotion = usePrefersReducedMotion();
   const [selection, setSelection] = useState<Selection | null>(null);
   const [showFullPage, setShowFullPage] = useState(false);
@@ -293,8 +296,9 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
             {showFullPage ? 'Show cropped view' : 'Show full page'}
           </button>
           <div className="fax-stage">
-          <div className="fax-sheet">
+          <div className="fax-sheet" ref={sheet}>
           <svg
+            ref={faxSvg}
             className="fax-image"
             viewBox={viewBoxAttr(box)}
             preserveAspectRatio="xMidYMid meet"
@@ -343,6 +347,19 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
           <p role="status" className="selection-line">
             {selectionLine(fields, selection, review)}
           </p>
+          {/* Decoration only (aria-hidden, fixed, no pointer events). Placed here so the DOM order of the fax, the field column and the summary bar is unchanged. */}
+          <SourceStringOverlay
+            field={selectedField?.name ?? null}
+            selectionKey={`${selection?.name ?? ''}-${selection?.count ?? 0}`}
+            flagged={selectedField ? isOriginallyFlagged(selectedField) : false}
+            word={ghostRects(selectedField, fax.ocr.words)[0] ?? null}
+            viewBox={box}
+            reducedMotion={reducedMotion}
+            svgRef={faxSvg}
+            sheetRef={sheet}
+            barRef={bar}
+            panelRef={panel}
+          />
         </div>
 
         <div className="viewer-side">
