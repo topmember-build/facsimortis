@@ -486,6 +486,65 @@ button.row-button:hover {
   border: 1px solid var(--edge);
 }
 
+/* Fax stage (D3). The fax image sits on a warm paper sheet. Only the frame is styled: the image
+   is not redrawn or recoloured. Nothing on the sheet is text, so no ink colour is needed; the
+   caption and status line below it stay on --ground. */
+.fax-stage {
+  width: 100%;
+  max-width: 40rem;
+}
+
+.fax-sheet {
+  --sheet-pad: clamp(0.75rem, 3vw, 1.5rem);
+  position: relative;
+  padding: var(--sheet-pad);
+  background: var(--paper);
+  border-radius: 8px;
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.5),
+    0 8px 16px rgb(0 0 0 / 0.4),
+    0 24px 48px rgb(0 0 0 / 0.45);
+}
+
+.fax-sheet .fax-image {
+  max-width: none;
+  border-color: rgb(29 28 26 / 0.35);
+}
+
+/* Very faint scanlines over the image only (inset by the sheet padding). A pseudo-element, so it
+   is not in the accessibility tree and takes no pointer events. It sits above the image AND the
+   source highlights (they are drawn inside the same SVG), so the lines are only 7% black, 1px in
+   every 3px: words and highlight outlines stay clearly legible. */
+.fax-sheet::after {
+  content: '';
+  position: absolute;
+  inset: var(--sheet-pad);
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0.07) 0,
+    rgb(0 0 0 / 0.07) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* Desk-lamp glow behind the fax stage on the review screen: warm white at 7% opacity at its
+   centre, fading to nothing. Worst-case background #1e2023; --text-muted on it is 6.5:1. */
+.page-main-wide {
+  position: relative;
+  isolation: isolate;
+}
+
+.page-main-wide::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse 34rem 30rem at 30% 24rem, rgb(255 244 220 / 0.07), transparent 70%);
+}
+
 .viewer-caption {
   margin: 0;
   color: var(--muted);
@@ -834,6 +893,18 @@ button.row-button:hover {
   }
   to {
     opacity: 1;
+  }
+}
+
+/* Reference desktop (1360 wide): fax stage about 600px, field column about 620px. Both shrink
+   together if the screen is a little narrower. */
+@media (min-width: 80rem) {
+  .page-main-wide {
+    max-width: 82rem;
+  }
+
+  .viewer {
+    grid-template-columns: minmax(0, 37.5rem) minmax(0, 38.75rem);
   }
 }
 

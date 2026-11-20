@@ -286,6 +286,8 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
           <button type="button" className="button page-toggle" onClick={() => setShowFullPage((v) => !v)}>
             {showFullPage ? 'Show cropped view' : 'Show full page'}
           </button>
+          <div className="fax-stage">
+          <div className="fax-sheet">
           <svg
             className="fax-image"
             viewBox={viewBoxAttr(box)}
@@ -329,6 +331,8 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
               );
             })}
           </svg>
+          </div>
+          </div>
           <p id={captionId} className="viewer-caption">{HIGHLIGHT_CAPTION}</p>
           <p role="status" className="selection-line">
             {selectionLine(fields, selection, review)}
