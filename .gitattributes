@@ -3,3 +3,4 @@ fixtures/**/*.json text eol=lf
 assets/tessdata/*.traineddata binary
 web/public/samples/*.png binary
 web/public/samples/*.json text eol=lf
+.github/workflows/*.yml text eol=lf

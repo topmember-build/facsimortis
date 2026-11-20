@@ -4,7 +4,8 @@ import axe from 'axe-core';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import { MemoryStore } from './storage';
-import { stubSite } from './test-site';
+import { committedFaxes, json, stubSite } from './test-site';
+import { NO_SAVED_ANSWER_MESSAGE } from '../../src/samples/schema.js';
 
 type UserApi = ReturnType<typeof userEvent.setup>;
 
@@ -49,7 +50,7 @@ describe('inbox status pills', () => {
     expect(pill).toHaveTextContent('No flags raised');
     expect(pill).toHaveTextContent('Ready to verify');
     expect(icon('fax-0001')).toHaveTextContent('○');
-    expect(rowButton('fax-0001')).toHaveAccessibleName('fax-0001, No flags raised, Ready to verify');
+    expect(rowButton('fax-0001')).toHaveAccessibleName('fax-0001, received Oct 1, 09:00, No flags raised, Ready to verify');
     expect(view.container.textContent).not.toContain('No flagged fields');
     expect(view.container.textContent).not.toContain('✓');
   });
@@ -72,13 +73,13 @@ describe('inbox status pills', () => {
       seen.push({ kind: expected, icon: iconText });
     };
 
-    note('flagged', '⚑', '2 flagged', 'Not yet reviewed', 'fax-0003, 2 flagged, Not yet reviewed');
+    note('flagged', '⚑', '2 flagged', 'Not yet reviewed', 'fax-0003, received Oct 1, 09:14, 2 flagged, Not yet reviewed');
     await expectNoViolations(view.container);
 
     await openFax(user, 'fax-0003');
     await user.click(accept('npi'));
     await back(user);
-    note('in-progress', '◐', '2 flagged, 1 reviewed', 'Review in progress', 'fax-0003, 2 flagged, 1 reviewed, Review in progress');
+    note('in-progress', '◐', '2 flagged, 1 reviewed', 'Review in progress', 'fax-0003, received Oct 1, 09:14, 2 flagged, 1 reviewed, Review in progress');
     await expectNoViolations(view.container);
 
     await openFax(user, 'fax-0003');
@@ -87,13 +88,13 @@ describe('inbox status pills', () => {
     await user.clear(input);
     await user.type(input, '555-0151{Enter}');
     await back(user);
-    note('reviewed', '✓', '2 flagged, reviewed', 'Ready to verify', 'fax-0003, 2 flagged, reviewed, Ready to verify');
+    note('reviewed', '✓', '2 flagged, reviewed', 'Ready to verify', 'fax-0003, received Oct 1, 09:14, 2 flagged, reviewed, Ready to verify');
     await expectNoViolations(view.container);
 
     await openFax(user, 'fax-0003');
     await user.click(screen.getByRole('button', { name: 'Verify record' }));
     await back(user);
-    note('laid-to-rest', '●', '2 flagged, reviewed', 'Laid to rest', 'fax-0003, 2 flagged, reviewed, Laid to rest');
+    note('laid-to-rest', '●', '2 flagged, reviewed', 'Laid to rest', 'fax-0003, received Oct 1, 09:14, 2 flagged, reviewed, Laid to rest');
     await expectNoViolations(view.container);
 
     expect(new Set(seen.map((s) => s.icon)).size).toBe(seen.length);
@@ -110,6 +111,34 @@ describe('inbox status pills', () => {
     await back(user);
     expect(pillOf('fax-0002')).toHaveAttribute('data-pill', 'flagged');
     expect(pillOf('fax-0002')).toHaveTextContent('3 flagged');
-    expect(rowButton('fax-0002')).toHaveAccessibleName('fax-0002, 3 flagged, Not yet reviewed');
+    expect(rowButton('fax-0002')).toHaveAccessibleName('fax-0002, received Oct 1, 09:07, 3 flagged, Not yet reviewed');
+  });
+
+  it('the time in each row name equals the visible time', async () => {
+    setup();
+    await inbox();
+    for (const id of ['fax-0001', 'fax-0002']) {
+      const visible = rowButton(id).querySelector('time')!.textContent;
+      expect(rowButton(id).getAttribute('aria-label')).toContain(`, received ${visible}, `);
+    }
+  });
+
+  it('names a row with no saved model answer', async () => {
+    const noAnswer = structuredClone(committedFaxes['fax-0002.json']) as { readers: { model: unknown } };
+    noAnswer.readers.model = { status: 'no-saved-answer', message: NO_SAVED_ANSWER_MESSAGE };
+    stubSite({ 'fax-0002.json': () => json(noAnswer) });
+    const { container } = render(<App now={clock()} storage={new MemoryStore()} onVerify={vi.fn()} download={() => {}} />);
+    await inbox();
+    expect(rowButton('fax-0002').getAttribute('aria-label')).toMatch(/^fax-0002, received Oct 1, 09:07, No saved model answer/);
+    await expectNoViolations(container);
+  });
+
+  it('names a row that failed to load with its time and error, axe clean', async () => {
+    stubSite({ 'fax-0002.json': () => json({ id: 'fax-0002' }) });
+    const { container } = render(<App now={clock()} storage={new MemoryStore()} onVerify={vi.fn()} download={() => {}} />);
+    await inbox();
+    const failed = screen.getByRole('group', { name: /^fax-0002, received Oct 1, 09:07, Could not be read\. .*not in the expected form/ });
+    expect(failed).toBeInTheDocument();
+    await expectNoViolations(container);
   });
 });

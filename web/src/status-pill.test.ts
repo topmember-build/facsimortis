@@ -3,7 +3,8 @@ import { SampleFaxSchema, type SampleFax } from '../../src/samples/schema.js';
 import type { FieldName } from '../../src/extract/schema.js';
 import type { VerifiedRecord } from './record';
 import { EMPTY_REVIEW, reviewKey, reviewReducer, type ReviewState } from './review-state';
-import { PILL_ICONS, statusPill, type PillKind } from './status-pill';
+import { formatReceived } from './format';
+import { PILL_ICONS, failedRowStatus, rowAccessibleName, statusPill, type PillKind } from './status-pill';
 import { committedFaxes } from './test-site';
 
 const REF = '2026-10-01';
@@ -119,5 +120,37 @@ describe('statusPill', () => {
       statusPill(fax('fax-0001'), 'model', {}, REF),
     ].map((pill) => pill.sentence);
     for (const text of texts) expect(text).not.toMatch(/correct|good|clean|\bright\b|no errors/i);
+  });
+});
+
+describe('rowAccessibleName', () => {
+  const at = '2026-10-01T09:14:00';
+
+  it('puts the received time between the id and the status sentence', () => {
+    const f = fax('fax-0003');
+    const name = (state: ReviewState, verified = {}) =>
+      rowAccessibleName(f.id, at, statusPill(f, 'model', reviews(f, state), REF, verified).sentence);
+    expect(name(EMPTY_REVIEW)).toBe('fax-0003, received Oct 1, 09:14, 2 flagged, Not yet reviewed');
+    expect(name(accept(EMPTY_REVIEW, 'npi'))).toBe(
+      'fax-0003, received Oct 1, 09:14, 2 flagged, 1 reviewed, Review in progress',
+    );
+    expect(name(EMPTY_REVIEW, verifiedFor(f))).toBe('fax-0003, received Oct 1, 09:14, 2 flagged, reviewed, Laid to rest');
+  });
+
+  it('covers no flags and no saved answer', () => {
+    const f1 = fax('fax-0001');
+    expect(rowAccessibleName(f1.id, '2026-10-01T09:00:00', statusPill(f1, 'model', {}, REF).sentence)).toBe(
+      'fax-0001, received Oct 1, 09:00, No flags raised, Ready to verify',
+    );
+    const none = structuredClone(f1);
+    none.readers.model = { status: 'no-saved-answer', message: 'x' } as SampleFax['readers']['model'];
+    const sentence = statusPill(none, 'model', {}, REF).sentence;
+    expect(rowAccessibleName(none.id, '2026-10-01T09:00:00', sentence)).toMatch(/^fax-0001, received Oct 1, 09:00, No saved model answer/);
+  });
+
+  it('uses the visible time formatter and keeps the error wording for a failed fax', () => {
+    expect(rowAccessibleName('fax-0002', at, failedRowStatus('It is broken.'))).toBe(
+      'fax-0002, received ' + formatReceived(at) + ', Could not be read. It is broken.',
+    );
   });
 });
