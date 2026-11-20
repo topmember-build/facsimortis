@@ -309,8 +309,15 @@ button.row-button:hover {
   top: 0;
   z-index: 10;
   display: grid;
+  /* Two rows: the fax facts on top; below them the reminder (left) and the reason with Verify (right).
+     DOM order is unchanged (Verify stays after the fields in tab order); only the placement moves. */
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'top top'
+    'note verify';
   align-content: center;
-  gap: 0.125rem;
+  align-items: end;
+  gap: 0.375rem 1rem;
   min-height: 4.5rem;
   padding: 0.5rem 0.875rem;
   background: var(--panel);
@@ -323,6 +330,7 @@ button.row-button:hover {
 }
 
 .summary-row {
+  grid-area: top;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -358,20 +366,45 @@ button.row-button:hover {
   font-weight: 600;
 }
 
-.summary-bar .button-primary {
-  margin-left: auto;
+.summary-verify {
+  grid-area: verify;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.375rem;
+  min-width: 0;
 }
 
 .summary-bar .verify-reason {
-  flex: 1 1 14rem;
   margin: 0;
   color: var(--text);
+  text-align: right;
 }
 
 .summary-bar .verify-note {
+  grid-area: note;
   margin: 0;
   color: var(--muted);
   font-size: 0.8125rem;
+}
+
+/* Narrow screens: one column, the reminder first, then the reason and Verify under it. */
+@media (max-width: 40rem) {
+  .summary-bar {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'top'
+      'note'
+      'verify';
+  }
+
+  .summary-verify {
+    align-items: stretch;
+  }
+
+  .summary-bar .verify-reason {
+    text-align: left;
+  }
 }
 
 /* Keep keyboard focus clear of the sticky bar when the page scrolls to it. */
@@ -498,6 +531,9 @@ button.row-button:hover {
   --sheet-pad: clamp(0.75rem, 3vw, 1.5rem);
   position: relative;
   padding: var(--sheet-pad);
+  /* Slightly darker than the brand --paper, for this sheet only (theme.css keeps #e8e4d6). Nothing
+     on it is text; --paper-ink on #ddd8c8 is still above 4.5:1 (see test/web-d4b-css.test.ts). */
+  --paper: #ddd8c8;
   background: var(--paper);
   border-radius: 8px;
   box-shadow:
@@ -513,7 +549,7 @@ button.row-button:hover {
 
 /* Very faint scanlines over the image only (inset by the sheet padding). A pseudo-element, so it
    is not in the accessibility tree and takes no pointer events. It sits above the image AND the
-   source highlights (they are drawn inside the same SVG), so the lines are only 7% black, 1px in
+   source highlights (they are drawn inside the same SVG), so the lines are only 3.5% black, 1px in
    every 3px: words and highlight outlines stay clearly legible. */
 .fax-sheet::after {
   content: '';
@@ -522,15 +558,15 @@ button.row-button:hover {
   pointer-events: none;
   background: repeating-linear-gradient(
     to bottom,
-    rgb(0 0 0 / 0.07) 0,
-    rgb(0 0 0 / 0.07) 1px,
+    rgb(0 0 0 / 0.035) 0,
+    rgb(0 0 0 / 0.035) 1px,
     transparent 1px,
     transparent 3px
   );
 }
 
-/* Desk-lamp glow behind the fax stage on the review screen: warm white at 7% opacity at its
-   centre, fading to nothing. Worst-case background #1e2023; --text-muted on it is 6.5:1. */
+/* Desk-lamp glow behind the fax stage on the review screen: warm white at 11% opacity at its
+   centre, fading to nothing. Worst-case contrast is checked in test/web-d4b-css.test.ts. */
 .page-main-wide {
   position: relative;
   isolation: isolate;
@@ -542,7 +578,7 @@ button.row-button:hover {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(ellipse 34rem 30rem at 30% 24rem, rgb(255 244 220 / 0.07), transparent 70%);
+  background: radial-gradient(ellipse 34rem 30rem at 30% 24rem, rgb(255 244 220 / 0.11), transparent 70%);
 }
 
 .viewer-caption {

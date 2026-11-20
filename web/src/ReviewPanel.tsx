@@ -409,12 +409,12 @@ export function SummaryBar({ faxId, receivedAt, urgency, counts, status, verifie
             </span>
           </span>
         )}
-        {!verified && (
+      </div>
+      {!verified && (
+        <div className="summary-verify">
           <p id="verify-reason" className="verify-reason" aria-live="polite">
             {reason}
           </p>
-        )}
-        {!verified && (
           <button
             type="button"
             className="button button-primary"
@@ -427,8 +427,8 @@ export function SummaryBar({ faxId, receivedAt, urgency, counts, status, verifie
           >
             Verify record
           </button>
-        )}
-      </div>
+        </div>
+      )}
       {!verified && (
         <p id="verify-note" className="verify-note">
           {VERIFY_NOTE}
