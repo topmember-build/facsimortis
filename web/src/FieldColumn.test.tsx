@@ -79,7 +79,7 @@ describe('field column sections', () => {
   it('says the clean fields were not checked by a person, and never that they were verified', async () => {
     stubSite();
     await openFax(userEvent.setup(), 'fax-0003');
-    const note = within(section('read-cleanly')).getByText('Read by the reader. Not checked by a person.');
+    const note = within(section('read-cleanly')).getByText('Read by the reader. Not checked by a person until you review it.');
     expect(note).toBeInTheDocument();
     expect(section('read-cleanly').textContent).not.toMatch(/verified|correct/i);
   });

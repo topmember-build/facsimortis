@@ -22,7 +22,7 @@ export const NO_CHANGE_TEXT = 'No change made';
 export const NEEDS_EYES_HEADING = 'Needs your eyes';
 export const NO_FLAGGED_TEXT = 'No fields are flagged.';
 export const READ_CLEANLY_HEADING = 'Read cleanly';
-export const READ_CLEANLY_NOTE = 'Read by the reader. Not checked by a person.';
+export const READ_CLEANLY_NOTE = 'Read by the reader. Not checked by a person until you review it.';
 export const NO_CLEAN_TEXT = 'None.';
 export const ACCEPT_LABEL = 'Accept anyway';
 
