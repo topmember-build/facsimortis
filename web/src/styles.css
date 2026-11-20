@@ -1,25 +1,17 @@
-/* Dark theme. Contrast ratios (WCAG) against --bg (#0b0d12) and --panel (#161b26):
-   --text #e8eaf0 16.2 and 14.3, --muted #b4bbcb 10.1 and 9.0,
-   --flag #ffb86b 11.4 and 10.1, --edge #8a94aa 6.4 and 5.7 (borders of controls),
-   --focus #ffffff 19.4 and 17.2.
-   --ghost #8fd8ff (12.4 and 11.0) and --ghost-edge #1f6fb5 (5.25 on white, 3.7 and 3.3) are RESERVED
-   for source ghosts (.ghost rules below). Nothing else may use them: not the inbox, not focus rings, not buttons, not the notice. */
+/* Dark theme. Colour tokens and fonts live in theme.css (imported first); the old names
+   (--bg, --muted, --border) are aliases defined there. Contrast ratios are listed in theme.css.
+   --bg is kept here as a literal hex (the same value as --ground) because test/web-ghost-css
+   reads it from this file. --ghost (#6fd3c0) and --ghost-edge (#1f6fb5; 5.25 on white, 3.6 on
+   --ground) are RESERVED for source ghosts (.ghost rules below). Nothing else may use them:
+   not the inbox, not focus rings, not buttons, not the notice. */
 :root {
   color-scheme: dark;
-  --bg: #0b0d12;
-  --panel: #161b26;
-  --border: #3a4458;
+  --bg: #0d1015;
   --edge: #8a94aa;
-  --text: #e8eaf0;
-  --muted: #b4bbcb;
   --focus: #ffffff;
-  --ghost: #8fd8ff;
   --ghost-edge: #1f6fb5;
-  --flag: #ffb86b;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
 }
-
 * {
   box-sizing: border-box;
 }
@@ -44,7 +36,6 @@ body {
 
 .page-header h1 {
   margin: 0 0 0.5rem;
-  font-size: 2rem;
 }
 
 .page-header p {
@@ -201,7 +192,7 @@ button.row-button:hover {
 
 .row-id {
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .row-time {
@@ -334,7 +325,7 @@ button.row-button:hover {
 }
 
 .summary-id {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .summary-bar .verify-reason {
@@ -693,7 +684,7 @@ button.row-button:hover {
 
 .field-value {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 500;
   overflow-wrap: anywhere;
 }
 
