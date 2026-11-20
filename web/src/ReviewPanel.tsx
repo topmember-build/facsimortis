@@ -294,8 +294,8 @@ export function LaidToRest({ record, onDownload }: { record: VerifiedRecord; onD
   );
 }
 
-/** The inbox's received time followed by " UTC". The sample data has no zone; the demo clock is shown as UTC. */
-export const receivedLine = (receivedAt: string): string => `${formatReceived(receivedAt)} UTC`;
+/** The inbox's received time followed by " (demo clock)". The sample data has no zone, so it is not called UTC. */
+export const receivedLine = (receivedAt: string): string => `${formatReceived(receivedAt)} (demo clock)`;
 
 export interface SummaryBarProps {
   faxId: string;
