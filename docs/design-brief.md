@@ -1,3 +1,5 @@
+> docs/design-brief-amber.md takes precedence where the two briefs differ.
+
 # Facsimortis: Visual design brief, "Reading Desk"
 
 Direction chosen by Paul: **A · Reading Desk**. Reference mockup: the "Facsimortis visual directions" canvas, artboard A. Treat the mockup as the target look, not as code to copy.

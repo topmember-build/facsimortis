@@ -1102,6 +1102,18 @@
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1795170273940
       }
+    ],
+    "D6 Loading \"dial-tone\" state and the \"Laid to rest\" fade, static under reduced motion. (R10)": [
+      {
+        "executionId": "5c3e7ba7-e6bb-420c-a5de-c13ad5dc8b98",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1795256720295
+      },
+      {
+        "executionId": "c57d6651-88a9-47f7-906d-dde98a72aba2",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1795257085249
+      }
     ]
   }
 }
