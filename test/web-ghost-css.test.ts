@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const css = readFileSync(resolve(__dirname, '..', 'web', 'src', 'styles.css'), 'utf8').replace(/\r\n/g, '\n');
+const theme = readFileSync(resolve(__dirname, '..', 'web', 'src', 'theme.css'), 'utf8').replace(/\r\n/g, '\n');
 
 function rule(prelude: string): string {
   const start = css.indexOf(`${prelude} {`);
@@ -21,7 +22,7 @@ function contrast(a: string, b: string): number {
   const [x, y] = [luminance(a), luminance(b)];
   return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
 }
-const variable = (name: string) => new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`).exec(css)![1]!;
+const variable = (name: string, source = css) => new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`).exec(source)![1]!;
 
 describe('styles.css: source highlight', () => {
   it('uses a thick, non-scaling outline when selected and a thinner one when quiet', () => {
@@ -47,7 +48,8 @@ describe('styles.css: source highlight', () => {
   it('keeps the outline colour at 3:1 or better against white and the dark background', () => {
     const edge = variable('--ghost-edge');
     expect(contrast(edge, '#ffffff')).toBeGreaterThanOrEqual(3);
-    expect(contrast(edge, variable('--bg'))).toBeGreaterThanOrEqual(3);
+    // The page background is --bg, which theme.css sets as an alias of --ground.
+    expect(contrast(edge, variable('--ground', theme))).toBeGreaterThanOrEqual(3);
   });
 
   it('uses the ghost variables only in ghost rules', () => {

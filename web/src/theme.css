@@ -1,7 +1,8 @@
-/* Theme tokens, self-hosted fonts and base typography (design brief "Reading Desk").
-   Imported before styles.css. Font files live in web/public/fonts (see SOURCES.md there);
-   the site makes no third-party requests. url('/fonts/...') is a public-dir path: Vite
-   prefixes it with the build base (SITE_BASE, or a relative path by default). */
+/* Theme tokens, self-hosted fonts and base typography (design brief "Amber Desk", docs/design-brief-amber.md).
+   Imported before styles.css. The brief's colour tokens are set here and nowhere else: styles.css loads
+   second, so a value set again there would silently win. Font files live in web/public/fonts (see
+   SOURCES.md there); the site makes no third-party requests. url('/fonts/...') is a public-dir path:
+   Vite prefixes it with the build base (SITE_BASE, or a relative path by default). */
 
 /* Latin subset, as in the Fontsource CSS. Anything outside it falls back to the stacks below. */
 @font-face {
@@ -88,31 +89,36 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-/* Contrast (WCAG), text and non-text, against --ground (#0d1015), --panel (#151a22) and --panel-raised (#171c24):
-   --text #e8e6df 15.3, 14.0, 13.7. --text-muted #9aa4b2 7.6, 6.9, 6.8.
-   --flag-text #ffc772 12.4, 11.4, 11.1. --flag #ffb347 10.7, 9.8, 9.6.
-   --ghost #6fd3c0 10.7, 9.8, 9.6. --focus #ffffff 19.1, 17.5, 17.1.
-   --ghost-edge #1f6fb5 3.6, 3.3, 3.3 (non-text, needs 3:1) and 5.25 on white.
-   --edge #8a94aa (borders of controls) 6.3, 5.7, 5.6. --paper-ink #1d1c1a on --paper #e8e4d6 13.4.
-   --line #262d38 is 1.2 to 1.4 against the surfaces: it is for decorative dividers only, never
+/* Contrast (WCAG), text and non-text, against --ground (#141414), --panel (#151a22) and --panel-raised (#171c24):
+   --text #fff3dc 16.76, 15.89, 15.56. --text-muted #9aa4b2 7.31, 6.92, 6.78.
+   --flag-text #ff9a8d 9.00, 8.53, 8.35. --flag #ff6a5c 6.55, 6.21, 6.08.
+   --ghost #6fd3c0 10.31, 9.77, 9.57. --focus #ffffff 18.42, 17.46, 17.10.
+   --ghost-edge #1f6fb5 3.51, 3.33, 3.26 (non-text, needs 3:1) and 5.25 on white.
+   --edge #8a94aa (borders of controls) 6.05, 5.73, 5.62. --paper-ink #1d1c1a on --paper #e8e4d6 13.38.
+   --flag-edge #8a2b20 is the dashed outline of flagged words, on the paper only: 6.02 on the sheet
+   (#ddd8c8), 6.74 on --paper and 8.58 on white, or 5.04, 5.55 and 6.81 at the 0.9 opacity of an
+   unselected outline. On the dark surfaces it is 2.23 or less, so it is never used there. On the
+   sheet --flag is 1.97 and --flag-text 1.44, so neither carries meaning on the paper.
+   --line #262d38 is 1.23 to 1.33 against the surfaces: it is for decorative dividers only, never
    for the border of a control (those use --edge, which needs 3:1). */
 :root {
-  --ground: #0d1015;
+  --ground: #141414;
   --panel: #151a22;
   --panel-raised: #171c24;
   --line: #262d38;
-  --text: #e8e6df;
+  --text: #fff3dc;
   --text-muted: #9aa4b2;
   --ghost: #6fd3c0;
-  --flag: #ffb347;
-  --flag-text: #ffc772;
+  --flag: #ff6a5c;
+  --flag-text: #ff9a8d;
+  --flag-edge: #8a2b20;
   --paper: #e8e4d6;
   --paper-ink: #1d1c1a;
 
-  /* Amber Desk (docs/design-brief-amber.md). Contrast against #141414 (the Amber Desk ground), --panel
-     and --taskbar: --amber 9.35, 8.86, 9.73. --amber-dim 6.28, 5.95, 6.53. --amber-soft 9.88, 9.36,
-     10.28. --amber-border 1.89, 1.79, 1.97: like --line, it is for decorative borders only, never for
-     the border of a control. --taskbar is a surface (the taskbar background). */
+  /* Amber interface colours. Contrast against --ground, --panel and --taskbar: --amber 9.35, 8.86, 9.73.
+     --amber-dim 6.28, 5.95, 6.53. --amber-soft 9.88, 9.36, 10.28. --amber-border 1.89, 1.79, 1.97: like
+     --line, it is for decorative borders only, never for the border of a control. --taskbar is a surface
+     (the taskbar background). */
   --amber: #f6a93b;
   --amber-dim: #c98a2b;
   --amber-soft: #e9b565;

@@ -8,15 +8,15 @@ const css = readFileSync(resolve(root, 'web', 'src', 'theme.css'), 'utf8').repla
 const fontsDir = resolve(root, 'web', 'public', 'fonts');
 
 const BRIEF_TOKENS: Record<string, string> = {
-  '--ground': '#0d1015',
+  '--ground': '#141414',
   '--panel': '#151a22',
   '--panel-raised': '#171c24',
   '--line': '#262d38',
-  '--text': '#e8e6df',
+  '--text': '#fff3dc',
   '--text-muted': '#9aa4b2',
   '--ghost': '#6fd3c0',
-  '--flag': '#ffb347',
-  '--flag-text': '#ffc772',
+  '--flag': '#ff6a5c',
+  '--flag-text': '#ff9a8d',
   '--paper': '#e8e4d6',
   '--paper-ink': '#1d1c1a',
   '--amber': '#f6a93b',

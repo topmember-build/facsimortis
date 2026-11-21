@@ -1,16 +1,15 @@
 /* Dark theme. Colour tokens and fonts live in theme.css (imported first); the old names
    (--bg, --muted, --border) are aliases defined there. Contrast ratios are listed in theme.css.
-   --bg is kept here as a literal hex (the same value as --ground) because test/web-ghost-css
-   reads it from this file. --ghost (#6fd3c0) and --ghost-edge (#1f6fb5; 5.25 on white, 3.6 on
-   --ground) are RESERVED for source ghosts (.ghost rules below). Nothing else may use them:
-   not the inbox, not focus rings, not buttons, not the notice. */
+   Never set a theme.css token again here: this file loads second, so the value here would win.
+   --ghost (#6fd3c0) and --ghost-edge (#1f6fb5; 5.25 on white, 3.51 on --ground) are RESERVED for
+   source ghosts (.ghost rules below). Nothing else may use them: not the inbox, not focus rings,
+   not buttons, not the notice. */
 :root {
   color-scheme: dark;
-  --bg: #0d1015;
   --edge: #8a94aa;
   --focus: #ffffff;
+  --focus-inner: #141414;
   --ghost-edge: #1f6fb5;
-  --flag-edge: #8a4b00;
   line-height: 1.5;
 }
 * {
@@ -23,9 +22,14 @@ body {
   color: var(--text);
 }
 
+/* Double focus ring: a 2px white outline 2px outside the control, and a 2px --focus-inner (#141414)
+   band filling that gap. One of the two always stands out: the white ring on the dark surfaces
+   (13.83:1 or more, lowest under the lamp glow), the dark band against amber (9.35:1), cream (16.76:1)
+   and the paper. In forced-colours mode the browser drops the band and keeps the outline. */
 :focus-visible {
-  outline: 3px solid var(--focus);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--focus-inner);
 }
 
 .page-header,
@@ -122,8 +126,8 @@ h2 {
 }
 
 /* The one primary action: Verify record. Outlined, 44px high, bold, never the ghost or flag colour.
-   Contrast on the bar (--panel): text --text 14.0:1, solid --text border 14.0:1.
-   aria-disabled: text --text 14.0:1, a dashed --edge border (5.7:1), lighter weight and a
+   Contrast on the bar (--panel): text --text 15.89:1, solid --text border 15.89:1.
+   aria-disabled: text --text 15.89:1, a dashed --edge border (5.73:1), lighter weight and a
    not-allowed cursor, so it does not rely on colour alone (the reason text explains why). */
 .button-primary,
 .button.button-primary {
@@ -470,11 +474,13 @@ button.row-button:hover {
 .fax-heading:focus,
 .fax-heading:focus-visible {
   outline: none;
+  box-shadow: none;
 }
 
 .fax-heading[data-opened-by='keyboard']:focus {
-  outline: 3px solid var(--focus);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--focus-inner);
 }
 
 .page-toggle {
@@ -629,12 +635,12 @@ button.row-button:hover {
 
 /* Source ghosts. --ghost and --ghost-edge are used here and nowhere else. Strokes keep a
    constant on-screen width however the image is scaled. A pale colour cannot be seen on a white
-   fax (--ghost and --flag are 1.8:1 on white), so every highlight has two parts: a tint in the
+   fax (on white, --ghost is 1.79:1 and --flag 2.81:1), so every highlight has two parts: a tint in the
    pale colour (never more than 20% opaque, so the words stay readable) and a darker outline that
    reaches 3:1 on the paper sheet and on white. Ghost words: tint --ghost, solid --ghost-edge
-   outline (5.25:1 on white, 3.7:1 on the sheet). Words cited by a field the reader flagged (the same
+   outline (5.25:1 on white, 3.68:1 on the sheet). Words cited by a field the reader flagged (the same
    rule as the "Needs your eyes" section: isOriginallyFlagged): tint --flag, dashed --flag-edge outline
-   (6.8:1 on white, 4.8:1 on the sheet), so the difference is not colour alone. The glow is --ghost, or
+   (8.58:1 on white, 6.02:1 on the sheet), so the difference is not colour alone. The glow is --ghost, or
    --flag for flagged words. Reduced motion only removes the pulse; the outline, tint and glow stay. */
 .ghost rect {
   fill: var(--ghost);
@@ -822,9 +828,11 @@ button.row-button:hover {
   cursor: pointer;
 }
 
-/* The ring stays inside the card so the scrolling list never clips it. */
+/* The ring stays inside the card so the scrolling list never clips it: the dark band runs along the
+   inside of the edge and the white ring sits just inside the band. */
 .field-item:focus-visible {
-  outline-offset: -3px;
+  outline-offset: -4px;
+  box-shadow: inset 0 0 0 2px var(--focus-inner);
 }
 
 .field-head {
@@ -1014,7 +1022,7 @@ button.row-button:hover {
   padding: 0.25rem 0.5rem 0.5rem;
 }
 
-/* Edit is the filled button of the expanded card: --text fill with --ground text (15.3:1). Neutral,
+/* Edit is the filled button of the expanded card: --text fill with --ground text (16.76:1). Neutral,
    so it is not the flag or ghost colour, and it is not the primary (Verify) button. */
 .button.button-fill {
   color: var(--ground);
@@ -1135,8 +1143,9 @@ button.row-button:hover {
    BELOW the sticky summary bar (z-index 10), so it can never cover the bar. The component draws nothing
    when the layout stacks to one column; the 60rem here must equal WIDE_LAYOUT_QUERY in source-string.ts
    (test/web-source-string-css.test.ts checks it). Both strings are solid (the dashed look is for the
-   highlights). Contrast on the page background is 10.7:1 for the flag colour and 10.7:1 for the ghost
-   colour (3:1 needed for a line). Under reduced motion the string appears with no animation. */
+   highlights). Contrast on the page background is 6.55:1 for the flag colour and 10.31:1 for the ghost
+   colour (3:1 needed for a line), and 4.92:1 and 7.74:1 over the brightest point of the lamp glow.
+   Under reduced motion the string appears with no animation. */
 .source-string-overlay {
   position: fixed;
   top: 0;

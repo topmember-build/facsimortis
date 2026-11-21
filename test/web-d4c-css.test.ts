@@ -73,8 +73,8 @@ describe('D4c highlight outline and tint', () => {
     const edges: Array<[string, Rgb, number]> = [
       ['ghost quiet', variable(css, '--ghost-edge'), num(block(css, '.ghost rect'), 'stroke-opacity')],
       ['ghost selected', variable(css, '--ghost-edge'), num(block(css, '.ghost-selected rect'), 'stroke-opacity')],
-      ['flag quiet', variable(css, '--flag-edge'), num(block(css, '.ghost rect'), 'stroke-opacity')],
-      ['flag selected', variable(css, '--flag-edge'), num(block(css, '.ghost-selected rect'), 'stroke-opacity')],
+      ['flag quiet', variable(theme, '--flag-edge'), num(block(css, '.ghost rect'), 'stroke-opacity')],
+      ['flag selected', variable(theme, '--flag-edge'), num(block(css, '.ghost-selected rect'), 'stroke-opacity')],
     ];
     for (const [name, colour, alpha] of edges) {
       for (const bg of [WHITE, SHEET, PAPER]) {
