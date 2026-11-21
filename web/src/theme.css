@@ -58,6 +58,36 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* Pixelify Sans (Amber Desk brief) is for the pixel-font roles only: wordmark, window titles, icon
+   labels, section headings, the Verify and primary button labels, the taskbar clock. Never for body
+   text, values or anything under 16px. */
+@font-face {
+  font-family: 'Pixelify Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/pixelify-sans/pixelify-sans-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Pixelify Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/pixelify-sans/pixelify-sans-latin-600-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Pixelify Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/pixelify-sans/pixelify-sans-latin-700-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /* Contrast (WCAG), text and non-text, against --ground (#0d1015), --panel (#151a22) and --panel-raised (#171c24):
    --text #e8e6df 15.3, 14.0, 13.7. --text-muted #9aa4b2 7.6, 6.9, 6.8.
    --flag-text #ffc772 12.4, 11.4, 11.1. --flag #ffb347 10.7, 9.8, 9.6.
@@ -78,6 +108,16 @@
   --flag-text: #ffc772;
   --paper: #e8e4d6;
   --paper-ink: #1d1c1a;
+
+  /* Amber Desk (docs/design-brief-amber.md). Contrast against #141414 (the Amber Desk ground), --panel
+     and --taskbar: --amber 9.35, 8.86, 9.73. --amber-dim 6.28, 5.95, 6.53. --amber-soft 9.88, 9.36,
+     10.28. --amber-border 1.89, 1.79, 1.97: like --line, it is for decorative borders only, never for
+     the border of a control. --taskbar is a surface (the taskbar background). */
+  --amber: #f6a93b;
+  --amber-dim: #c98a2b;
+  --amber-soft: #e9b565;
+  --amber-border: #5a3f14;
+  --taskbar: #05101a;
 
   /* Old names, kept as aliases so styles.css keeps working. */
   --bg: var(--ground);

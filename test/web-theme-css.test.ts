@@ -19,6 +19,11 @@ const BRIEF_TOKENS: Record<string, string> = {
   '--flag-text': '#ffc772',
   '--paper': '#e8e4d6',
   '--paper-ink': '#1d1c1a',
+  '--amber': '#f6a93b',
+  '--amber-dim': '#c98a2b',
+  '--amber-soft': '#e9b565',
+  '--amber-border': '#5a3f14',
+  '--taskbar': '#05101a',
 };
 
 const fontFaces = [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((m) => m[1]!);
@@ -41,8 +46,8 @@ describe('theme.css tokens', () => {
 });
 
 describe('theme.css fonts', () => {
-  it('declares six faces, each with swap and a woff2 url under /fonts/', () => {
-    expect(fontFaces).toHaveLength(6);
+  it('declares nine faces, each with swap and a woff2 url under /fonts/', () => {
+    expect(fontFaces).toHaveLength(9);
     for (const face of fontFaces) {
       expect(face).toMatch(/font-display:\s*swap/);
       expect(face).toMatch(/url\('\/fonts\/[a-z-]+\/[a-z0-9-]+\.woff2'\)\s*format\('woff2'\)/);
