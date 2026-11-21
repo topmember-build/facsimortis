@@ -9,8 +9,8 @@ const fontsDir = resolve(root, 'web', 'public', 'fonts');
 
 const BRIEF_TOKENS: Record<string, string> = {
   '--ground': '#141414',
-  '--panel': '#151a22',
-  '--panel-raised': '#171c24',
+  '--panel': '#181512',
+  '--panel-raised': '#1d1812',
   '--line': '#262d38',
   '--text': '#fff3dc',
   '--text-muted': '#9aa4b2',
