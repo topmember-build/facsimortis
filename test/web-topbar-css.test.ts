@@ -32,18 +32,19 @@ describe('top bar rules in the stylesheets', () => {
     expect(disabled).not.toMatch(/(^|[^-])opacity/);
   });
 
-  it('draws the banner in --text-muted, about 32px, never ghost or flag', () => {
+  it('draws the banner in --amber-dim, about 32px, never ghost or flag', () => {
     const banner = rule(css, '.synthetic-banner');
-    expect(banner).toMatch(/color:\s*var\(--text-muted\)/);
+    expect(banner).toMatch(/color:\s*var\(--amber-dim\)/);
     expect(banner).toMatch(/min-height:\s*2rem/);
     expect(banner).not.toMatch(/--ghost|--flag/);
   });
 
-  it('sets the wordmark in Instrument Serif at 30px', () => {
+  it('sets the wordmark in Pixelify Sans, bold and large', () => {
     const h1 = rule(theme, '.page-header h1');
     expect(h1).toMatch(/font-family:\s*var\(--font-display\)/);
-    expect(h1).toMatch(/font-size:\s*1\.875rem/);
-    expect(theme).toMatch(/--font-display:\s*'Instrument Serif'/);
+    expect(h1).toMatch(/font-size:\s*clamp\(2\.75rem, 9\.6vw, 8\.5rem\)/);
+    expect(h1).toMatch(/font-weight:\s*700/);
+    expect(theme).toMatch(/--font-display:\s*'Pixelify Sans'/);
   });
 
   it('keeps the bar sticky with a 72px minimum and uses the flag colour only for the flagged count', () => {

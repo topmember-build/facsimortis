@@ -46,8 +46,8 @@ describe('theme.css tokens', () => {
 });
 
 describe('theme.css fonts', () => {
-  it('declares nine faces, each with swap and a woff2 url under /fonts/', () => {
-    expect(fontFaces).toHaveLength(9);
+  it('declares eight faces, each with swap and a woff2 url under /fonts/', () => {
+    expect(fontFaces).toHaveLength(8);
     for (const face of fontFaces) {
       expect(face).toMatch(/font-display:\s*swap/);
       expect(face).toMatch(/url\('\/fonts\/[a-z-]+\/[a-z0-9-]+\.woff2'\)\s*format\('woff2'\)/);

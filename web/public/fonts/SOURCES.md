@@ -6,7 +6,6 @@ These were downloaded once as static files. They are not an npm dependency.
 
 | File | Package | Source URL | Licence | Bytes | SHA-256 |
 |---|---|---|---|---|---|
-| `instrument-serif/instrument-serif-latin-400-normal.woff2` | @fontsource/instrument-serif 5.3.0 | https://cdn.jsdelivr.net/npm/@fontsource/instrument-serif@5.3.0/files/instrument-serif-latin-400-normal.woff2 | OFL-1.1 | 21032 | 5eb09b5ac0e28b67c2f041c8ba6d244604ca0c0980d65912ab2d47fed84ddc31 |
 | `inter-tight/inter-tight-latin-400-normal.woff2` | @fontsource/inter-tight 5.3.0 | https://cdn.jsdelivr.net/npm/@fontsource/inter-tight@5.3.0/files/inter-tight-latin-400-normal.woff2 | OFL-1.1 | 22016 | 6f32da94d4f26e98cb6ccd97034d306aa38945322c816f54a93c7d15dc0905b8 |
 | `inter-tight/inter-tight-latin-500-normal.woff2` | @fontsource/inter-tight 5.3.0 | https://cdn.jsdelivr.net/npm/@fontsource/inter-tight@5.3.0/files/inter-tight-latin-500-normal.woff2 | OFL-1.1 | 22616 | 6c0019f88d5bc179f2c972998ed8c14e779254566da9081c5e29f364a0a0aeb6 |
 | `inter-tight/inter-tight-latin-600-normal.woff2` | @fontsource/inter-tight 5.3.0 | https://cdn.jsdelivr.net/npm/@fontsource/inter-tight@5.3.0/files/inter-tight-latin-600-normal.woff2 | OFL-1.1 | 22660 | db1a039d03ed646ef6a899f9ff92bf2f6fe382a49f1b0992066e85caf88b5be9 |
@@ -16,6 +15,6 @@ These were downloaded once as static files. They are not an npm dependency.
 | `pixelify-sans/pixelify-sans-latin-600-normal.woff2` | @fontsource/pixelify-sans 5.3.0 | https://cdn.jsdelivr.net/npm/@fontsource/pixelify-sans@5.3.0/files/pixelify-sans-latin-600-normal.woff2 | OFL-1.1 | 8216 | 9ee47c039a991caea6072eecfe03cf36debf4f70bb2566bd602b9eada1ab1112 |
 | `pixelify-sans/pixelify-sans-latin-700-normal.woff2` | @fontsource/pixelify-sans 5.3.0 | https://cdn.jsdelivr.net/npm/@fontsource/pixelify-sans@5.3.0/files/pixelify-sans-latin-700-normal.woff2 | OFL-1.1 | 7904 | c836cfa5c0e9d62ea9b890e0418d52a6004149090a521cd198a8c09f5d5ab893 |
 
-Licence texts: https://cdn.jsdelivr.net/npm/@fontsource/<family>@5.3.0/LICENSE for instrument-serif, inter-tight, ibm-plex-mono and pixelify-sans.
+Licence texts: https://cdn.jsdelivr.net/npm/@fontsource/<family>@5.3.0/LICENSE for inter-tight, ibm-plex-mono and pixelify-sans.
 
 The Pixelify Sans files and its LICENSE match the SHA-256 hashes and sizes that jsDelivr lists for the package: https://data.jsdelivr.com/v1/packages/npm/@fontsource/pixelify-sans@5.3.0?structure=flat

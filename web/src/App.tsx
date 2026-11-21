@@ -5,6 +5,7 @@ import { FaxView } from './FaxView';
 import { DEFAULT_READER, type ReaderName } from './flags';
 import { Inbox } from './Inbox';
 import type { OpenedBy } from './input-modality';
+import { Taskbar } from './Taskbar';
 import { initialVisibleCount, revealNext } from './inbox-state';
 import { SAMPLE_DATA_VERSION } from '../../src/samples/schema.js';
 import { buildVerifiedRecord, exportFileName, serialiseRecord, type VerifiedRecord } from './record';
@@ -149,7 +150,9 @@ export function App({ now = systemClock, onReviewAction, onVerify, storage: stor
 
   let screen;
   // The fax screen has a compact header: the wordmark and tagline are hidden by CSS (see .page-header-review).
+  // Every other screen is the amber desktop: the wordmark at the bottom right, and on the inbox a taskbar.
   let reviewing = false;
+  let taskbar = null;
   if (load.state === 'loading') {
     screen = <p role="status">Loading the sample faxes…</p>;
   } else if (load.state === 'error') {
@@ -212,6 +215,9 @@ export function App({ now = systemClock, onReviewAction, onVerify, storage: stor
           onRetry={retry}
         />
       );
+      taskbar = (
+        <Taskbar items={shown} reader={reader} reviews={reviews} verified={verified} referenceDate={referenceDate} />
+      );
     }
   }
 
@@ -222,13 +228,13 @@ export function App({ now = systemClock, onReviewAction, onVerify, storage: stor
       <div className="synthetic-banner" role="region" aria-label="Synthetic data notice">
         {SYNTHETIC_BANNER_TEXT}
       </div>
-      <header className={reviewing ? 'page-header page-header-review' : 'page-header'}>
+      <header className={reviewing ? 'page-header page-header-review' : 'page-header page-header-desktop'}>
         <h1>Facsimortis</h1>
         <p>
           A demo that turns faxed referrals into checked records. It is built on synthetic data only.
         </p>
       </header>
-      <main className={openId !== null && load.state === 'ready' ? 'page-main page-main-wide' : 'page-main'}>
+      <main className={reviewing ? 'page-main page-main-wide' : 'page-main page-main-desktop'}>
         {notes.length > 0 && (
           <div className="app-notes" role="status">
             {notes.map((note) => (
@@ -240,6 +246,7 @@ export function App({ now = systemClock, onReviewAction, onVerify, storage: stor
         )}
         {screen}
       </main>
+      {taskbar}
     </>
   );
 }

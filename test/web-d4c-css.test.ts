@@ -106,7 +106,7 @@ describe('D4c review header', () => {
     expect(h1).toMatch(/clip:\s*rect\(0,\s*0,\s*0,\s*0\)/);
     expect(h1).toMatch(/width:\s*1px/);
     // The inbox rules are untouched.
-    expect(block(theme, '.page-header h1')).toMatch(/font-size:\s*1\.875rem/);
+    expect(block(theme, '.page-header h1')).toMatch(/font-size:\s*clamp\(2\.75rem, 9\.6vw, 8\.5rem\)/);
     expect(css).not.toMatch(/(^|\n)\.page-header(\s+(h1|p))?\s*\{[^}]*display:\s*none/);
   });
 });
