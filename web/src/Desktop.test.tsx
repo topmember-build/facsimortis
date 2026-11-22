@@ -117,6 +117,19 @@ describe('taskbar', () => {
     expect(icon('fax-0001')).toHaveFocus();
   });
 
+  it('hands its height to the page while the inbox shows, and takes it back on the fax screen', async () => {
+    const { user } = setup();
+    await inbox();
+    // jsdom has no layout, so the measured height is 0px here; the wiring is what is checked.
+    const height = () => document.documentElement.style.getPropertyValue('--taskbar-h');
+    expect(height()).toBe('0px');
+    await user.click(icon('fax-0001'));
+    await screen.findByRole('heading', { level: 2, name: 'Fax fax-0001' });
+    expect(height()).toBe('');
+    await user.click(screen.getByRole('button', { name: 'Back to inbox' }));
+    expect(height()).toBe('0px');
+  });
+
   it('is only on the inbox: not on the fax screen', async () => {
     const { user } = setup();
     await inbox();

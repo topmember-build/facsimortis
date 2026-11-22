@@ -2,8 +2,9 @@
    (--bg, --muted, --border) are aliases defined there. Contrast ratios are listed in theme.css.
    Never set a theme.css token again here: this file loads second, so the value here would win.
    --ghost (#6fd3c0) and --ghost-edge (#1f6fb5; 5.25 on white, 3.51 on --ground) are RESERVED for
-   source ghosts (.ghost rules below). Nothing else may use them: not the inbox, not focus rings,
-   not buttons, not the notice. */
+   source ghosts (.ghost rules below). The one named exception is the quiet teal "Laid to rest"
+   status in the inbox (.pill-laid-to-rest, --ghost only). Nothing else may use them: not focus
+   rings, not buttons, not the notice. */
 :root {
   color-scheme: dark;
   --edge: #8a94aa;
@@ -23,13 +24,20 @@ body {
 }
 
 /* The page is a column at least as tall as the window: the banner, the screen, then on the desktop the
-   wordmark and the taskbar. The wordmark is moved after the screen with `order` only, so the DOM order,
-   and with it the reading order and the tab order, stays as it is. */
+   wordmark. The wordmark is moved after the screen with `order` only, so the DOM order, and with it the
+   reading order and the tab order, stays as it is. On the inbox the taskbar is pinned over the bottom
+   of the window: the column keeps a bottom padding of its height and the page the same scroll padding
+   (--taskbar-h, measured by Taskbar.tsx and unset on every other screen), so nothing stays behind it. */
 #root {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
+  padding-bottom: var(--taskbar-h, 0px);
+}
+
+html {
+  scroll-padding-bottom: var(--taskbar-h, 0px);
 }
 
 /* Double focus ring: a 2px white outline 2px outside the control, and a 2px --focus-inner (#141414)
@@ -131,6 +139,12 @@ body {
 .page-main-desktop .button {
   color: var(--amber);
   border-color: var(--amber);
+}
+
+/* A control that takes keyboard focus is scrolled to at least 12px above the pinned taskbar, so its
+   focus ring (4px outside it) is never behind the bar. */
+.page-main-desktop button {
+  scroll-margin-bottom: 0.75rem;
 }
 
 .page-main-desktop .button[aria-disabled='true'] {
@@ -246,16 +260,16 @@ h2 {
   color: var(--amber);
 }
 
-/* Inbox as a desktop (Amber Desk): each fax is an icon button in a grid at the top left, two per row as
-   in docs/design/amber-inbox.png and three per row at phone width (media query near the end). */
+/* Inbox as a desktop (Amber Desk): each fax is an icon button in a grid at the top left, three per row
+   at every width, so the three sample faxes share one row. 160px tiles: the received time wraps after
+   "Received", and the longest common status line ("2 flagged, 1 reviewed") still fits on one line. */
 .fax-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  /* 188px: wide enough for "Received Oct 1, 09:00" on one line in IBM Plex Mono at 14px. */
-  grid-template-columns: repeat(2, 11.75rem);
-  gap: 1rem 0.75rem;
+  grid-template-columns: repeat(3, 10rem);
+  gap: 1rem 0.5rem;
 }
 
 .row-button {
@@ -281,24 +295,24 @@ button.row-button:hover {
   border-color: var(--amber-border);
 }
 
-/* The document icon: the fax's own thumbnail inside a pixel-art page frame (48 x 64px, in 4px units),
-   clipped under the folded corner. The frame (amber, 9.35:1 on --ground) and the badge are aria-hidden;
-   the thumbnail keeps its name. */
+/* The document icon: the fax's own thumbnail inside a pixel-art page frame (60 x 80px, the 12 x 16 unit
+   art at 5px a unit, so every edge stays on whole pixels), clipped under the folded corner. The frame
+   (amber, 9.35:1 on --ground) and the badge are aria-hidden; the thumbnail keeps its name. */
 .doc-icon {
   position: relative;
   display: block;
   flex: none;
-  width: 48px;
-  height: 64px;
+  width: 60px;
+  height: 80px;
 }
 
 .thumb {
   position: absolute;
-  top: 4px;
-  left: 4px;
+  top: 5px;
+  left: 5px;
   display: block;
-  width: 40px;
-  height: 56px;
+  width: 50px;
+  height: 70px;
   background: #ffffff;
   object-fit: contain;
   clip-path: polygon(0 0, 70% 0, 70% 21.43%, 100% 21.43%, 100% 100%, 0 100%);
@@ -307,8 +321,8 @@ button.row-button:hover {
 .doc-frame {
   position: absolute;
   inset: 0;
-  width: 48px;
-  height: 64px;
+  width: 60px;
+  height: 80px;
 }
 
 .doc-frame-line {
@@ -323,10 +337,10 @@ button.row-button:hover {
    coral; the "!" shape and the status line carry the meaning too, so it is never colour alone. */
 .doc-badge {
   position: absolute;
-  top: -14px;
-  right: -14px;
-  width: 20px;
-  height: 24px;
+  top: -18px;
+  right: -18px;
+  width: 25px;
+  height: 30px;
 }
 
 .doc-badge-fill {
@@ -370,9 +384,10 @@ button.row-button:hover {
   color: var(--amber);
 }
 
-/* The status line under each icon. Each state has its own icon shape and words, never colour alone;
-   coral only while flagged fields wait (6.55:1 on --ground), --amber-dim (6.28:1) otherwise, and a
-   filled cream mark for Laid to rest. */
+/* The status line under each icon: plain text with the state's icon, no fill or outline. Each state has
+   its own icon shape and words, never colour alone. Coral only while flagged fields wait (6.55:1 on
+   --ground, 5.96 at the brightest point of the desktop glow), the quiet teal for "Laid to rest" (10.31,
+   9.38), --amber-dim for every other state (6.28, 5.71). */
 .status-pill {
   /* Two lines: the icon and the flag part, then the review state under them. */
   display: flex;
@@ -399,11 +414,10 @@ button.row-button:hover {
   font-weight: 600;
 }
 
-.pill-laid-to-rest {
-  padding: 0.125rem 0.625rem;
-  color: var(--bg);
-  background: var(--text);
-  border-radius: 0.75rem;
+/* Laid to rest: the state's icon and the words "Laid to rest" in the quiet teal. The flag part ("2 flagged,
+   reviewed") keeps --amber-dim, because teal is never used for flags. */
+.pill-laid-to-rest :is(.pill-icon, .pill-review) {
+  color: var(--ghost);
 }
 
 .desktop-hint {
@@ -423,17 +437,24 @@ button.row-button:hover {
   color: var(--amber-dim);
 }
 
-/* Bottom taskbar (Amber Desk): dark navy with a 2px amber top border. Not fixed: it sits at the foot of
-   the window when the desktop is short and after the content when it is long, so it never covers
-   anything. Contrast on --taskbar: --amber 9.73, --amber-dim 6.53, --flag 6.82; the amber border is
-   9.73 against it and 9.35 against --ground. */
+/* Bottom taskbar (Amber Desk): dark navy with a 2px amber top border, pinned to the bottom of the window
+   (see #root for the padding that keeps content clear of it). The 6px vertical padding keeps the Inbox
+   button's focus ring, which reaches 4px outside the button, inside the bar and on screen. Opaque, so
+   nothing shows through it. Contrast on --taskbar: --amber 9.73, --amber-dim 6.53, --flag 6.82; the
+   amber border is 9.73 against it and 9.35 against --ground. `order` only matters on very short windows,
+   where the bar goes back into the page flow (media query near the end). */
 .taskbar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
   order: 3;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem 1.5rem;
-  padding: 0.125rem clamp(0.75rem, 2vw, 1.5rem);
+  padding: 0.375rem clamp(0.75rem, 2vw, 1.5rem);
   background: var(--taskbar);
   border-top: 2px solid var(--amber);
   color: var(--amber-dim);
@@ -1328,6 +1349,76 @@ button.row-button:hover {
     align-items: center;
     padding-bottom: 1.5rem;
     text-align: center;
+  }
+
+  /* The pinned taskbar in two rows instead of three: the Inbox button, the reader and the clock, then
+     the tray status. Only the placement moves; the DOM order (and the reading order) stays. */
+  .taskbar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'buttons reader clock'
+      'status status status';
+    gap: 0.25rem 0.75rem;
+  }
+
+  .taskbar-buttons {
+    grid-area: buttons;
+  }
+
+  .taskbar-reader {
+    grid-area: reader;
+    text-align: right;
+  }
+
+  .taskbar-clock {
+    grid-area: clock;
+  }
+
+  .taskbar-status {
+    grid-area: status;
+  }
+}
+
+/* Short windows (for example a 1366x768 laptop, about 650px of page height in a browser): less space
+   around the icons and the wordmark, so the whole desktop fits above the pinned taskbar. */
+@media (max-height: 46rem) {
+  .page-main.page-main-desktop {
+    padding-top: 1rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .desktop-hint {
+    margin-top: 1rem;
+  }
+
+  .page-header.page-header-desktop {
+    padding-bottom: 1.5rem;
+  }
+
+  /* The wordmark also shrinks with the window height, so the desktop still fits above the taskbar on
+     shorter windows. Apart from the taskbar (its measured height) and the wordmark, the desktop takes
+     about 482px (banner, icons, hint, Incoming fax, tagline and padding; 30.375rem leaves 4px to spare),
+     and the wordmark's line box is 0.85 of its size. At 1366x657 the cap is above the full size, so the
+     wordmark only shrinks on shorter windows. */
+  .page-header.page-header-desktop h1 {
+    font-size: clamp(2.75rem, min(9.6vw, (100vh - var(--taskbar-h, 0px) - 30.375rem) / 0.85), 8.5rem);
+  }
+}
+
+/* Very short windows (under 480px, for example a phone held sideways, or 200% zoom on a laptop): the
+   taskbar goes back into the page flow after the wordmark, so it never covers a large part of the screen. */
+@media (max-height: 30rem) {
+  .taskbar {
+    position: static;
+  }
+
+  #root {
+    padding-bottom: 0;
+  }
+
+  html {
+    scroll-padding-bottom: 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {

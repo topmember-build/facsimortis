@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react';
 import type { InboxItem } from './data';
 import { demoClock, trayStatus } from './desktop';
 import { READER_LABEL, type ReaderName } from './flags';
@@ -29,8 +30,28 @@ function focusInbox() {
 export function Taskbar({ items, reader, reviews, verified, referenceDate }: TaskbarProps) {
   const status = trayStatus(items, reader, reviews, referenceDate, verified);
   const clock = demoClock(items);
+  const barRef = useRef<HTMLElement>(null);
+
+  // The bar is pinned over the bottom of the window. It wraps on narrow screens, so its real height is
+  // handed to the stylesheet as --taskbar-h on <html>: the page keeps that much bottom padding, so
+  // nothing ends up behind the bar, and the same scroll padding, so a control that takes keyboard focus
+  // is scrolled clear of it. Removed again when the inbox closes, so the fax screen is unchanged.
+  useLayoutEffect(() => {
+    const barEl = barRef.current;
+    if (!barEl) return;
+    const rootEl = document.documentElement;
+    const apply = () => rootEl.style.setProperty('--taskbar-h', `${barEl.offsetHeight}px`);
+    apply();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(apply);
+    observer?.observe(barEl);
+    return () => {
+      observer?.disconnect();
+      rootEl.style.removeProperty('--taskbar-h');
+    };
+  }, []);
+
   return (
-    <footer className="taskbar">
+    <footer className="taskbar" ref={barRef}>
       <div className="taskbar-buttons">
         <button type="button" className="taskbar-button" aria-label="Inbox" onClick={focusInbox}>
           <InboxGlyph />

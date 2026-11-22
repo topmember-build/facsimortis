@@ -52,7 +52,10 @@ describe('styles.css: source highlight', () => {
     expect(contrast(edge, variable('--ground', theme))).toBeGreaterThanOrEqual(3);
   });
 
-  it('uses the ghost variables only in ghost rules', () => {
+  it('uses the ghost variables only in ghost rules, plus the named "Laid to rest" status', () => {
+    // Named exceptions, by class: they may use --ghost, never --ghost-edge. The quiet teal "Laid to rest"
+    // status in the inbox (R2b).
+    const named = ['.pill-laid-to-rest'];
     const lines = css.split('\n');
     let selector = '';
     let inComment = false;
@@ -61,7 +64,9 @@ describe('styles.css: source highlight', () => {
       if (!inComment) {
         if (/\{\s*$/.test(line)) selector = line.trim();
         if (/var\(--ghost(-edge)?\)/.test(line)) {
-          expect(selector, line).toMatch(/\.ghost/);
+          const ghostRule = /\.ghost/.test(selector);
+          const namedRule = named.includes(selector.split(/[\s,:{]/)[0]!) && !/--ghost-edge/.test(line);
+          expect(ghostRule || namedRule, `${line.trim()} in ${selector}`).toBe(true);
         }
       }
       if (line.includes('*/')) inComment = false;
