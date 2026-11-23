@@ -60,6 +60,8 @@ export const HIGHLIGHT_CAPTION = 'The highlight shows where the page value was r
 
 /** What every sample fax is. The window's title bar reads "<id> — referral". */
 export const WINDOW_TITLE_KIND = 'referral';
+/** Once the record is verified the title bar reads "<id> — laid to rest" (the status line says "Laid to rest"). */
+export const WINDOW_TITLE_KIND_VERIFIED = LAID_TO_REST.toLowerCase();
 
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 
@@ -261,7 +263,8 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
   const box = viewerBox(crop, fax, ghostRects(selectedField, fax.ocr.words), showFullPage);
 
   return (
-    <section aria-labelledby="fax-title" className="fax-view" ref={root}>
+    // data-state: the stylesheet fades the coral emphasis into the quiet state when it becomes "laid-to-rest".
+    <section aria-labelledby="fax-title" className="fax-view" data-state={verified ? 'laid-to-rest' : undefined} ref={root}>
       {/* Close window does what Back to inbox does, nothing else. It comes first in the DOM, before Back to
           inbox, so every other control keeps its place in the tab order: from the heading, Tab still goes to
           the reader toggle and Shift+Tab to Back to inbox, and the summary bar stays last so that Verify
@@ -296,7 +299,7 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
             <span className="sr-only">Fax</span> {item.entry.id}
           </h2>
           <span className="fax-title-kind" aria-hidden="true">
-            — {WINDOW_TITLE_KIND}
+            — {verified ? WINDOW_TITLE_KIND_VERIFIED : WINDOW_TITLE_KIND}
           </span>
         </div>
         <p className="reader-name">{READER_LABEL[reader]}</p>

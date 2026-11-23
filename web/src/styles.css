@@ -1458,8 +1458,10 @@ button.row-button:hover {
   color: var(--amber);
 }
 
-/* Laid to rest: a calm, settled state. Existing palette only (not the ghost colour),
-   one gentle fade on arrival that the reduced-motion rule below removes. */
+/* Laid to rest (R5a): a calm, settled panel. A 1px --amber-border outline (decoration, 1.87:1) and a 4px teal
+   accent line on the left in --ghost (10.31:1 on --ground, 10.18:1 on --panel; 3:1 needed for a line); the
+   teal is a named exception in test/web-ghost-css.test.ts. One gentle fade on arrival that the
+   reduced-motion rule at the end of this file removes. */
 .laid-to-rest {
   display: grid;
   gap: 0.5rem;
@@ -1467,8 +1469,8 @@ button.row-button:hover {
   margin-top: 1rem;
   padding: 1rem 1.25rem;
   background: var(--panel);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--edge);
+  border: 1px solid var(--amber-border);
+  border-left: 4px solid var(--ghost);
   border-radius: 0.5rem;
   animation: settle 0.8s ease-out 1;
 }
@@ -1478,14 +1480,61 @@ button.row-button:hover {
   margin: 0;
 }
 
+/* The heading is Pixelify Sans (theme.css) at 20px, bold, in --text (16.54:1 on --panel). */
 .rest-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* Download JSON: the one action of this state, in the same amber style as Verify record was: a 2px --amber
+   outline and an --amber label in Pixelify Sans (theme.css) at 18px, 44px high. --amber on --panel is
+   9.23:1; on the hover fill (--panel-raised) 8.94:1. */
+.button.button-download {
+  min-height: 2.75rem;
+  padding: 0.5rem 1.5rem;
+  color: var(--amber);
+  border: 2px solid var(--amber);
   font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.button.button-download:hover {
+  background: var(--panel-raised);
 }
 
 .rest-note {
   color: var(--muted);
   font-size: 0.875rem;
 }
+
+/* The verify moment (R5a): when the record is laid to rest, FaxView sets data-state="laid-to-rest" on the
+   window and the coral emphasis fades into the quiet state over 400ms:
+   - the selected flagged card's border and ring go from --flag to --amber-dim (6.19:1 on --panel) and its
+     soft glow fades out; it keeps its 3px outline and "Selected" tag;
+   - the flagged count goes from --flag to --amber-dim (6.19:1 on --panel);
+   - the glow of the selected flagged highlight on the fax and of its source string fades out; the dashed
+     outlines, the line and every flag note stay, so nothing about flags is hidden.
+   The transitions are declared only here, so they run only into this state (selecting a card stays
+   instant), and a fax that opens already verified starts quiet. The reduced-motion rule at the end of this
+   file sets transition: none, so under reduced motion the change is instant. */
+.fax-view[data-state='laid-to-rest'] .field-card.field-flagged.field-selected,
+.fax-view[data-state='laid-to-rest'] .field-card.field-flagged.field-selected:hover {
+  border-color: var(--amber-dim);
+  box-shadow:
+    inset 0 0 0 2px var(--amber-dim),
+    0 0 6px 1px rgb(255 106 92 / 0);
+  transition:
+    border-color 400ms ease-out,
+    box-shadow 400ms ease-out;
+}
+
+.fax-view[data-state='laid-to-rest'] .summary-count.count-flag {
+  color: var(--amber-dim);
+  transition: color 400ms ease-out;
+}
+
+/* (The glow of the selected flagged highlight and of its source string is faded in the same way by the
+   rule after the source string rules below, so it comes after their base rules.) */
 
 @keyframes settle {
   from {
@@ -1790,6 +1839,16 @@ button.row-button:hover {
     stroke-dasharray: 1;
     stroke-dashoffset: 0;
   }
+}
+
+/* The verify moment (R5a, see "Laid to rest" above): the coral glow of the selected flagged highlight and of
+   its source string fades out over 400ms when the window gets data-state="laid-to-rest". The dashed
+   outline and the line itself stay. Placed after the base rules (their tests find a rule by its first
+   occurrence); the reduced-motion rule sets transition: none, so under reduced motion it is instant. */
+.fax-view[data-state='laid-to-rest'] .ghost-flag.ghost-selected,
+.fax-view[data-state='laid-to-rest'] .ghost-string-flag {
+  filter: drop-shadow(0 0 0 rgb(255 106 92 / 0));
+  transition: filter 400ms ease-out;
 }
 
 @media (max-width: 59.99rem) {

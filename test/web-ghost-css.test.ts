@@ -54,8 +54,9 @@ describe('styles.css: source highlight', () => {
 
   it('uses the ghost variables only in ghost rules, plus the named "Laid to rest" status', () => {
     // Named exceptions, by class: they may use --ghost, never --ghost-edge. The quiet teal "Laid to rest"
-    // status in the inbox (R2b) and the "Read cleanly" section heading in the field column (R4b).
-    const named = ['.pill-laid-to-rest', '.field-section-title-clean'];
+    // status in the inbox (R2b), the "Read cleanly" section heading in the field column (R4b) and the teal
+    // accent line of the Laid to rest panel (R5a).
+    const named = ['.pill-laid-to-rest', '.field-section-title-clean', '.laid-to-rest'];
     const lines = css.split('\n');
     let selector = '';
     let inComment = false;

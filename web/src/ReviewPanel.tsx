@@ -341,7 +341,7 @@ export function LaidToRest({ record, onDownload }: { record: VerifiedRecord; onD
           ))}
         </ul>
       )}
-      <button type="button" className="button button-strong" data-download="true" onClick={onDownload}>
+      <button type="button" className="button button-download" data-download="true" onClick={onDownload}>
         Download JSON
       </button>
       <p className="rest-note">The record and its edit history are kept only in this browser.</p>

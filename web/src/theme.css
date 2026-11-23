@@ -164,6 +164,12 @@
   font-family: var(--font-display);
 }
 
+/* The Laid to rest panel (R5a): its heading (20px) and the Download JSON label (18px). */
+.rest-title,
+.button.button-download {
+  font-family: var(--font-display);
+}
+
 /* Boot screen: the wordmark, the prompt and the Receive faxes label, all 20px or more (styles.css). */
 .boot-wordmark,
 .boot-prompt,
