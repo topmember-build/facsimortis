@@ -76,7 +76,7 @@ Rules:
 
 ## Do not
 - Add sound, video, canvas or WebGL effects, or any dependency.
-- Put scanlines, glow or blur on the fax image, the cards' text or the values. Glow is allowed on the wordmark, window border, selected card and source string only.
+- Put glow or blur on the fax image, the cards' text or the values. Glow is allowed on the wordmark, window border, selected card and source string only. Scanlines: faint scanlines (4% or less) are allowed on the paper sheet only; none on the cards, values or text.
 - Change data flow, storage format, extractor, or any test expectation without telling me first.
 - Use emoji.
 
