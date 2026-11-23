@@ -43,6 +43,27 @@ describe('desktop icons', () => {
     expect(icon('fax-0003').querySelector('svg.doc-frame')).toHaveAttribute('aria-hidden', 'true');
   });
 
+  it('put every word they show into their name, in order (label in name, WCAG 2.5.3)', async () => {
+    const { user } = setup();
+    await inbox();
+    await incoming(user);
+    // The visible text as assistive technology and speech input read it: the text nodes in order, without
+    // the aria-hidden parts and the pictures. Then compared the way axe does: lower case, no punctuation.
+    const visibleText = (node: Node): string => {
+      if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? '';
+      if (node instanceof Element && (node.getAttribute('aria-hidden') === 'true' || node.namespaceURI === 'http://www.w3.org/2000/svg')) return '';
+      return Array.from(node.childNodes, visibleText).join('');
+    };
+    const curate = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, '').replace(/\s+/g, ' ').trim();
+    for (const id of ['fax-0001', 'fax-0002', 'fax-0003']) {
+      const button = icon(id);
+      const shown = curate(visibleText(button));
+      // The words stay apart: "fax0001 received", never "fax0001received".
+      expect(shown, id).toMatch(new RegExp(`^${id.replace('-', '')} received `));
+      expect(curate(button.getAttribute('aria-label')!), id).toContain(shown);
+    }
+  });
+
   it('show the coral "!" badge while flagged fields wait, and not after they are reviewed', async () => {
     const { user } = setup();
     await inbox();

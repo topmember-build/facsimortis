@@ -80,7 +80,10 @@ describe('boot screen type and colour', () => {
   it('has the glow on the wordmark only, and no background effect', () => {
     for (const { prelude, body } of bootRules) {
       if (prelude === '.boot-wordmark') expect(body).toMatch(/text-shadow/);
-      else expect(body, prelude).not.toMatch(/text-shadow|box-shadow|filter|gradient/);
+      else expect(body, prelude).not.toMatch(/text-shadow|filter|gradient/);
+      // The only other shadow is the focus ring's dark band: a solid 2px ring with no blur, not a glow.
+      const shadow = /box-shadow:\s*([^;]+);/.exec(body)?.[1];
+      if (shadow !== undefined) expect(shadow.trim(), prelude).toBe('0 0 0 2px var(--focus-inner)');
     }
     expect(css).not.toMatch(/\.boot-screen::(before|after)/);
   });
@@ -100,6 +103,21 @@ describe('boot screen type and colour', () => {
     expect(button).toMatch(/border:\s*2px solid var\(--amber\)/);
     expect(remOf(button, 'min-height') * 16).toBeGreaterThanOrEqual(44);
     expect(contrast(token('--amber'), token('--ground'))).toBeGreaterThanOrEqual(3);
+  });
+
+  it('draws the double focus ring on Receive faxes whenever it has focus, also when focus was set by code', () => {
+    const ring = block(css, '.boot-button:focus');
+    expect(ring).toMatch(/outline:\s*2px solid var\(--focus\)/);
+    expect(ring).toMatch(/outline-offset:\s*2px/);
+    expect(ring).toMatch(/box-shadow:\s*0 0 0 2px var\(--focus-inner\)/);
+    // The same ring as every other control gets from the :focus-visible rule.
+    const declarations = (s: string) =>
+      s
+        .split(';')
+        .map((d) => d.trim())
+        .filter(Boolean)
+        .sort();
+    expect(declarations(ring)).toEqual(declarations(block(css, '\n:focus-visible')));
   });
 
   it('keeps a fixed height for the "Receiving fax…" line, so nothing moves when it appears', () => {

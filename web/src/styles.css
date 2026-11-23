@@ -1430,6 +1430,16 @@ button.row-button:hover {
   background: var(--panel);
 }
 
+/* Receive faxes has focus from the start, set by code. Whether a browser counts that as :focus-visible
+   depends on its own rules and on what the user did before, so this button draws the same double ring on
+   :focus too: the ring shows whenever it has focus. White on --ground is 18.42:1, and the dark band
+   against the amber outline 9.35:1. A click on it leaves the screen at once. */
+.boot-button:focus {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--focus-inner);
+}
+
 /* Phone width: the icons wrap three per row, and the wordmark with its line sits above the taskbar. */
 @media (max-width: 36rem) {
   .page-main.page-main-desktop {

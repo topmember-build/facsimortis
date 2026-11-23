@@ -11,7 +11,11 @@ import type { ReviewState } from './review-state';
 import type { ReaderName } from './flags';
 import { failedRowStatus, flagsWaiting, rowAccessibleName, statusPill, type StatusPill } from './status-pill';
 
-/** The status line: the icon and the flag part on the first line, the review state under them. */
+/**
+ * The status line: the icon and the flag part on the first line, the review state under them. The space
+ * between the two lines is not drawn (they are flex items), but it keeps "raised" and "Ready" apart in the
+ * text that assistive technology reads (see RowText).
+ */
 function StatusPillView({ pill }: { pill: StatusPill }) {
   return (
     <span className={`status-pill pill-${pill.kind}`} data-pill={pill.kind}>
@@ -20,7 +24,7 @@ function StatusPillView({ pill }: { pill: StatusPill }) {
           {pill.icon}
         </span>{' '}
         <span className="pill-flags">{pill.flagText}</span>
-      </span>
+      </span>{' '}
       <span className="pill-review">{pill.reviewText}</span>
     </span>
   );
@@ -63,7 +67,12 @@ function DocIcon({ item, badge }: { item: InboxItem; badge: boolean }) {
   );
 }
 
-/** The label ("./fax-0003"), the received time and the status line under an icon. */
+/**
+ * The label ("./fax-0003"), the received time and the status line under an icon. The spaces between the
+ * parts are not drawn (the parts are grid items, so the layout is the same), but they keep the words apart
+ * in the button's visible text as assistive technology and speech input read it ("fax-0003 Received",
+ * not "fax-0003Received"), so that text is part of the button's name (WCAG 2.5.3, label in name).
+ */
 function RowText({ item, pill, error }: { item: InboxItem; pill: StatusPill | null; error: string | null }) {
   return (
     <span className="row-text">
@@ -72,10 +81,10 @@ function RowText({ item, pill, error }: { item: InboxItem; pill: StatusPill | nu
           ./
         </span>
         <span>{item.entry.id}</span>
-      </span>
+      </span>{' '}
       <span className="row-time">
         Received <time dateTime={item.entry.receivedAt}>{formatReceived(item.entry.receivedAt)}</time>
-      </span>
+      </span>{' '}
       {pill && <StatusPillView pill={pill} />}
       {error !== null && (
         <span className="flag-line row-error">
