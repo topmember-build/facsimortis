@@ -517,19 +517,88 @@ button.row-button:hover {
   max-width: 72rem;
 }
 
+/* The review screen's side padding is 1rem, so at 1360px wide the window is 1280px, as in
+   docs/design/amber-review.png, and the fax stage and field column keep their sizes inside it. */
+.page-main.page-main-wide {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
 /* A flex column (not a grid) so the summary bar can be sticky across the whole screen.
    The bar is last in the DOM (Verify follows the fields in tab order) and shown above
    the viewer with `order`. --summary-bar-h is the bar's real height, set by FaxView;
-   5rem is the first-paint fallback. */
+   5rem is the first-paint fallback.
+   It is also the review window (R4a): a 2px amber border (9.35:1 against --ground) with no fill, so the
+   desk-lamp glow behind the fax stage still shows. Positioned, so the two buttons can sit in the title bar. */
 .fax-view {
   --bar-h: var(--summary-bar-h, 5rem);
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  border: 2px solid var(--amber);
 }
 
-.fax-view .back-button {
-  align-self: center;
+/* The two title bar buttons: 44px targets with a 32px dark outlined face and a glyph ("<" or "x") drawn in
+   the pixel font. Dark (--ground) on --amber is 9.35:1, and 6.99:1 on the hover tint (#d49235 as Chrome
+   draws it). The double focus ring (:focus-visible above) shows on the amber by its dark band, 9.35:1. */
+.window-button {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  color: var(--ground);
+  background: var(--amber);
+  border: 0;
+  cursor: pointer;
+}
+
+.window-button-face {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid var(--ground);
+}
+
+.window-button:hover .window-button-face {
+  background: rgb(20 20 20 / 0.15);
+}
+
+/* The glyphs are decoration: the face is aria-hidden and each button is named by its aria-label. */
+.window-button-face::before {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.back-button .window-button-face::before {
+  content: '<';
+}
+
+.window-close .window-button-face::before {
+  content: '\00d7';
+}
+
+/* Both buttons sit at the right end of the title bar, Back to inbox then Close window, as in
+   docs/design/amber-review.png, over the title row, which keeps room for them. In the DOM Close window comes
+   first and Back to inbox stays before the heading (see FaxView), so the tab order is Close window, Back to
+   inbox, then the reader toggle under them. They stay at the top if the title wraps on a narrow screen. */
+.window-close,
+.fax-header > .back-button {
+  position: absolute;
+  top: 0;
+  z-index: 1;
+}
+
+.window-close {
+  right: 0;
+}
+
+.fax-header > .back-button {
+  right: 2.75rem;
 }
 
 .summary-bar {
@@ -550,12 +619,20 @@ button.row-button:hover {
   min-height: 4.5rem;
   padding: 0.5rem 0.875rem;
   background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  /* The full width of the window. It continues the reader line above it (same --panel, so the top line
+     does not show), so the reader toggle reads as the top of the summary panel; the divider is below, above
+     the stage. The top line keeps the bar at its height before the window, and with it the field column's
+     height, which is worked out from the bar's. */
+  border-top: 1px solid var(--panel);
+  border-bottom: 1px solid var(--border);
 }
 
+/* Inside the window: the page's side padding (1rem), the window border (2px) and this padding (6px) add up to
+   the 1.5rem the page had before the window, so the stage and the field column keep their exact widths at
+   every screen width. */
 .viewer {
   order: 2;
+  padding: 1rem 0.375rem;
 }
 
 .summary-row {
@@ -643,33 +720,71 @@ button.row-button:hover {
   scroll-margin-bottom: 0.75rem;
 }
 
-/* Review screen header: one compact row (Back to inbox, Fax id, reader line, reader toggle) that
-   wraps on narrow screens. DOM order is unchanged, so the tab order is too. */
+/* Review screen header (R4a): Back to inbox, the title, the reader line and the toggle, in that DOM order
+   (so the tab order is unchanged), wrapping into two lines. Line 1 is the window's title bar: the title
+   row, filled --amber across the whole line, with Back to inbox placed over its right end (see above).
+   Line 2 is the reader line and the toggle, directly under the title bar, on the summary bar's --panel
+   with no line between, so they read as the top of the summary panel. The gaps are 0 so the fills meet. */
 .fax-header {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 1rem;
+  align-items: stretch;
+  gap: 0;
 }
 
-.fax-header .reader-name,
-.fax-header .reader-toggle {
-  margin: 0;
-}
-
-.fax-header .reader-toggle {
-  margin-left: auto;
-}
-
-.fax-title-row {
+/* The title: "<id> — referral" in Pixelify Sans (theme.css) at 18px, dark on --amber, 9.35:1. The heading
+   inside it still reads "Fax <id>" to screen readers. The right padding keeps the two 44px buttons clear
+   of the text, with 8px to spare. */
+.fax-header > .fax-title-row {
+  flex: 1 0 100%;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 1rem;
+  gap: 0 0.45em;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0 6rem 0 0.375rem;
+  color: var(--ground);
+  background: var(--amber);
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .fax-title-row h2 {
   margin: 0;
+  font: inherit;
+  color: inherit;
+}
+
+.fax-title-kind {
+  white-space: nowrap;
+}
+
+/* Line 2: the reader in use (--text-muted on --panel, 7.21:1) and the toggle, at the right end. On a narrow
+   screen the toggle wraps under the reader line and stays at the right end, as before the window. Not
+   sticky: the summary bar under it keeps the facts and Verify pinned when the page scrolls. */
+.fax-header > .reader-name,
+.fax-header > .reader-toggle {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0.375rem 0.875rem;
+  background: var(--panel);
+}
+
+.fax-header > .reader-toggle {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* On --panel the usual hover fill (--panel) would not show, so the button not in use steps up to
+   --panel-raised, as it stepped up from --ground to --panel before; the one in use keeps its fill, as
+   before. --text on --panel-raised is 16.03:1 and --edge 5.79:1. */
+.fax-header > .reader-toggle .toggle-button[aria-pressed='false']:hover {
+  background: var(--panel-raised);
 }
 
 /* The heading takes focus when a fax opens, so screen readers announce it. Its ring
