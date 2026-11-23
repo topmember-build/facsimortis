@@ -16,7 +16,7 @@ Haunted, not hindered. The spooky theme must carry meaning. If an effect does no
 Nowhere else. No cobwebs, bats, floating decorations or sound.
 
 ## Visual basics
-- Dark theme with a restrained palette: near-black background, one cool accent for ghosts, one warm accent for flags.
+- Dark theme with a restrained palette on a near-black background: amber is the interface, coral (`--flag`) is for flags only, teal is for source ghosts, the "Laid to rest" status and the "Read cleanly" heading.
 - Flagged fields use colour **and** an icon **and** text, never colour alone.
 - Fax image is always the visual centre of the screen; controls sit around it.
 - Generous spacing; one primary action per screen ("Verify record").

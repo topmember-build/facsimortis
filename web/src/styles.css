@@ -1,16 +1,16 @@
 /* Dark theme. Colour tokens and fonts live in theme.css (imported first); the old names
    (--bg, --muted, --border) are aliases defined there. Contrast ratios are listed in theme.css.
-   --bg is kept here as a literal hex (the same value as --ground) because test/web-ghost-css
-   reads it from this file. --ghost (#6fd3c0) and --ghost-edge (#1f6fb5; 5.25 on white, 3.6 on
-   --ground) are RESERVED for source ghosts (.ghost rules below). Nothing else may use them:
-   not the inbox, not focus rings, not buttons, not the notice. */
+   Never set a theme.css token again here: this file loads second, so the value here would win.
+   --ghost (#6fd3c0) and --ghost-edge (#1f6fb5; 5.25 on white, 3.51 on --ground) are RESERVED for
+   source ghosts (.ghost rules below). The one named exception is the quiet teal "Laid to rest"
+   status in the inbox (.pill-laid-to-rest, --ghost only). Nothing else may use them: not focus
+   rings, not buttons, not the notice. */
 :root {
   color-scheme: dark;
-  --bg: #0d1015;
   --edge: #8a94aa;
   --focus: #ffffff;
+  --focus-inner: #141414;
   --ghost-edge: #1f6fb5;
-  --flag-edge: #8a4b00;
   line-height: 1.5;
 }
 * {
@@ -23,13 +23,36 @@ body {
   color: var(--text);
 }
 
+/* The page is a column at least as tall as the window: the banner, the screen, then on the desktop the
+   wordmark. The wordmark is moved after the screen with `order` only, so the DOM order, and with it the
+   reading order and the tab order, stays as it is. On the inbox the taskbar is pinned over the bottom
+   of the window: the column keeps a bottom padding of its height and the page the same scroll padding
+   (--taskbar-h, measured by Taskbar.tsx and unset on every other screen), so nothing stays behind it. */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-bottom: var(--taskbar-h, 0px);
+}
+
+html {
+  scroll-padding-bottom: var(--taskbar-h, 0px);
+}
+
+/* Double focus ring: a 2px white outline 2px outside the control, and a 2px --focus-inner (#141414)
+   band filling that gap. One of the two always stands out: the white ring on the dark surfaces
+   (13.83:1 or more, lowest under the lamp glow), the dark band against amber (9.35:1), cream (16.76:1)
+   and the paper. In forced-colours mode the browser drops the band and keeps the outline. */
 :focus-visible {
-  outline: 3px solid var(--focus);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--focus-inner);
 }
 
 .page-header,
 .page-main {
+  width: 100%;
   max-width: 48rem;
   margin: 0 auto;
   padding: 1.5rem;
@@ -64,8 +87,75 @@ body {
 .page-header.page-header-review p {
   display: none;
 }
+
+/* Desktop screens (inbox, loading, error): the wordmark sits at the bottom right, above the taskbar, with
+   its description line above it (column-reverse: the DOM keeps the h1 first). Contrast on --ground:
+   --amber 9.35 (large text), --amber-dim 6.28. */
+.page-header.page-header-desktop {
+  order: 2;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 1rem;
+  max-width: none;
+  margin: 0;
+  padding: 1rem clamp(1.25rem, 6vw, 5rem) 5.5rem;
+  text-align: right;
+}
+
+.page-header.page-header-desktop h1 {
+  margin: 0;
+  /* The pixel glyphs fill little of a 1.0 line box; 0.85 keeps the space above and below even. */
+  line-height: 0.85;
+  color: var(--amber);
+  /* Glow is allowed on the wordmark (Amber Desk brief). */
+  text-shadow: 0 0 1.25rem rgb(246 169 59 / 0.35);
+}
+
+.page-header.page-header-desktop p {
+  max-width: 26rem;
+  color: var(--amber-dim);
+}
+
+.page-main.page-main-desktop {
+  flex: 1 0 auto;
+  max-width: none;
+  margin: 0;
+  padding: 1.5rem clamp(1.25rem, 3vw, 3.5rem) 1rem;
+}
+
+/* A very soft amber glow on the desktop ground, fixed to the window. 6% amber at its centre, so text over
+   its brightest point stays above 4.5:1 (test/web-desktop-css.test.ts checks it). */
+.page-main.page-main-desktop::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse 70rem 45rem at 45% 55%, rgb(246 169 59 / 0.06), transparent 70%);
+}
+
+/* Buttons on the desktop (Incoming fax, Try again) are amber outlines. */
+.page-main-desktop .button {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+
+/* A control that takes keyboard focus is scrolled to at least 12px above the pinned taskbar, so its
+   focus ring (4px outside it) is never behind the bar. */
+.page-main-desktop button {
+  scroll-margin-bottom: 0.75rem;
+}
+
+.page-main-desktop .button[aria-disabled='true'] {
+  color: var(--amber-dim);
+  border-color: var(--amber-dim);
+  border-style: dashed;
+}
+
 /* One slim (32px) notice at the very top. Not sticky: it scrolls away so the review summary bar keeps the top.
-   --text-muted on --panel is 6.9:1. Neutral colours only; never the ghost or flag colours. */
+   --amber-dim on --panel is 6.19:1. Never the ghost or flag colours. Inter Tight, not the pixel font: the
+   text is under 16px. */
 .synthetic-banner {
   display: flex;
   align-items: center;
@@ -73,8 +163,8 @@ body {
   min-height: 2rem;
   padding: 0.25rem 1rem;
   background: var(--panel);
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--edge);
+  color: var(--amber-dim);
+  border-bottom: 1px solid var(--amber-border);
   font-size: 0.875rem;
   line-height: 1.25;
   text-align: center;
@@ -121,21 +211,23 @@ h2 {
   font-weight: 600;
 }
 
-/* The one primary action: Verify record. Outlined, 44px high, bold, never the ghost or flag colour.
-   Contrast on the bar (--panel): text --text 14.0:1, solid --text border 14.0:1.
-   aria-disabled: text --text 14.0:1, a dashed --edge border (5.7:1), lighter weight and a
+/* The one primary action: Verify record. Outlined in amber (R4b), 44px high, bold, never the ghost or flag
+   colour; its label is set in Pixelify Sans at 18px (theme.css), above the 17px floor.
+   Contrast on the bar (--panel): label --amber 9.23:1, solid --amber border 9.23:1; on the hover fill
+   (--panel-raised) the label is 8.94:1.
+   aria-disabled: text --text 16.54:1, a dashed --edge border (5.97:1), lighter weight and a
    not-allowed cursor, so it does not rely on colour alone (the reason text explains why). */
 .button-primary,
 .button.button-primary {
   --primary-fill: transparent;
-  --primary-ink: var(--text);
+  --primary-ink: var(--amber);
   min-height: 2.75rem;
   padding: 0.5rem 1.5rem;
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--primary-ink);
   background: var(--primary-fill);
-  border: 2px solid var(--text);
+  border: 2px solid var(--amber);
 }
 
 .button.button-primary:hover {
@@ -159,36 +251,42 @@ h2 {
   margin: 0 0 1.5rem;
   padding: 0.75rem 1rem;
   background: var(--panel);
-  border: 1px solid var(--flag);
+  border: 1px solid var(--amber-border);
   border-radius: 0.5rem;
 }
 
+/* A load problem is not a flag, so it is amber (9.23:1 on --panel), never coral. The icon and the words
+   carry the meaning; the outline is decoration. */
 .problem-box p {
   margin: 0;
-  color: var(--flag);
+  color: var(--amber);
 }
 
-/* Inbox: the fax image is the centre of each row; text sits beside it. */
+/* Inbox as a desktop (Amber Desk): each fax is an icon button in a grid at the top left, three per row
+   at every width, so the three sample faxes share one row. 160px tiles: the received time wraps after
+   "Received", and the longest common status line ("2 flagged, 1 reviewed") still fits on one line. */
 .fax-list {
   list-style: none;
-  margin: 0 0 1.5rem;
+  margin: 0;
   padding: 0;
   display: grid;
-  gap: 1rem;
+  grid-template-columns: repeat(3, 10rem);
+  gap: 1rem 0.5rem;
 }
 
 .row-button {
   display: flex;
-  align-items: flex-start;
-  gap: 1.25rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
   width: 100%;
-  padding: 1rem;
+  padding: 1rem 0.25rem 0.5rem;
   font: inherit;
-  color: inherit;
-  text-align: left;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  color: var(--amber-dim);
+  text-align: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
 }
 
 button.row-button {
@@ -196,60 +294,115 @@ button.row-button {
 }
 
 button.row-button:hover {
-  border-color: var(--edge);
+  border-color: var(--amber-border);
+}
+
+/* The document icon: the fax's own thumbnail inside a pixel-art page frame (60 x 80px, the 12 x 16 unit
+   art at 5px a unit, so every edge stays on whole pixels), clipped under the folded corner. The frame
+   (amber, 9.35:1 on --ground) and the badge are aria-hidden; the thumbnail keeps its name. */
+.doc-icon {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 60px;
+  height: 80px;
 }
 
 .thumb {
+  position: absolute;
+  top: 5px;
+  left: 5px;
   display: block;
-  flex: none;
-  width: 10rem;
-  height: auto;
+  width: 50px;
+  height: 70px;
   background: #ffffff;
-  border: 1px solid var(--edge);
+  object-fit: contain;
+  clip-path: polygon(0 0, 70% 0, 70% 21.43%, 100% 21.43%, 100% 100%, 0 100%);
+}
+
+.doc-frame {
+  position: absolute;
+  inset: 0;
+  width: 60px;
+  height: 80px;
+}
+
+.doc-frame-line {
+  fill: var(--amber);
+}
+
+.doc-frame-fold {
+  fill: var(--amber-dim);
+}
+
+/* The coral "!" badge while flagged fields wait. Coral is 6.55:1 on --ground and the dark "!" 6.55:1 on
+   coral; the "!" shape and the status line carry the meaning too, so it is never colour alone. */
+.doc-badge {
+  position: absolute;
+  top: -18px;
+  right: -18px;
+  width: 25px;
+  height: 30px;
+}
+
+.doc-badge-fill {
+  fill: var(--flag);
+}
+
+.doc-badge-mark {
+  fill: var(--ground);
 }
 
 .row-text {
   display: grid;
-  gap: 0.25rem;
+  justify-items: center;
+  gap: 0.125rem;
   min-width: 0;
 }
 
+/* The label, in the pixel font (theme.css) at 18px. */
 .row-id {
   font-size: 1.125rem;
-  font-weight: 500;
+  line-height: 1.3;
+  color: var(--amber);
 }
 
 .row-time {
-  color: var(--muted);
+  font-size: 0.875rem;
+  color: var(--amber-dim);
+}
+
+/* If the line must wrap, it breaks after "Received", never inside the time. */
+.row-time time {
+  white-space: nowrap;
 }
 
 .flag-line {
   font-weight: 600;
 }
 
-.flag-on {
-  color: var(--flag);
+/* A fax that could not be read. Not a flag, so amber, never coral. */
+.row-error {
+  color: var(--amber);
 }
 
-/* Inbox status pill. Each state differs in icon shape AND border or fill, never colour alone.
-   Warm accent only while flagged fields wait; the ghost colour is not used here. */
+/* The status line under each icon: plain text with the state's icon, no fill or outline. Each state has
+   its own icon shape and words, never colour alone. Coral only while flagged fields wait (6.55:1 on
+   --ground, 5.96 at the brightest point of the desktop glow), the quiet teal for "Laid to rest" (10.31,
+   9.38), --amber-dim for every other state (6.28, 5.71). */
 .status-pill {
-  display: inline-flex;
-  flex-wrap: wrap;
+  /* Two lines: the icon and the flag part, then the review state under them. */
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-self: start;
-  gap: 0.125rem 0.5rem;
-  padding: 0.125rem 0.75rem;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--text);
-  background: transparent;
-  border: 1px solid var(--edge);
-  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--amber-dim);
 }
 
 .pill-icon {
-  font-size: 1.0625rem;
+  font-size: 1rem;
   line-height: 1;
 }
 
@@ -257,40 +410,21 @@ button.row-button:hover {
   font-weight: 400;
 }
 
-.pill-review::before {
-  content: '\00b7';
-  margin-right: 0.5rem;
-}
-
-.pill-flagged {
-  color: var(--flag);
-  border: 2px solid var(--flag);
-}
-
+.pill-flagged,
 .pill-in-progress {
   color: var(--flag);
-  border: 2px dashed var(--flag);
+  font-weight: 600;
 }
 
-.pill-reviewed {
-  border: 2px solid var(--edge);
+/* Laid to rest: the state's icon and the words "Laid to rest" in the quiet teal. The flag part ("2 flagged,
+   reviewed") keeps --amber-dim, because teal is never used for flags. */
+.pill-laid-to-rest :is(.pill-icon, .pill-review) {
+  color: var(--ghost);
 }
 
-.pill-laid-to-rest {
-  color: var(--bg);
-  background: var(--text);
-  border-color: var(--text);
-}
-
-.pill-no-flags {
-  color: var(--muted);
-  border: 1px dotted var(--edge);
-}
-
-.pill-no-answer {
-  color: var(--muted);
-  border-color: transparent;
-  padding-left: 0;
+.desktop-hint {
+  margin: 1.5rem 0 0.75rem;
+  color: var(--amber-dim);
 }
 
 .incoming {
@@ -302,26 +436,171 @@ button.row-button:hover {
 
 .incoming-note p {
   margin: 0;
-  color: var(--muted);
+  color: var(--amber-dim);
+}
+
+/* Bottom taskbar (Amber Desk): dark navy with a 2px amber top border, pinned to the bottom of the window
+   (see #root for the padding that keeps content clear of it). The 6px vertical padding keeps the Inbox
+   button's focus ring, which reaches 4px outside the button, inside the bar and on screen. Opaque, so
+   nothing shows through it. Contrast on --taskbar: --amber 9.73, --amber-dim 6.53, --flag 6.82; the
+   amber border is 9.73 against it and 9.35 against --ground. `order` only matters on very short windows,
+   where the bar goes back into the page flow (media query near the end). */
+.taskbar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  order: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  padding: 0.375rem clamp(0.75rem, 2vw, 1.5rem);
+  background: var(--taskbar);
+  border-top: 2px solid var(--amber);
+  color: var(--amber-dim);
+  font-family: var(--font-data);
+  font-size: 0.875rem;
+}
+
+.taskbar p {
+  margin: 0;
+}
+
+.taskbar-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.taskbar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+  color: var(--amber);
+  background: transparent;
+  border: 2px solid var(--amber);
+  cursor: pointer;
+}
+
+.taskbar-button:hover {
+  background: var(--panel);
+}
+
+.taskbar-glyph {
+  width: 24px;
+  height: 32px;
+}
+
+.taskbar-glyph path {
+  fill: currentColor;
+}
+
+.taskbar-status {
+  flex: 1 1 auto;
+  color: var(--amber);
+  text-align: center;
+}
+
+.taskbar-flag {
+  color: var(--flag);
+}
+
+/* The clock, in the pixel font (theme.css) at 18px. */
+.taskbar-clock {
+  font-size: 1.125rem;
+  color: var(--amber);
 }
 
 .page-main-wide {
   max-width: 72rem;
 }
 
+/* The review screen's side padding is 1rem, so at 1360px wide the window is 1280px, as in
+   docs/design/amber-review.png, and the fax stage and field column keep their sizes inside it. */
+.page-main.page-main-wide {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
 /* A flex column (not a grid) so the summary bar can be sticky across the whole screen.
    The bar is last in the DOM (Verify follows the fields in tab order) and shown above
    the viewer with `order`. --summary-bar-h is the bar's real height, set by FaxView;
-   5rem is the first-paint fallback. */
+   5rem is the first-paint fallback.
+   It is also the review window (R4a): a 2px amber border (9.35:1 against --ground) with no fill, so the
+   desk-lamp glow behind the fax stage still shows. Positioned, so the two buttons can sit in the title bar. */
 .fax-view {
   --bar-h: var(--summary-bar-h, 5rem);
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  border: 2px solid var(--amber);
 }
 
-.fax-view .back-button {
-  align-self: center;
+/* The two title bar buttons: 44px targets with a 32px dark outlined face and a glyph ("<" or "x") drawn in
+   the pixel font. Dark (--ground) on --amber is 9.35:1, and 6.99:1 on the hover tint (#d49235 as Chrome
+   draws it). The double focus ring (:focus-visible above) shows on the amber by its dark band, 9.35:1. */
+.window-button {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  color: var(--ground);
+  background: var(--amber);
+  border: 0;
+  cursor: pointer;
+}
+
+.window-button-face {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid var(--ground);
+}
+
+.window-button:hover .window-button-face {
+  background: rgb(20 20 20 / 0.15);
+}
+
+/* The glyphs are decoration: the face is aria-hidden and each button is named by its aria-label. */
+.window-button-face::before {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.back-button .window-button-face::before {
+  content: '<';
+}
+
+.window-close .window-button-face::before {
+  content: '\00d7';
+}
+
+/* Both buttons sit at the right end of the title bar, Back to inbox then Close window, as in
+   docs/design/amber-review.png, over the title row, which keeps room for them. In the DOM Close window comes
+   first and Back to inbox stays before the heading (see FaxView), so the tab order is Close window, Back to
+   inbox, then the reader toggle under them. They stay at the top if the title wraps on a narrow screen. */
+.window-close,
+.fax-header > .back-button {
+  position: absolute;
+  top: 0;
+  z-index: 1;
+}
+
+.window-close {
+  right: 0;
+}
+
+.fax-header > .back-button {
+  right: 2.75rem;
 }
 
 .summary-bar {
@@ -342,12 +621,20 @@ button.row-button:hover {
   min-height: 4.5rem;
   padding: 0.5rem 0.875rem;
   background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  /* The full width of the window. It continues the reader line above it (same --panel, so the top line
+     does not show), so the reader toggle reads as the top of the summary panel; the divider is below, above
+     the stage. The top line keeps the bar at its height before the window, and with it the field column's
+     height, which is worked out from the bar's. */
+  border-top: 1px solid var(--panel);
+  border-bottom: 1px solid var(--border);
 }
 
+/* Inside the window: the page's side padding (1rem), the window border (2px) and this padding (6px) add up to
+   the 1.5rem the page had before the window, so the stage and the field column keep their exact widths at
+   every screen width. */
 .viewer {
   order: 2;
+  padding: 1rem 0.375rem;
 }
 
 .summary-row {
@@ -358,12 +645,16 @@ button.row-button:hover {
   gap: 0.25rem 0.875rem;
 }
 
+/* Summary row colours (R4b), on --panel: the fax id in --amber (9.23:1), the labels ("Received", "Urgency"),
+   the counts and the reminder in --amber-dim (6.19:1); the values and the reason stay --text, the flagged
+   count stays --flag. */
 .summary-id {
+  color: var(--amber);
   font-weight: 500;
 }
 
 .summary-meta {
-  color: var(--text-muted);
+  color: var(--amber-dim);
   font-size: 0.875rem;
 }
 
@@ -379,7 +670,7 @@ button.row-button:hover {
   flex-wrap: wrap;
   gap: 0 0.75rem;
   font-size: 0.875rem;
-  color: var(--text-muted);
+  color: var(--amber-dim);
 }
 
 .summary-count.count-flag {
@@ -405,7 +696,7 @@ button.row-button:hover {
 .summary-bar .verify-note {
   grid-area: note;
   margin: 0;
-  color: var(--muted);
+  color: var(--amber-dim);
   font-size: 0.8125rem;
 }
 
@@ -435,33 +726,71 @@ button.row-button:hover {
   scroll-margin-bottom: 0.75rem;
 }
 
-/* Review screen header: one compact row (Back to inbox, Fax id, reader line, reader toggle) that
-   wraps on narrow screens. DOM order is unchanged, so the tab order is too. */
+/* Review screen header (R4a): Back to inbox, the title, the reader line and the toggle, in that DOM order
+   (so the tab order is unchanged), wrapping into two lines. Line 1 is the window's title bar: the title
+   row, filled --amber across the whole line, with Back to inbox placed over its right end (see above).
+   Line 2 is the reader line and the toggle, directly under the title bar, on the summary bar's --panel
+   with no line between, so they read as the top of the summary panel. The gaps are 0 so the fills meet. */
 .fax-header {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 1rem;
+  align-items: stretch;
+  gap: 0;
 }
 
-.fax-header .reader-name,
-.fax-header .reader-toggle {
-  margin: 0;
-}
-
-.fax-header .reader-toggle {
-  margin-left: auto;
-}
-
-.fax-title-row {
+/* The title: "<id> — referral" in Pixelify Sans (theme.css) at 18px, dark on --amber, 9.35:1. The heading
+   inside it still reads "Fax <id>" to screen readers. The right padding keeps the two 44px buttons clear
+   of the text, with 8px to spare. */
+.fax-header > .fax-title-row {
+  flex: 1 0 100%;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 1rem;
+  gap: 0 0.45em;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0 6rem 0 0.375rem;
+  color: var(--ground);
+  background: var(--amber);
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .fax-title-row h2 {
   margin: 0;
+  font: inherit;
+  color: inherit;
+}
+
+.fax-title-kind {
+  white-space: nowrap;
+}
+
+/* Line 2: the reader in use (--text-muted on --panel, 7.21:1) and the toggle, at the right end. On a narrow
+   screen the toggle wraps under the reader line and stays at the right end, as before the window. Not
+   sticky: the summary bar under it keeps the facts and Verify pinned when the page scrolls. */
+.fax-header > .reader-name,
+.fax-header > .reader-toggle {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0.375rem 0.875rem;
+  background: var(--panel);
+}
+
+.fax-header > .reader-toggle {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* On --panel the usual hover fill (--panel) would not show, so the button not in use steps up to
+   --panel-raised, as it stepped up from --ground to --panel before; the one in use keeps its fill, as
+   before. --text on --panel-raised is 16.03:1 and --edge 5.79:1. */
+.fax-header > .reader-toggle .toggle-button[aria-pressed='false']:hover {
+  background: var(--panel-raised);
 }
 
 /* The heading takes focus when a fax opens, so screen readers announce it. Its ring
@@ -470,11 +799,13 @@ button.row-button:hover {
 .fax-heading:focus,
 .fax-heading:focus-visible {
   outline: none;
+  box-shadow: none;
 }
 
 .fax-heading[data-opened-by='keyboard']:focus {
-  outline: 3px solid var(--focus);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--focus-inner);
 }
 
 .page-toggle {
@@ -629,12 +960,12 @@ button.row-button:hover {
 
 /* Source ghosts. --ghost and --ghost-edge are used here and nowhere else. Strokes keep a
    constant on-screen width however the image is scaled. A pale colour cannot be seen on a white
-   fax (--ghost and --flag are 1.8:1 on white), so every highlight has two parts: a tint in the
+   fax (on white, --ghost is 1.79:1 and --flag 2.81:1), so every highlight has two parts: a tint in the
    pale colour (never more than 20% opaque, so the words stay readable) and a darker outline that
    reaches 3:1 on the paper sheet and on white. Ghost words: tint --ghost, solid --ghost-edge
-   outline (5.25:1 on white, 3.7:1 on the sheet). Words cited by a field the reader flagged (the same
+   outline (5.25:1 on white, 3.68:1 on the sheet). Words cited by a field the reader flagged (the same
    rule as the "Needs your eyes" section: isOriginallyFlagged): tint --flag, dashed --flag-edge outline
-   (6.8:1 on white, 4.8:1 on the sheet), so the difference is not colour alone. The glow is --ghost, or
+   (8.58:1 on white, 6.02:1 on the sheet), so the difference is not colour alone. The glow is --ghost, or
    --flag for flagged words. Reduced motion only removes the pulse; the outline, tint and glow stay. */
 .ghost rect {
   fill: var(--ghost);
@@ -712,10 +1043,17 @@ button.row-button:hover {
   line-height: 1.25;
 }
 
-/* Accept stays clearly visible on flagged fields: light border, heavier text. */
+/* Accept anyway answers a flag, so it is outlined in coral with its label in --flag-text (R4b). On the card
+   (--panel): --flag-text 8.88:1, the --flag outline 6.47:1; on the hover tint (coral at 14%) the label
+   is 7.31:1 and the outline 5.33:1. The outline is 2px, heavier than the plain Edit button beside it. */
 .button.button-accept {
-  border-color: var(--text);
+  color: var(--flag-text);
+  border: 2px solid var(--flag);
   font-weight: 600;
+}
+
+.button.button-accept:hover {
+  background: rgb(255 106 92 / 0.14);
 }
 
 /* Wide and narrow: Accept and Edit sit top right inside the card, beside the field name. */
@@ -779,33 +1117,52 @@ button.row-button:hover {
   cursor: not-allowed;
 }
 
+/* One column that can shrink to the list's width (minmax(0, 1fr)), so a card never makes its list, and
+   with it the field column, wider than the window. */
 .field-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.25rem;
 }
 
 /* The li is the card: it holds the select button, the Accept/Edit buttons and the edit form.
-   Text is never below 0.875rem. Height budget is in the 2.10 task report. */
+   Text is never below 0.875rem. Height budget is in the 2.10 task report.
+   R4b: a 1px --amber-border outline (1.87:1 on --panel: decoration only, like --line; the card's controls
+   are named by their text and are not identified by this line). Hover brightens it to --amber-dim (6.19:1). */
 .field-card {
   position: relative;
   background: var(--panel);
-  border: 1px solid var(--border);
+  border: 1px solid var(--amber-border);
   border-radius: 0.5rem;
   font-size: 0.875rem;
   line-height: 1.3;
 }
 
 .field-card:hover {
-  border-color: var(--edge);
+  border-color: var(--amber-dim);
 }
 
+/* Selected: a heavier outline (3px in all: the border plus a 2px inner ring) and the "Selected" label, so
+   it does not rely on colour. A selected clean card is outlined in --amber (9.23:1 on --panel). It rises
+   above its neighbours (z-index) so the glow of a flagged one is not covered by the next card. */
 .field-card.field-selected,
 .field-card.field-selected:hover {
-  border-color: var(--text);
-  box-shadow: inset 0 0 0 2px var(--text);
+  z-index: 1;
+  border-color: var(--amber);
+  box-shadow: inset 0 0 0 2px var(--amber);
+}
+
+/* A selected flagged card is outlined in coral (--flag, 6.47:1 on --panel) with a soft coral glow. The
+   glow is a short 6px, so the 4px of padding around the scrolling list on wide screens hardly clips it. */
+.field-card.field-flagged.field-selected,
+.field-card.field-flagged.field-selected:hover {
+  border-color: var(--flag);
+  box-shadow:
+    inset 0 0 0 2px var(--flag),
+    0 0 6px 1px rgb(255 106 92 / 0.3);
 }
 
 .field-item {
@@ -822,9 +1179,11 @@ button.row-button:hover {
   cursor: pointer;
 }
 
-/* The ring stays inside the card so the scrolling list never clips it. */
+/* The ring stays inside the card so the scrolling list never clips it: the dark band runs along the
+   inside of the edge and the white ring sits just inside the band. */
 .field-item:focus-visible {
-  outline-offset: -3px;
+  outline-offset: -4px;
+  box-shadow: inset 0 0 0 2px var(--focus-inner);
 }
 
 .field-head {
@@ -856,8 +1215,9 @@ button.row-button:hover {
   padding: 0 0.5rem;
 }
 
+/* Labels are --amber-dim (6.19:1 on --panel); values stay --text. */
 .field-name {
-  color: var(--muted);
+  color: var(--amber-dim);
   font-size: 0.875rem;
 }
 
@@ -911,19 +1271,32 @@ button.row-button:hover {
    the cards in the DOM is the tab order, so nothing here changes it. */
 .review-panel {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
 }
 
 .field-section {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.375rem;
 }
 
+/* Section headings (R4b): Pixelify Sans (theme.css) at 20px, bold. "Needs your eyes" is --flag-text and
+   "Read cleanly" is --ghost, each on --ground. The ghost colour here is a named exception in
+   test/web-ghost-css.test.ts. */
 .field-section-title {
   margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
   line-height: 1.3;
+}
+
+.field-section-title-flagged {
+  color: var(--flag-text);
+}
+
+.field-section-title-clean {
+  color: var(--ghost);
 }
 
 .field-section-note,
@@ -996,6 +1369,24 @@ button.row-button:hover {
   display: none;
 }
 
+/* Narrow screens (R4b): a compact flagged card is only about 340px wide on a phone, too narrow for the text
+   (value, "Confidence: 83%" and its bar) beside Accept anyway and Edit, which made the card wider than the
+   window and put Accept anyway over the bar. So here the buttons sit in their own row under the text, as
+   they already do on the expanded card, and the 10rem kept free at the right is given back. Both buttons
+   stay 44px high. Wider screens keep the buttons at the right of the card. */
+@media (max-width: 40rem) {
+  .field-card.field-flagged:not(.field-expanded) .field-item {
+    padding-right: 0.5rem;
+  }
+
+  .field-card.field-flagged:not(.field-expanded) .field-actions {
+    position: static;
+    top: auto;
+    transform: none;
+    padding: 0.25rem 0.5rem 0.5rem;
+  }
+}
+
 /* The selected flagged card is expanded: the value in large mono type, the reasons in the flag text
    colour, and the buttons in their own row under the text. Confidence stays neutral grey. */
 .field-card.field-expanded .field-value {
@@ -1014,18 +1405,19 @@ button.row-button:hover {
   padding: 0.25rem 0.5rem 0.5rem;
 }
 
-/* Edit is the filled button of the expanded card: --text fill with --ground text (15.3:1). Neutral,
-   so it is not the flag or ghost colour, and it is not the primary (Verify) button. */
+/* Edit is the filled button of the expanded card (R4b): --amber fill with --ground text (9.35:1). Amber is
+   the interface colour, so it is not the flag or ghost colour, and it is not the primary (Verify) button,
+   which is outlined. Hover lightens the fill to --amber-soft (9.88:1 with the same text). */
 .button.button-fill {
   color: var(--ground);
-  background: var(--text);
-  border: 2px solid var(--text);
+  background: var(--amber);
+  border: 2px solid var(--amber);
   font-weight: 600;
 }
 
 .button.button-fill:hover {
   color: var(--ground);
-  background: #ffffff;
+  background: var(--amber-soft);
 }
 
 .rest-summary {
@@ -1051,22 +1443,25 @@ button.row-button:hover {
   color: var(--text);
 }
 
-/* Notes about saved progress (not kept, or old data ignored). Warm accent, with an icon and text. */
+/* Notes about saved progress (not kept, or old data ignored), with an icon and text. Not flags, so amber
+   (9.23:1 on --panel), never coral. */
 .app-notes {
   margin: 0 0 1.5rem;
   padding: 0.75rem 1rem;
   background: var(--panel);
-  border: 1px solid var(--flag);
+  border: 1px solid var(--amber-border);
   border-radius: 0.5rem;
 }
 
 .app-notes p {
   margin: 0;
-  color: var(--flag);
+  color: var(--amber);
 }
 
-/* Laid to rest: a calm, settled state. Existing palette only (not the ghost colour),
-   one gentle fade on arrival that the reduced-motion rule below removes. */
+/* Laid to rest (R5a): a calm, settled panel. A 1px --amber-border outline (decoration, 1.87:1) and a 4px teal
+   accent line on the left in --ghost (10.31:1 on --ground, 10.18:1 on --panel; 3:1 needed for a line); the
+   teal is a named exception in test/web-ghost-css.test.ts. One gentle fade on arrival that the
+   reduced-motion rule at the end of this file removes. */
 .laid-to-rest {
   display: grid;
   gap: 0.5rem;
@@ -1074,8 +1469,8 @@ button.row-button:hover {
   margin-top: 1rem;
   padding: 1rem 1.25rem;
   background: var(--panel);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--edge);
+  border: 1px solid var(--amber-border);
+  border-left: 4px solid var(--ghost);
   border-radius: 0.5rem;
   animation: settle 0.8s ease-out 1;
 }
@@ -1085,14 +1480,61 @@ button.row-button:hover {
   margin: 0;
 }
 
+/* The heading is Pixelify Sans (theme.css) at 20px, bold, in --text (16.54:1 on --panel). */
 .rest-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* Download JSON: the one action of this state, in the same amber style as Verify record was: a 2px --amber
+   outline and an --amber label in Pixelify Sans (theme.css) at 18px, 44px high. --amber on --panel is
+   9.23:1; on the hover fill (--panel-raised) 8.94:1. */
+.button.button-download {
+  min-height: 2.75rem;
+  padding: 0.5rem 1.5rem;
+  color: var(--amber);
+  border: 2px solid var(--amber);
   font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.button.button-download:hover {
+  background: var(--panel-raised);
 }
 
 .rest-note {
   color: var(--muted);
   font-size: 0.875rem;
 }
+
+/* The verify moment (R5a): when the record is laid to rest, FaxView sets data-state="laid-to-rest" on the
+   window and the coral emphasis fades into the quiet state over 400ms:
+   - the selected flagged card's border and ring go from --flag to --amber-dim (6.19:1 on --panel) and its
+     soft glow fades out; it keeps its 3px outline and "Selected" tag;
+   - the flagged count goes from --flag to --amber-dim (6.19:1 on --panel);
+   - the glow of the selected flagged highlight on the fax and of its source string fades out; the dashed
+     outlines, the line and every flag note stay, so nothing about flags is hidden.
+   The transitions are declared only here, so they run only into this state (selecting a card stays
+   instant), and a fax that opens already verified starts quiet. The reduced-motion rule at the end of this
+   file sets transition: none, so under reduced motion the change is instant. */
+.fax-view[data-state='laid-to-rest'] .field-card.field-flagged.field-selected,
+.fax-view[data-state='laid-to-rest'] .field-card.field-flagged.field-selected:hover {
+  border-color: var(--amber-dim);
+  box-shadow:
+    inset 0 0 0 2px var(--amber-dim),
+    0 0 6px 1px rgb(255 106 92 / 0);
+  transition:
+    border-color 400ms ease-out,
+    box-shadow 400ms ease-out;
+}
+
+.fax-view[data-state='laid-to-rest'] .summary-count.count-flag {
+  color: var(--amber-dim);
+  transition: color 400ms ease-out;
+}
+
+/* (The glow of the selected flagged highlight and of its source string is faded in the same way by the
+   rule after the source string rules below, so it comes after their base rules.) */
 
 @keyframes settle {
   from {
@@ -1115,9 +1557,216 @@ button.row-button:hover {
   }
 }
 
+/* Boot screen (R3): shown once per browser session before the inbox, below the Synthetic data notice.
+   Plain --ground with amber text; the one glow is on the wordmark. Contrast on --ground: --amber 9.35
+   (wordmark, handshake lines, prompt, button label and outline), --amber-dim 6.28 ("Receiving fax…");
+   on the button's hover fill (--panel) --amber is 9.23. The pixel font (theme.css) is 20px and up here. */
+.boot-screen {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 2rem 1.25rem 3rem;
+  color: var(--amber);
+  text-align: center;
+}
+
+.boot-wordmark {
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+  font-size: clamp(3rem, 9vw, 6.5rem);
+  line-height: 0.85;
+  color: var(--amber);
+  /* The one glow on this screen (Amber Desk brief: glow on the wordmark only). */
+  text-shadow: 0 0 1.25rem rgb(246 169 59 / 0.35);
+}
+
+/* The handshake: three lines in IBM Plex Mono, left-aligned as in a terminal. All three are in the page
+   from the start and visible by default; only this animation hides each one until its turn (fill-mode
+   both), 0.5s apart, so the last one is in by about 1.5s. Under reduced motion the global rule at the
+   end of this file removes every animation, so all three show at once, with no typing or blinking. */
+.boot-log {
+  display: grid;
+  justify-items: start;
+  gap: 0.25rem;
+  min-width: 12rem;
+  font-family: var(--font-data);
+  font-size: 1rem;
+  text-align: left;
+}
+
+.boot-line {
+  margin: 0;
+  animation: boot-line-in 200ms ease-out both;
+}
+
+.boot-line:nth-child(1) {
+  animation-delay: 250ms;
+}
+
+.boot-line:nth-child(2) {
+  animation-delay: 750ms;
+}
+
+.boot-line:nth-child(3) {
+  animation-delay: 1250ms;
+}
+
+@keyframes boot-line-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* "Receiving fax…" (role="status"). Always in the page with a fixed height, so nothing moves when the
+   words appear. */
+.boot-status {
+  min-height: 1.5rem;
+  margin: 0;
+  font-family: var(--font-data);
+  font-size: 1rem;
+  color: var(--amber-dim);
+}
+
+/* On narrow screens the line breaks into two even halves, not one word on its own. */
+.boot-prompt {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+/* Receive faxes: a real button with focus when the screen appears; amber outline, pixel-font label,
+   44px or more high. */
+.boot-button {
+  min-height: 2.75rem;
+  padding: 0.5rem 1.5rem;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  color: var(--amber);
+  background: transparent;
+  border: 2px solid var(--amber);
+  cursor: pointer;
+}
+
+.boot-button:hover {
+  background: var(--panel);
+}
+
+/* Receive faxes has focus from the start, set by code. Whether a browser counts that as :focus-visible
+   depends on its own rules and on what the user did before, so this button draws the same double ring on
+   :focus too: the ring shows whenever it has focus. White on --ground is 18.42:1, and the dark band
+   against the amber outline 9.35:1. A click on it leaves the screen at once. */
+.boot-button:focus {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--focus-inner);
+}
+
+/* Phone width: the icons wrap three per row, and the wordmark with its line sits above the taskbar. */
 @media (max-width: 36rem) {
+  .page-main.page-main-desktop {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .fax-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem 0.25rem;
+  }
+
   .row-button {
-    flex-direction: column;
+    padding-left: 0.125rem;
+    padding-right: 0.125rem;
+  }
+
+  .page-header.page-header-desktop {
+    align-items: center;
+    padding-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  /* The pinned taskbar in two rows instead of three: the Inbox button, the reader and the clock, then
+     the tray status. Only the placement moves; the DOM order (and the reading order) stays. */
+  .taskbar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'buttons reader clock'
+      'status status status';
+    gap: 0.25rem 0.75rem;
+  }
+
+  .taskbar-buttons {
+    grid-area: buttons;
+  }
+
+  .taskbar-reader {
+    grid-area: reader;
+    text-align: right;
+  }
+
+  .taskbar-clock {
+    grid-area: clock;
+  }
+
+  .taskbar-status {
+    grid-area: status;
+  }
+}
+
+/* Short windows (for example a 1366x768 laptop, about 650px of page height in a browser): less space
+   around the icons and the wordmark, so the whole desktop fits above the pinned taskbar. */
+@media (max-height: 46rem) {
+  .page-main.page-main-desktop {
+    padding-top: 1rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .desktop-hint {
+    margin-top: 1rem;
+  }
+
+  .page-header.page-header-desktop {
+    padding-bottom: 1.5rem;
+  }
+
+  /* The wordmark also shrinks with the window height, so the desktop still fits above the taskbar on
+     shorter windows. Apart from the taskbar (its measured height) and the wordmark, the desktop takes
+     about 482px (banner, icons, hint, Incoming fax, tagline and padding; 30.375rem leaves 4px to spare),
+     and the wordmark's line box is 0.85 of its size. At 1366x657 the cap is above the full size, so the
+     wordmark only shrinks on shorter windows. */
+  .page-header.page-header-desktop h1 {
+    font-size: clamp(2.75rem, min(9.6vw, (100vh - var(--taskbar-h, 0px) - 30.375rem) / 0.85), 8.5rem);
+  }
+}
+
+/* Very short windows (under 480px, for example a phone held sideways, or 200% zoom on a laptop): the
+   taskbar goes back into the page flow after the wordmark, so it never covers a large part of the screen,
+   and the boot screen's parts sit closer together, so Receive faxes stays on screen. */
+@media (max-height: 30rem) {
+  .taskbar {
+    position: static;
+  }
+
+  #root {
+    padding-bottom: 0;
+  }
+
+  html {
+    scroll-padding-bottom: 0;
+  }
+
+  .boot-screen {
+    gap: 0.75rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1135,8 +1784,9 @@ button.row-button:hover {
    BELOW the sticky summary bar (z-index 10), so it can never cover the bar. The component draws nothing
    when the layout stacks to one column; the 60rem here must equal WIDE_LAYOUT_QUERY in source-string.ts
    (test/web-source-string-css.test.ts checks it). Both strings are solid (the dashed look is for the
-   highlights). Contrast on the page background is 10.7:1 for the flag colour and 10.7:1 for the ghost
-   colour (3:1 needed for a line). Under reduced motion the string appears with no animation. */
+   highlights). Contrast on the page background is 6.55:1 for the flag colour and 10.31:1 for the ghost
+   colour (3:1 needed for a line), and 4.92:1 and 7.74:1 over the brightest point of the lamp glow.
+   Under reduced motion the string appears with no animation. */
 .source-string-overlay {
   position: fixed;
   top: 0;
@@ -1189,6 +1839,16 @@ button.row-button:hover {
     stroke-dasharray: 1;
     stroke-dashoffset: 0;
   }
+}
+
+/* The verify moment (R5a, see "Laid to rest" above): the coral glow of the selected flagged highlight and of
+   its source string fades out over 400ms when the window gets data-state="laid-to-rest". The dashed
+   outline and the line itself stay. Placed after the base rules (their tests find a rule by its first
+   occurrence); the reduced-motion rule sets transition: none, so under reduced motion it is instant. */
+.fax-view[data-state='laid-to-rest'] .ghost-flag.ghost-selected,
+.fax-view[data-state='laid-to-rest'] .ghost-string-flag {
+  filter: drop-shadow(0 0 0 rgb(255 106 92 / 0));
+  transition: filter 400ms ease-out;
 }
 
 @media (max-width: 59.99rem) {

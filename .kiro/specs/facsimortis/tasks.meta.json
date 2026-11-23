@@ -1084,6 +1084,52 @@
         "executionId": "a5ec6cb4-e4f9-49f6-82f6-868a89cdd535",
         "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
         "timestamp": 1795168033997
+      },
+      {
+        "executionId": "a5ec6cb4-e4f9-49f6-82f6-868a89cdd535",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1795168874481
+      }
+    ],
+    "D5b Source string and highlight polish: filled 4px-radius dots at both ends of the string in the line colour; line 1.5px for flagged and 1.25px for clean at 90% opacity, glow kept on the flagged line; selected-word tint at most 12% opacity for flagged and other words, 3px outline kept. Only tests that pin these values change. (R3.3, R10)": [
+      {
+        "executionId": "3123fae4-e690-4bbe-b830-1f88ea6f727e",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1795169947605
+      },
+      {
+        "executionId": "3123fae4-e690-4bbe-b830-1f88ea6f727e",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1795170273940
+      }
+    ],
+    "D6 Loading \"dial-tone\" state and the \"Laid to rest\" fade, static under reduced motion. (R10)": [
+      {
+        "executionId": "5c3e7ba7-e6bb-420c-a5de-c13ad5dc8b98",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1795256720295
+      },
+      {
+        "executionId": "c57d6651-88a9-47f7-906d-dde98a72aba2",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1795257085249
+      }
+    ],
+    "R1 Tokens and fonts: new colour tokens (--ground #141414, --amber, --amber-dim, --amber-soft, --text #fff3dc, --taskbar, --flag #ff6a5c, --flag-text #ff9a8d, --flag-edge #8a2b20, --ghost #6fd3c0, paper unchanged) with the flag recolour; Pixelify Sans self-hosted as woff2 with OFL.txt and SOURCES.md (source URL and SHA-256); design.md steering updated (amber interface, coral flags, teal ghosts); contrast report for every pair on every surface; list of tests that pin old values, stopping for approval before editing them; fonts resolve under SITE_BASE=/facsimortis/ and the default base. (R10)": [
+      {
+        "executionId": "d584ffc0-3dc2-4321-b358-0b793b94f761",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1795257552011
+      },
+      {
+        "executionId": "d584ffc0-3dc2-4321-b358-0b793b94f761",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1795257720988
+      },
+      {
+        "executionId": "d584ffc0-3dc2-4321-b358-0b793b94f761",
+        "chatSessionId": "sess_c98ae856-971a-4e6b-a5b7-1723dfb68753",
+        "timestamp": 1795257741039
       }
     ]
   }

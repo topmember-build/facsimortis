@@ -42,6 +42,8 @@ export interface StatusPill {
   reviewText: string;
   /** The whole status in words, for screen readers. */
   sentence: string;
+  /** How many fields are flagged (as read, or again after a bad edit). null when there is no saved answer. */
+  flagged: number | null;
 }
 
 /**
@@ -72,16 +74,17 @@ export function statusPill(
 ): StatusPill {
   const reviewText = reviewLabel(fax, reader, reviews, referenceDate, verified);
   const result = fax.readers[reader];
-  const make = (kind: PillKind, flagText: string): StatusPill => ({
+  const make = (kind: PillKind, flagText: string, flagged: number | null): StatusPill => ({
     kind,
     icon: PILL_ICONS[kind],
     flagText,
     reviewText,
     sentence: `${flagText}, ${reviewText}`,
+    flagged,
   });
 
   if (result.status !== 'ok') {
-    return make('no-answer', NO_SAVED_ANSWER_LABEL);
+    return make('no-answer', NO_SAVED_ANSWER_LABEL, null);
   }
 
   const key = reviewKey(fax.id, reader);
@@ -95,10 +98,15 @@ export function statusPill(
   const reviewed = total - waiting.length;
 
   if (verified[key]) {
-    return make('laid-to-rest', total === 0 ? NO_FLAGS_LABEL : `${total} flagged, reviewed`);
+    return make('laid-to-rest', total === 0 ? NO_FLAGS_LABEL : `${total} flagged, reviewed`, total);
   }
-  if (total === 0) return make('no-flags', NO_FLAGS_LABEL);
-  if (waiting.length === 0) return make('reviewed', `${total} flagged, reviewed`);
-  if (reviewText === REVIEW_IN_PROGRESS) return make('in-progress', `${total} flagged, ${reviewed} reviewed`);
-  return make('flagged', `${total} flagged`);
+  if (total === 0) return make('no-flags', NO_FLAGS_LABEL, total);
+  if (waiting.length === 0) return make('reviewed', `${total} flagged, reviewed`, total);
+  if (reviewText === REVIEW_IN_PROGRESS) return make('in-progress', `${total} flagged, ${reviewed} reviewed`, total);
+  return make('flagged', `${total} flagged`, total);
+}
+
+/** True while flagged fields still wait for review: the inbox icon shows the coral "!" badge. */
+export function flagsWaiting(pill: StatusPill): boolean {
+  return pill.kind === 'flagged' || pill.kind === 'in-progress';
 }

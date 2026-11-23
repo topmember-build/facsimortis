@@ -164,7 +164,8 @@ describe('the verified record', () => {
     expect(screen.getByText(/Verifier: Demo reviewer/)).toBeInTheDocument();
     expect(verifyButton()).not.toBeInTheDocument();
     expect(document.querySelectorAll('[data-accept], [data-edit]')).toHaveLength(0);
-    expect(downloadButton()).toHaveFocus();
+    // R5b: focus moves to the Laid to rest heading (not the Download button); see LaidToRestFocus.test.tsx.
+    expect(screen.getByRole('heading', { level: 3, name: 'Laid to rest' })).toHaveFocus();
     expect(screen.getByText(/Record laid to rest/)).toBeInTheDocument();
 
     const phone = within(fieldButton('callbackPhone'));

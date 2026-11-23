@@ -1,21 +1,30 @@
 import { useEffect, useRef } from 'react';
 import { cropBox, viewBoxAttr } from './crop';
 import type { InboxItem } from './data';
+import { DESKTOP_HINT } from './desktop';
 import type { OpenedBy } from './input-modality';
 import { formatReceived } from './format';
 import { NO_MORE_FAXES_MESSAGE } from './inbox-state';
+import { DocFrame, FlagBadge } from './PixelIcons';
 import type { VerifiedRecord } from './record';
 import type { ReviewState } from './review-state';
-import { READER_LABEL, type ReaderName } from './flags';
-import { failedRowStatus, rowAccessibleName, statusPill, type StatusPill } from './status-pill';
+import type { ReaderName } from './flags';
+import { failedRowStatus, flagsWaiting, rowAccessibleName, statusPill, type StatusPill } from './status-pill';
 
+/**
+ * The status line: the icon and the flag part on the first line, the review state under them. The space
+ * between the two lines is not drawn (they are flex items), but it keeps "raised" and "Ready" apart in the
+ * text that assistive technology reads (see RowText).
+ */
 function StatusPillView({ pill }: { pill: StatusPill }) {
   return (
     <span className={`status-pill pill-${pill.kind}`} data-pill={pill.kind}>
-      <span className="pill-icon" aria-hidden="true">
-        {pill.icon}
-      </span>
-      <span className="pill-flags">{pill.flagText}</span>
+      <span className="pill-line">
+        <span className="pill-icon" aria-hidden="true">
+          {pill.icon}
+        </span>{' '}
+        <span className="pill-flags">{pill.flagText}</span>
+      </span>{' '}
       <span className="pill-review">{pill.reviewText}</span>
     </span>
   );
@@ -43,32 +52,43 @@ function Thumbnail({ item }: { item: InboxItem }) {
   );
 }
 
-function RowText({
-  item,
-  reader,
-  reviews,
-  verified,
-  referenceDate,
-}: {
-  item: InboxItem;
-  reader: ReaderName;
-  reviews: Readonly<Record<string, ReviewState>>;
-  verified: Readonly<Record<string, VerifiedRecord>>;
-  referenceDate: string;
-}) {
+/**
+ * A fax as a desktop icon: the pixel-art page frame around the fax's own thumbnail, with the coral
+ * "!" badge while flagged fields wait. The frame and the badge are aria-hidden; the thumbnail keeps
+ * its name.
+ */
+function DocIcon({ item, badge }: { item: InboxItem; badge: boolean }) {
+  return (
+    <span className="doc-icon">
+      <Thumbnail item={item} />
+      <DocFrame />
+      {badge && <FlagBadge />}
+    </span>
+  );
+}
+
+/**
+ * The label ("./fax-0003"), the received time and the status line under an icon. The spaces between the
+ * parts are not drawn (the parts are grid items, so the layout is the same), but they keep the words apart
+ * in the button's visible text as assistive technology and speech input read it ("fax-0003 Received",
+ * not "fax-0003Received"), so that text is part of the button's name (WCAG 2.5.3, label in name).
+ */
+function RowText({ item, pill, error }: { item: InboxItem; pill: StatusPill | null; error: string | null }) {
   return (
     <span className="row-text">
-      <span className="row-id">{item.entry.id}</span>
+      <span className="row-id">
+        <span className="row-id-path" aria-hidden="true">
+          ./
+        </span>
+        <span>{item.entry.id}</span>
+      </span>{' '}
       <span className="row-time">
         Received <time dateTime={item.entry.receivedAt}>{formatReceived(item.entry.receivedAt)}</time>
-      </span>
-      {item.fax.ok ? (
-        <>
-          <StatusPillView pill={statusPill(item.fax.value, reader, reviews, referenceDate, verified)} />
-        </>
-      ) : (
-        <span className="flag-line flag-on">
-          <span aria-hidden="true">⚠</span> Could not be read. {item.fax.error}
+      </span>{' '}
+      {pill && <StatusPillView pill={pill} />}
+      {error !== null && (
+        <span className="flag-line row-error">
+          <span aria-hidden="true">⚠</span> Could not be read. {error}
         </span>
       )}
     </span>
@@ -93,6 +113,10 @@ interface InboxProps {
   onRetry: () => void;
 }
 
+/**
+ * The inbox as a desktop: one icon button per fax in a grid. The reader in use is named in the
+ * taskbar (Taskbar.tsx). The "Inbox" heading stays for screen readers and is hidden on screen.
+ */
 export function Inbox({ items, total, reader, reviews, verified, referenceDate, focusId, arrivedId, onOpen, onIncoming, onRetry }: InboxProps) {
   // The last input on a row before its click: Enter or Space, or a pointer press.
   // A click with neither (for example from assistive technology) counts as keyboard.
@@ -112,8 +136,9 @@ export function Inbox({ items, total, reader, reviews, verified, referenceDate, 
 
   return (
     <section aria-labelledby="inbox-title" className="inbox">
-      <h2 id="inbox-title">Inbox</h2>
-      <p className="reader-name">{READER_LABEL[reader]}</p>
+      <h2 id="inbox-title" className="sr-only">
+        Inbox
+      </h2>
 
       {total === 0 && <p role="status">There are no sample faxes.</p>}
       {total > 0 && items.length === 0 && (
@@ -135,18 +160,30 @@ export function Inbox({ items, total, reader, reviews, verified, referenceDate, 
 
       {items.length > 0 && (
         <ul className="fax-list">
-          {items.map((item) => (
-            <li key={item.entry.id} className="fax-row">
-              {item.fax.ok ? (
+          {items.map((item) => {
+            if (!item.fax.ok) {
+              const error = item.fax.error;
+              return (
+                <li key={item.entry.id} className="fax-row">
+                  <div
+                    className="row-button row-failed"
+                    role="group"
+                    aria-label={rowAccessibleName(item.entry.id, item.entry.receivedAt, failedRowStatus(error))}
+                  >
+                    <DocIcon item={item} badge={false} />
+                    <RowText item={item} pill={null} error={error} />
+                  </div>
+                </li>
+              );
+            }
+            const pill = statusPill(item.fax.value, reader, reviews, referenceDate, verified);
+            return (
+              <li key={item.entry.id} className="fax-row">
                 <button
                   type="button"
                   className="row-button"
                   data-fax-id={item.entry.id}
-                  aria-label={rowAccessibleName(
-                    item.entry.id,
-                    item.entry.receivedAt,
-                    statusPill(item.fax.value, reader, reviews, referenceDate, verified).sentence,
-                  )}
+                  aria-label={rowAccessibleName(item.entry.id, item.entry.receivedAt, pill.sentence)}
                   onPointerDown={markPointer}
                   onMouseDown={markPointer}
                   onKeyDown={(event) => {
@@ -158,23 +195,16 @@ export function Inbox({ items, total, reader, reviews, verified, referenceDate, 
                     onOpen(item.entry.id, by);
                   }}
                 >
-                  <Thumbnail item={item} />
-                  <RowText item={item} reader={reader} reviews={reviews} verified={verified} referenceDate={referenceDate} />
+                  <DocIcon item={item} badge={flagsWaiting(pill)} />
+                  <RowText item={item} pill={pill} error={null} />
                 </button>
-              ) : (
-                <div
-                  className="row-button row-failed"
-                  role="group"
-                  aria-label={rowAccessibleName(item.entry.id, item.entry.receivedAt, failedRowStatus(item.fax.error))}
-                >
-                  <Thumbnail item={item} />
-                  <RowText item={item} reader={reader} reviews={reviews} verified={verified} referenceDate={referenceDate} />
-                </div>
-              )}
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
+
+      {items.length > 0 && <p className="desktop-hint">{DESKTOP_HINT}</p>}
 
       <div className="incoming">
         <button

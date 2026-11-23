@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { bootWanted, browserSession, rememberBooted, type SessionStore } from './boot';
+import { BootScreen } from './BootScreen';
 import { loadInbox, type InboxItem } from './data';
 import { downloadText } from './download';
 import { FaxView } from './FaxView';
 import { DEFAULT_READER, type ReaderName } from './flags';
 import { Inbox } from './Inbox';
 import type { OpenedBy } from './input-modality';
+import { Taskbar } from './Taskbar';
 import { initialVisibleCount, revealNext } from './inbox-state';
 import { SAMPLE_DATA_VERSION } from '../../src/samples/schema.js';
 import { buildVerifiedRecord, exportFileName, serialiseRecord, type VerifiedRecord } from './record';
@@ -40,14 +43,40 @@ interface AppProps {
   storage?: KeyValueStore | null;
   /** Saves a file. Default: a browser download. Tests pass their own. */
   download?: (fileName: string, text: string) => void;
+  /**
+   * Show the boot screen (BootScreen.tsx) once per browser session before the inbox. Default false,
+   * so tests and anything else that renders <App /> get the inbox directly; main.tsx turns it on for
+   * the site. Even when on, ?skipboot in the URL skips it. Read once, when the app first renders.
+   */
+  boot?: boolean;
+  /** Where "booted" is remembered for the session. Default: this browser's sessionStorage. null: nowhere (memory only). */
+  session?: SessionStore | null;
 }
 
 export const SYNTHETIC_BANNER_TEXT = 'Synthetic data. Demo only, no real patient information.';
 
 const systemClock = () => new Date();
 
-export function App({ now = systemClock, onReviewAction, onVerify, storage: storageProp, download = downloadText }: AppProps = {}) {
+export function App({
+  now = systemClock,
+  onReviewAction,
+  onVerify,
+  storage: storageProp,
+  download = downloadText,
+  boot = false,
+  session: sessionProp,
+}: AppProps = {}) {
   const [storage] = useState(() => new ReviewStorage(storageProp === undefined ? browserStore() : storageProp));
+  const [session] = useState(() => (sessionProp === undefined ? browserSession() : sessionProp));
+  // The boot screen, while it shows. The data loads behind it.
+  const [booting, setBooting] = useState(() => boot && bootWanted(window.location.search, session));
+  // Set when the boot screen is left: the first fax icon then takes focus when the inbox appears.
+  const [focusFirstFax, setFocusFirstFax] = useState(false);
+  const finishBoot = useCallback(() => {
+    rememberBooted(session);
+    setBooting(false);
+    setFocusFirstFax(true);
+  }, [session]);
   const [kept, setKept] = useState(storage.ok);
   const [notices, setNotices] = useState<string[]>([]);
   // Keys of stale saved progress. Removed in an effect, after the note has been rendered.
@@ -135,21 +164,40 @@ export function App({ now = systemClock, onReviewAction, onVerify, storage: stor
   }, [attempt, storage]);
 
   // Runs after the commit that shows the note. If removal fails, the page carries on; the note
-  // is already in `notices`, so it is not added again in this session.
+  // is already in `notices`, so it is not added again in this session. The boot screen shows no notes,
+  // so the removal waits until the boot screen is gone and the note is on screen.
   useEffect(() => {
-    if (toDiscard.length === 0 || load.state !== 'ready') return;
+    if (booting || toDiscard.length === 0 || load.state !== 'ready') return;
     storage.discardKeys(toDiscard);
     setToDiscard([]);
-  }, [toDiscard, load.state, storage]);
+  }, [booting, toDiscard, load.state, storage]);
 
   function retry() {
     setLoad({ state: 'loading' });
     setAttempt((n) => n + 1);
   }
 
+  const banner = (
+    <div className="synthetic-banner" role="region" aria-label="Synthetic data notice">
+      {SYNTHETIC_BANNER_TEXT}
+    </div>
+  );
+
+  // The boot screen comes first, with the Synthetic data notice still at the very top.
+  if (booting) {
+    return (
+      <>
+        {banner}
+        <BootScreen loading={load.state === 'loading'} onContinue={finishBoot} />
+      </>
+    );
+  }
+
   let screen;
   // The fax screen has a compact header: the wordmark and tagline are hidden by CSS (see .page-header-review).
+  // Every other screen is the amber desktop: the wordmark at the bottom right, and on the inbox a taskbar.
   let reviewing = false;
+  let taskbar = null;
   if (load.state === 'loading') {
     screen = <p role="status">Loading the sample faxes…</p>;
   } else if (load.state === 'error') {
@@ -198,7 +246,7 @@ export function App({ now = systemClock, onReviewAction, onVerify, storage: stor
           reviews={reviews}
           verified={verified}
           referenceDate={referenceDate}
-          focusId={returnFocusId}
+          focusId={returnFocusId ?? (focusFirstFax ? (shown.find((item) => item.fax.ok)?.entry.id ?? null) : null)}
           arrivedId={arrivedId}
           onOpen={(id, by) => {
             setOpenedBy(by);
@@ -212,6 +260,9 @@ export function App({ now = systemClock, onReviewAction, onVerify, storage: stor
           onRetry={retry}
         />
       );
+      taskbar = (
+        <Taskbar items={shown} reader={reader} reviews={reviews} verified={verified} referenceDate={referenceDate} />
+      );
     }
   }
 
@@ -219,16 +270,14 @@ export function App({ now = systemClock, onReviewAction, onVerify, storage: stor
 
   return (
     <>
-      <div className="synthetic-banner" role="region" aria-label="Synthetic data notice">
-        {SYNTHETIC_BANNER_TEXT}
-      </div>
-      <header className={reviewing ? 'page-header page-header-review' : 'page-header'}>
+      {banner}
+      <header className={reviewing ? 'page-header page-header-review' : 'page-header page-header-desktop'}>
         <h1>Facsimortis</h1>
         <p>
           A demo that turns faxed referrals into checked records. It is built on synthetic data only.
         </p>
       </header>
-      <main className={openId !== null && load.state === 'ready' ? 'page-main page-main-wide' : 'page-main'}>
+      <main className={reviewing ? 'page-main page-main-wide' : 'page-main page-main-desktop'}>
         {notes.length > 0 && (
           <div className="app-notes" role="status">
             {notes.map((note) => (
@@ -240,6 +289,7 @@ export function App({ now = systemClock, onReviewAction, onVerify, storage: stor
         )}
         {screen}
       </main>
+      {taskbar}
     </>
   );
 }

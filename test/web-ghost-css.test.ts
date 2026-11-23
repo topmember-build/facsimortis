@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const css = readFileSync(resolve(__dirname, '..', 'web', 'src', 'styles.css'), 'utf8').replace(/\r\n/g, '\n');
+const theme = readFileSync(resolve(__dirname, '..', 'web', 'src', 'theme.css'), 'utf8').replace(/\r\n/g, '\n');
 
 function rule(prelude: string): string {
   const start = css.indexOf(`${prelude} {`);
@@ -21,7 +22,7 @@ function contrast(a: string, b: string): number {
   const [x, y] = [luminance(a), luminance(b)];
   return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
 }
-const variable = (name: string) => new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`).exec(css)![1]!;
+const variable = (name: string, source = css) => new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`).exec(source)![1]!;
 
 describe('styles.css: source highlight', () => {
   it('uses a thick, non-scaling outline when selected and a thinner one when quiet', () => {
@@ -47,10 +48,15 @@ describe('styles.css: source highlight', () => {
   it('keeps the outline colour at 3:1 or better against white and the dark background', () => {
     const edge = variable('--ghost-edge');
     expect(contrast(edge, '#ffffff')).toBeGreaterThanOrEqual(3);
-    expect(contrast(edge, variable('--bg'))).toBeGreaterThanOrEqual(3);
+    // The page background is --bg, which theme.css sets as an alias of --ground.
+    expect(contrast(edge, variable('--ground', theme))).toBeGreaterThanOrEqual(3);
   });
 
-  it('uses the ghost variables only in ghost rules', () => {
+  it('uses the ghost variables only in ghost rules, plus the named "Laid to rest" status', () => {
+    // Named exceptions, by class: they may use --ghost, never --ghost-edge. The quiet teal "Laid to rest"
+    // status in the inbox (R2b), the "Read cleanly" section heading in the field column (R4b) and the teal
+    // accent line of the Laid to rest panel (R5a).
+    const named = ['.pill-laid-to-rest', '.field-section-title-clean', '.laid-to-rest'];
     const lines = css.split('\n');
     let selector = '';
     let inComment = false;
@@ -59,7 +65,9 @@ describe('styles.css: source highlight', () => {
       if (!inComment) {
         if (/\{\s*$/.test(line)) selector = line.trim();
         if (/var\(--ghost(-edge)?\)/.test(line)) {
-          expect(selector, line).toMatch(/\.ghost/);
+          const ghostRule = /\.ghost/.test(selector);
+          const namedRule = named.includes(selector.split(/[\s,:{]/)[0]!) && !/--ghost-edge/.test(line);
+          expect(ghostRule || namedRule, `${line.trim()} in ${selector}`).toBe(true);
         }
       }
       if (line.includes('*/')) inComment = false;

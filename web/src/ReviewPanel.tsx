@@ -285,7 +285,7 @@ export function ReviewPanel(props: ReviewPanelProps) {
   return (
     <div ref={props.panelRef} className="review-panel">
       <div className="field-section" data-section="needs-your-eyes">
-        <h3 id={flaggedId} className="field-section-title">
+        <h3 id={flaggedId} className="field-section-title field-section-title-flagged">
           {NEEDS_EYES_HEADING}
         </h3>
         {flagged.length > 0 ? (
@@ -297,7 +297,7 @@ export function ReviewPanel(props: ReviewPanelProps) {
         )}
       </div>
       <div className="field-section" data-section="read-cleanly">
-        <h3 id={cleanId} className="field-section-title">
+        <h3 id={cleanId} className="field-section-title field-section-title-clean">
           {READ_CLEANLY_HEADING}
         </h3>
         <p className="field-section-note">{READ_CLEANLY_NOTE}</p>
@@ -319,7 +319,10 @@ export function LaidToRest({ record, onDownload }: { record: VerifiedRecord; onD
   const despite = record.fields.filter((field) => field.acceptedDespiteFlag);
   return (
     <div className="laid-to-rest" data-laid-to-rest="true">
-      <h3 className="rest-title">{LAID_TO_REST}</h3>
+      {/* tabIndex -1: focusable by code (Verify moves focus here) but not a Tab stop. */}
+      <h3 className="rest-title" tabIndex={-1}>
+        {LAID_TO_REST}
+      </h3>
       <p>{verifiedLine(record.verifiedAtUtc)}</p>
       <p className="rest-note">Verifier: {record.verifier}. This is a fixed demo label; there are no accounts.</p>
       <ul className="rest-summary" aria-label="Summary of this review" data-summary="true">
@@ -341,7 +344,7 @@ export function LaidToRest({ record, onDownload }: { record: VerifiedRecord; onD
           ))}
         </ul>
       )}
-      <button type="button" className="button button-strong" data-download="true" onClick={onDownload}>
+      <button type="button" className="button button-download" data-download="true" onClick={onDownload}>
         Download JSON
       </button>
       <p className="rest-note">The record and its edit history are kept only in this browser.</p>

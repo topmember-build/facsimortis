@@ -1,18 +1,10 @@
-/* Theme tokens, self-hosted fonts and base typography (design brief "Reading Desk").
-   Imported before styles.css. Font files live in web/public/fonts (see SOURCES.md there);
-   the site makes no third-party requests. url('/fonts/...') is a public-dir path: Vite
-   prefixes it with the build base (SITE_BASE, or a relative path by default). */
+/* Theme tokens, self-hosted fonts and base typography (design brief "Amber Desk", docs/design-brief-amber.md).
+   Imported before styles.css. The brief's colour tokens are set here and nowhere else: styles.css loads
+   second, so a value set again there would silently win. Font files live in web/public/fonts (see
+   SOURCES.md there); the site makes no third-party requests. url('/fonts/...') is a public-dir path:
+   Vite prefixes it with the build base (SITE_BASE, or a relative path by default). */
 
 /* Latin subset, as in the Fontsource CSS. Anything outside it falls back to the stacks below. */
-@font-face {
-  font-family: 'Instrument Serif';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('/fonts/instrument-serif/instrument-serif-latin-400-normal.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
 @font-face {
   font-family: 'Inter Tight';
   font-style: normal;
@@ -58,33 +50,80 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-/* Contrast (WCAG), text and non-text, against --ground (#0d1015), --panel (#151a22) and --panel-raised (#171c24):
-   --text #e8e6df 15.3, 14.0, 13.7. --text-muted #9aa4b2 7.6, 6.9, 6.8.
-   --flag-text #ffc772 12.4, 11.4, 11.1. --flag #ffb347 10.7, 9.8, 9.6.
-   --ghost #6fd3c0 10.7, 9.8, 9.6. --focus #ffffff 19.1, 17.5, 17.1.
-   --ghost-edge #1f6fb5 3.6, 3.3, 3.3 (non-text, needs 3:1) and 5.25 on white.
-   --edge #8a94aa (borders of controls) 6.3, 5.7, 5.6. --paper-ink #1d1c1a on --paper #e8e4d6 13.4.
-   --line #262d38 is 1.2 to 1.4 against the surfaces: it is for decorative dividers only, never
+/* Pixelify Sans (Amber Desk brief) is for the pixel-font roles only: wordmark, window titles, icon
+   labels, section headings, the Verify and primary button labels, the taskbar clock. Never for body
+   text, values or anything under 16px. */
+@font-face {
+  font-family: 'Pixelify Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/pixelify-sans/pixelify-sans-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Pixelify Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/pixelify-sans/pixelify-sans-latin-600-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Pixelify Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/pixelify-sans/pixelify-sans-latin-700-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Contrast (WCAG), text and non-text, against --ground (#141414), --panel (#181512) and --panel-raised (#1d1812):
+   --text #fff3dc 16.76, 16.54, 16.03. --text-muted #9aa4b2 7.31, 7.21, 6.99.
+   --flag-text #ff9a8d 9.00, 8.88, 8.61. --flag #ff6a5c 6.55, 6.47, 6.27.
+   --ghost #6fd3c0 10.31, 10.18, 9.86. --focus #ffffff 18.42, 18.18, 17.62.
+   --ghost-edge #1f6fb5 3.51, 3.46, 3.36 (non-text, needs 3:1) and 5.25 on white.
+   --edge #8a94aa (borders of controls) 6.05, 5.97, 5.79. --paper-ink #1d1c1a on --paper #e8e4d6 13.38.
+   The panels are close to the ground in lightness (--panel 1.01, --panel-raised 1.05), so a card shows
+   by its border and its warmer tone, not by contrast.
+   --flag-edge #8a2b20 is the dashed outline of flagged words, on the paper only: 6.02 on the sheet
+   (#ddd8c8), 6.74 on --paper and 8.58 on white, or 5.04, 5.55 and 6.81 at the 0.9 opacity of an
+   unselected outline. On the dark surfaces it is 2.23 or less, so it is never used there. On the
+   sheet --flag is 1.97 and --flag-text 1.44, so neither carries meaning on the paper.
+   --line #262d38 is 1.27 to 1.33 against the surfaces: it is for decorative dividers only, never
    for the border of a control (those use --edge, which needs 3:1). */
 :root {
-  --ground: #0d1015;
-  --panel: #151a22;
-  --panel-raised: #171c24;
+  --ground: #141414;
+  --panel: #181512;
+  --panel-raised: #1d1812;
   --line: #262d38;
-  --text: #e8e6df;
+  --text: #fff3dc;
   --text-muted: #9aa4b2;
   --ghost: #6fd3c0;
-  --flag: #ffb347;
-  --flag-text: #ffc772;
+  --flag: #ff6a5c;
+  --flag-text: #ff9a8d;
+  --flag-edge: #8a2b20;
   --paper: #e8e4d6;
   --paper-ink: #1d1c1a;
+
+  /* Amber interface colours. Contrast against --ground, --panel and --taskbar: --amber 9.35, 9.23, 9.73.
+     --amber-dim 6.28, 6.19, 6.53. --amber-soft 9.88, 9.75, 10.28. --amber-border 1.89, 1.87, 1.97: like
+     --line, it is for decorative borders only, never for the border of a control. --taskbar is a surface
+     (the taskbar background). */
+  --amber: #f6a93b;
+  --amber-dim: #c98a2b;
+  --amber-soft: #e9b565;
+  --amber-border: #5a3f14;
+  --taskbar: #05101a;
 
   /* Old names, kept as aliases so styles.css keeps working. */
   --bg: var(--ground);
   --muted: var(--text-muted);
   --border: var(--line);
 
-  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-display: 'Pixelify Sans', ui-monospace, monospace;
   --font-ui: 'Inter Tight', system-ui, sans-serif;
   --font-data: 'IBM Plex Mono', ui-monospace, monospace;
 }
@@ -95,16 +134,50 @@
   font-weight: 400;
 }
 
-/* App title (wordmark). */
+/* App title (wordmark): Pixelify Sans, large. styles.css places it at the bottom right of the desktop. */
 .page-header h1 {
   font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 1.875rem;
-  line-height: 1.2;
+  font-weight: 700;
+  font-size: clamp(2.75rem, 9.6vw, 8.5rem);
+  line-height: 1;
+}
+
+/* The other pixel-font roles: desktop icon labels and the taskbar clock. Never body text, values or
+   anything under 16px; styles.css sets both at 1.125rem. */
+.row-id,
+.taskbar-clock {
+  font-family: var(--font-display);
+}
+
+/* The review window's title bar, at 18px (styles.css). */
+.fax-title-row {
+  font-family: var(--font-display);
+}
+
+/* The field column's two section headings (20px) and the Verify record label (18px, the .button rule in
+   styles.css sets `font: inherit`, so this one is more specific). Never under 16px. */
+.field-section-title {
+  font-family: var(--font-display);
+}
+
+.button.button-primary {
+  font-family: var(--font-display);
+}
+
+/* The Laid to rest panel (R5a): its heading (20px) and the Download JSON label (18px). */
+.rest-title,
+.button.button-download {
+  font-family: var(--font-display);
+}
+
+/* Boot screen: the wordmark, the prompt and the Receive faxes label, all 20px or more (styles.css). */
+.boot-wordmark,
+.boot-prompt,
+.boot-button {
+  font-family: var(--font-display);
 }
 
 /* IDs, values, times and confidence numbers. */
-.row-id,
 .row-time,
 .summary-id,
 .summary-value,

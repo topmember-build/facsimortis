@@ -58,6 +58,11 @@ const READER_CHOICES: { name: ReaderName; label: string }[] = [
 /** The one visible caption for the highlight. */
 export const HIGHLIGHT_CAPTION = 'The highlight shows where the page value was read.';
 
+/** What every sample fax is. The window's title bar reads "<id> — referral". */
+export const WINDOW_TITLE_KIND = 'referral';
+/** Once the record is verified the title bar reads "<id> — laid to rest" (the status line says "Laid to rest"). */
+export const WINDOW_TITLE_KIND_VERIFIED = LAID_TO_REST.toLowerCase();
+
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 
 function usePrefersReducedMotion(): boolean {
@@ -80,7 +85,7 @@ interface Selection {
   count: number;
 }
 
-type FocusTarget = { kind: 'accept' | 'edit'; field: FieldName } | { kind: 'verify' } | { kind: 'download' };
+type FocusTarget = { kind: 'accept' | 'edit'; field: FieldName } | { kind: 'verify' } | { kind: 'laid-to-rest' };
 
 function selectionLine(fields: readonly Field[], selection: Selection | null, review: ReviewState): string {
   const field = selection ? fields.find((f) => f.name === selection.name) : undefined;
@@ -151,8 +156,8 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
     const selector =
       pendingFocus.kind === 'verify'
         ? '[data-verify]'
-        : pendingFocus.kind === 'download'
-          ? '[data-download]'
+        : pendingFocus.kind === 'laid-to-rest'
+          ? '.laid-to-rest .rest-title'
           : pendingFocus.kind === 'accept'
           ? `[data-accept="${pendingFocus.field}"]`
           : `[data-edit="${pendingFocus.field}"]`;
@@ -231,8 +236,10 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
     setEditing(null);
     setNoChange(null);
     onVerify();
+    // The announcement goes through the live region; focus moves to the Laid to rest heading (Verify record is
+    // gone), and the next Tab stop after it is Download JSON.
     setAnnouncement('Record laid to rest. It is now read-only. Download JSON is available.');
-    setPendingFocus({ kind: 'download' });
+    setPendingFocus({ kind: 'laid-to-rest' });
   }
 
   function cancel(name: FieldName) {
@@ -258,12 +265,31 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
   const box = viewerBox(crop, fax, ghostRects(selectedField, fax.ocr.words), showFullPage);
 
   return (
-    <section aria-labelledby="fax-title" className="fax-view" ref={root}>
+    // data-state: the stylesheet fades the coral emphasis into the quiet state when it becomes "laid-to-rest".
+    <section aria-labelledby="fax-title" className="fax-view" data-state={verified ? 'laid-to-rest' : undefined} ref={root}>
+      {/* Close window does what Back to inbox does, nothing else. It comes first in the DOM, before Back to
+          inbox, so every other control keeps its place in the tab order: from the heading, Tab still goes to
+          the reader toggle and Shift+Tab to Back to inbox, and the summary bar stays last so that Verify
+          follows the fields. CSS puts both buttons at the right end of the title bar, Back to inbox then
+          Close window, as in docs/design/amber-review.png. */}
+      {/* The glyphs ("x" here, "<" on Back to inbox) are drawn by CSS in the pixel font, so the title bar
+          adds no SVG: the fax image stays the first SVG on the screen. */}
+      <button type="button" className="window-button window-close" aria-label="Close window" onClick={onBack}>
+        <span className="window-button-face" aria-hidden="true" />
+        <span className="sr-only">Close window</span>
+      </button>
+
+      {/* The window (R4a). Its title bar is the first line of this header: the title, with Back to inbox
+          placed by CSS at the right end next to Close window. The second line holds the reader line and the
+          toggle, directly under the title bar, at the top of the summary panel. */}
       <div className="fax-header">
-        <button type="button" className="button back-button" onClick={onBack}>
-          Back to inbox
+        <button type="button" className="window-button back-button" aria-label="Back to inbox" onClick={onBack}>
+          <span className="window-button-face" aria-hidden="true" />
+          {/* The words stay in the button: they show if the stylesheet fails to load. */}
+          <span className="sr-only">Back to inbox</span>
         </button>
         <div className="fax-title-row">
+          {/* The heading still reads "Fax <id>" to screen readers; on screen the title reads "<id> — referral". */}
           <h2
             id="fax-title"
             className="fax-heading"
@@ -271,8 +297,12 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
             tabIndex={-1}
             ref={heading}
           >
-            Fax {item.entry.id}
+            {/* The space stays outside the hidden word, so the name is "Fax <id>" and nothing is drawn before the id. */}
+            <span className="sr-only">Fax</span> {item.entry.id}
           </h2>
+          <span className="fax-title-kind" aria-hidden="true">
+            — {verified ? WINDOW_TITLE_KIND_VERIFIED : WINDOW_TITLE_KIND}
+          </span>
         </div>
         <p className="reader-name">{READER_LABEL[reader]}</p>
         <div role="group" aria-label="Which reader to show" className="reader-toggle">

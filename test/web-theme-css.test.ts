@@ -8,17 +8,22 @@ const css = readFileSync(resolve(root, 'web', 'src', 'theme.css'), 'utf8').repla
 const fontsDir = resolve(root, 'web', 'public', 'fonts');
 
 const BRIEF_TOKENS: Record<string, string> = {
-  '--ground': '#0d1015',
-  '--panel': '#151a22',
-  '--panel-raised': '#171c24',
+  '--ground': '#141414',
+  '--panel': '#181512',
+  '--panel-raised': '#1d1812',
   '--line': '#262d38',
-  '--text': '#e8e6df',
+  '--text': '#fff3dc',
   '--text-muted': '#9aa4b2',
   '--ghost': '#6fd3c0',
-  '--flag': '#ffb347',
-  '--flag-text': '#ffc772',
+  '--flag': '#ff6a5c',
+  '--flag-text': '#ff9a8d',
   '--paper': '#e8e4d6',
   '--paper-ink': '#1d1c1a',
+  '--amber': '#f6a93b',
+  '--amber-dim': '#c98a2b',
+  '--amber-soft': '#e9b565',
+  '--amber-border': '#5a3f14',
+  '--taskbar': '#05101a',
 };
 
 const fontFaces = [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((m) => m[1]!);
@@ -41,8 +46,8 @@ describe('theme.css tokens', () => {
 });
 
 describe('theme.css fonts', () => {
-  it('declares six faces, each with swap and a woff2 url under /fonts/', () => {
-    expect(fontFaces).toHaveLength(6);
+  it('declares eight faces, each with swap and a woff2 url under /fonts/', () => {
+    expect(fontFaces).toHaveLength(8);
     for (const face of fontFaces) {
       expect(face).toMatch(/font-display:\s*swap/);
       expect(face).toMatch(/url\('\/fonts\/[a-z-]+\/[a-z0-9-]+\.woff2'\)\s*format\('woff2'\)/);

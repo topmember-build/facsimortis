@@ -60,12 +60,12 @@ describe('field column rules in styles.css', () => {
     expect(rule(css, '.selected-tag')).toMatch(/font-weight:\s*600/);
   });
 
-  it('fills Edit with a neutral colour that has AA contrast and is neither flag, ghost nor primary', () => {
+  it('fills Edit with amber and dark text that have AA contrast, and is neither flag, ghost nor primary', () => {
     const fill = rule(css, '.button.button-fill');
-    expect(fill).toMatch(/background:\s*var\(--text\)/);
+    expect(fill).toMatch(/background:\s*var\(--amber\)/);
     expect(fill).toMatch(/color:\s*var\(--ground\)/);
     expect(fill).not.toMatch(/--flag|--ghost|--primary/);
-    expect(contrast(hexOf('--text'), hexOf('--ground'))).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(hexOf('--amber'), hexOf('--ground'))).toBeGreaterThanOrEqual(4.5);
     expect(css).not.toMatch(/\.button-primary[^{]*button-fill|button-fill[^{]*button-primary/);
   });
 });
