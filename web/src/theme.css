@@ -154,6 +154,16 @@
   font-family: var(--font-display);
 }
 
+/* The field column's two section headings (20px) and the Verify record label (18px, the .button rule in
+   styles.css sets `font: inherit`, so this one is more specific). Never under 16px. */
+.field-section-title {
+  font-family: var(--font-display);
+}
+
+.button.button-primary {
+  font-family: var(--font-display);
+}
+
 /* Boot screen: the wordmark, the prompt and the Receive faxes label, all 20px or more (styles.css). */
 .boot-wordmark,
 .boot-prompt,

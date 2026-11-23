@@ -19,7 +19,7 @@ describe('top bar rules in the stylesheets', () => {
     const min = /min-height:\s*([\d.]+)rem/.exec(primary);
     expect(Number(min![1])).toBeGreaterThanOrEqual(2.75);
     expect(primary).toMatch(/--primary-fill:\s*transparent/);
-    expect(primary).toMatch(/border:\s*2px solid var\(--text\)/);
+    expect(primary).toMatch(/border:\s*2px solid var\(--amber\)/);
   });
 
   it('marks the aria-disabled Verify record with more than colour', () => {

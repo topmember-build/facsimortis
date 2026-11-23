@@ -285,7 +285,7 @@ export function ReviewPanel(props: ReviewPanelProps) {
   return (
     <div ref={props.panelRef} className="review-panel">
       <div className="field-section" data-section="needs-your-eyes">
-        <h3 id={flaggedId} className="field-section-title">
+        <h3 id={flaggedId} className="field-section-title field-section-title-flagged">
           {NEEDS_EYES_HEADING}
         </h3>
         {flagged.length > 0 ? (
@@ -297,7 +297,7 @@ export function ReviewPanel(props: ReviewPanelProps) {
         )}
       </div>
       <div className="field-section" data-section="read-cleanly">
-        <h3 id={cleanId} className="field-section-title">
+        <h3 id={cleanId} className="field-section-title field-section-title-clean">
           {READ_CLEANLY_HEADING}
         </h3>
         <p className="field-section-note">{READ_CLEANLY_NOTE}</p>
