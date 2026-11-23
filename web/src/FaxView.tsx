@@ -85,7 +85,7 @@ interface Selection {
   count: number;
 }
 
-type FocusTarget = { kind: 'accept' | 'edit'; field: FieldName } | { kind: 'verify' } | { kind: 'download' };
+type FocusTarget = { kind: 'accept' | 'edit'; field: FieldName } | { kind: 'verify' } | { kind: 'laid-to-rest' };
 
 function selectionLine(fields: readonly Field[], selection: Selection | null, review: ReviewState): string {
   const field = selection ? fields.find((f) => f.name === selection.name) : undefined;
@@ -156,8 +156,8 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
     const selector =
       pendingFocus.kind === 'verify'
         ? '[data-verify]'
-        : pendingFocus.kind === 'download'
-          ? '[data-download]'
+        : pendingFocus.kind === 'laid-to-rest'
+          ? '.laid-to-rest .rest-title'
           : pendingFocus.kind === 'accept'
           ? `[data-accept="${pendingFocus.field}"]`
           : `[data-edit="${pendingFocus.field}"]`;
@@ -236,8 +236,10 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
     setEditing(null);
     setNoChange(null);
     onVerify();
+    // The announcement goes through the live region; focus moves to the Laid to rest heading (Verify record is
+    // gone), and the next Tab stop after it is Download JSON.
     setAnnouncement('Record laid to rest. It is now read-only. Download JSON is available.');
-    setPendingFocus({ kind: 'download' });
+    setPendingFocus({ kind: 'laid-to-rest' });
   }
 
   function cancel(name: FieldName) {

@@ -319,7 +319,10 @@ export function LaidToRest({ record, onDownload }: { record: VerifiedRecord; onD
   const despite = record.fields.filter((field) => field.acceptedDespiteFlag);
   return (
     <div className="laid-to-rest" data-laid-to-rest="true">
-      <h3 className="rest-title">{LAID_TO_REST}</h3>
+      {/* tabIndex -1: focusable by code (Verify moves focus here) but not a Tab stop. */}
+      <h3 className="rest-title" tabIndex={-1}>
+        {LAID_TO_REST}
+      </h3>
       <p>{verifiedLine(record.verifiedAtUtc)}</p>
       <p className="rest-note">Verifier: {record.verifier}. This is a fixed demo label; there are no accounts.</p>
       <ul className="rest-summary" aria-label="Summary of this review" data-summary="true">
