@@ -1328,6 +1328,108 @@ button.row-button:hover {
   }
 }
 
+/* Boot screen (R3): shown once per browser session before the inbox, below the Synthetic data notice.
+   Plain --ground with amber text; the one glow is on the wordmark. Contrast on --ground: --amber 9.35
+   (wordmark, handshake lines, prompt, button label and outline), --amber-dim 6.28 ("Receiving fax…");
+   on the button's hover fill (--panel) --amber is 9.23. The pixel font (theme.css) is 20px and up here. */
+.boot-screen {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 2rem 1.25rem 3rem;
+  color: var(--amber);
+  text-align: center;
+}
+
+.boot-wordmark {
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+  font-size: clamp(3rem, 9vw, 6.5rem);
+  line-height: 0.85;
+  color: var(--amber);
+  /* The one glow on this screen (Amber Desk brief: glow on the wordmark only). */
+  text-shadow: 0 0 1.25rem rgb(246 169 59 / 0.35);
+}
+
+/* The handshake: three lines in IBM Plex Mono, left-aligned as in a terminal. All three are in the page
+   from the start and visible by default; only this animation hides each one until its turn (fill-mode
+   both), 0.5s apart, so the last one is in by about 1.5s. Under reduced motion the global rule at the
+   end of this file removes every animation, so all three show at once, with no typing or blinking. */
+.boot-log {
+  display: grid;
+  justify-items: start;
+  gap: 0.25rem;
+  min-width: 12rem;
+  font-family: var(--font-data);
+  font-size: 1rem;
+  text-align: left;
+}
+
+.boot-line {
+  margin: 0;
+  animation: boot-line-in 200ms ease-out both;
+}
+
+.boot-line:nth-child(1) {
+  animation-delay: 250ms;
+}
+
+.boot-line:nth-child(2) {
+  animation-delay: 750ms;
+}
+
+.boot-line:nth-child(3) {
+  animation-delay: 1250ms;
+}
+
+@keyframes boot-line-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* "Receiving fax…" (role="status"). Always in the page with a fixed height, so nothing moves when the
+   words appear. */
+.boot-status {
+  min-height: 1.5rem;
+  margin: 0;
+  font-family: var(--font-data);
+  font-size: 1rem;
+  color: var(--amber-dim);
+}
+
+/* On narrow screens the line breaks into two even halves, not one word on its own. */
+.boot-prompt {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+/* Receive faxes: a real button with focus when the screen appears; amber outline, pixel-font label,
+   44px or more high. */
+.boot-button {
+  min-height: 2.75rem;
+  padding: 0.5rem 1.5rem;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  color: var(--amber);
+  background: transparent;
+  border: 2px solid var(--amber);
+  cursor: pointer;
+}
+
+.boot-button:hover {
+  background: var(--panel);
+}
+
 /* Phone width: the icons wrap three per row, and the wordmark with its line sits above the taskbar. */
 @media (max-width: 36rem) {
   .page-main.page-main-desktop {
@@ -1407,7 +1509,8 @@ button.row-button:hover {
 }
 
 /* Very short windows (under 480px, for example a phone held sideways, or 200% zoom on a laptop): the
-   taskbar goes back into the page flow after the wordmark, so it never covers a large part of the screen. */
+   taskbar goes back into the page flow after the wordmark, so it never covers a large part of the screen,
+   and the boot screen's parts sit closer together, so Receive faxes stays on screen. */
 @media (max-height: 30rem) {
   .taskbar {
     position: static;
@@ -1419,6 +1522,12 @@ button.row-button:hover {
 
   html {
     scroll-padding-bottom: 0;
+  }
+
+  .boot-screen {
+    gap: 0.75rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {

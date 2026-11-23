@@ -149,6 +149,13 @@
   font-family: var(--font-display);
 }
 
+/* Boot screen: the wordmark, the prompt and the Receive faxes label, all 20px or more (styles.css). */
+.boot-wordmark,
+.boot-prompt,
+.boot-button {
+  font-family: var(--font-display);
+}
+
 /* IDs, values, times and confidence numbers. */
 .row-time,
 .summary-id,
