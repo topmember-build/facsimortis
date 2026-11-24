@@ -6,6 +6,10 @@ import { App } from './App';
 import type { ReviewAction } from './review-state';
 import { NPI_FLAG as VALIDATOR_NPI_FLAG } from '../../src/validators/messages.js';
 import { committedIndex, json, stubSite } from './test-site';
+import { SLOW_TEST_TIMEOUT } from './test-timeout';
+
+// T1: this file renders the whole app or runs axe, which is slow on a busy machine. One shared limit: ./test-timeout.
+vi.setConfig({ testTimeout: SLOW_TEST_TIMEOUT });
 
 type UserApi = ReturnType<typeof userEvent.setup>;
 

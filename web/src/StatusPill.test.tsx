@@ -6,6 +6,10 @@ import { App } from './App';
 import { MemoryStore } from './storage';
 import { committedFaxes, json, stubSite } from './test-site';
 import { NO_SAVED_ANSWER_MESSAGE } from '../../src/samples/schema.js';
+import { SLOW_TEST_TIMEOUT } from './test-timeout';
+
+// T1: this file renders the whole app or runs axe, which is slow on a busy machine. One shared limit: ./test-timeout.
+vi.setConfig({ testTimeout: SLOW_TEST_TIMEOUT });
 
 type UserApi = ReturnType<typeof userEvent.setup>;
 

@@ -6,6 +6,10 @@ import { NO_SAVED_ANSWER_MESSAGE } from '../../src/samples/schema.js';
 import { App } from './App';
 import { MemoryStore } from './storage';
 import { committedFaxes, json, stubSite } from './test-site';
+import { SLOW_TEST_TIMEOUT } from './test-timeout';
+
+// T1: this file renders the whole app or runs axe, which is slow on a busy machine. One shared limit: ./test-timeout.
+vi.setConfig({ testTimeout: SLOW_TEST_TIMEOUT });
 
 // R2: the inbox as an amber desktop. jsdom has no layout, so these check structure, names and order;
 // the stylesheet rules are checked in test/web-desktop-css.test.ts.

@@ -1,11 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { NO_SAVED_ANSWER_MESSAGE, SampleFaxSchema } from '../../src/samples/schema.js';
 import { App } from './App';
 import { boxContains, cropBox, fullPageBox, viewBoxAttr } from './crop';
 import { ghostRects } from './ghost';
 import { committedFaxes, json, stubSite, type Overrides } from './test-site';
+import { SLOW_TEST_TIMEOUT } from './test-timeout';
+
+// T1: this file renders the whole app or runs axe, which is slow on a busy machine. One shared limit: ./test-timeout.
+vi.setConfig({ testTimeout: SLOW_TEST_TIMEOUT });
 
 type UserApi = ReturnType<typeof userEvent.setup>;
 

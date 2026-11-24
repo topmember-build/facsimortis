@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import axe from 'axe-core';
 import fc from 'fast-check';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { FIELD_ORDER, type FieldName } from '../../src/extract/schema.js';
 import { SAMPLE_DATA_VERSION, SampleFaxSchema, type SampleFax } from '../../src/samples/schema.js';
 import { NPI_FLAG } from '../../src/validators/messages.js';
@@ -21,6 +21,10 @@ import {
 } from './review-state';
 import { MemoryStore } from './storage';
 import { committedFaxes, stubSite } from './test-site';
+import { SLOW_TEST_TIMEOUT } from './test-timeout';
+
+// T1: this file renders the whole app or runs axe, which is slow on a busy machine. One shared limit: ./test-timeout.
+vi.setConfig({ testTimeout: SLOW_TEST_TIMEOUT });
 
 const fax3: SampleFax = SampleFaxSchema.parse(committedFaxes['fax-0003.json']);
 const REF = '2026-10-01';

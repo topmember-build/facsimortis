@@ -7,6 +7,10 @@ import { downloadText } from './download';
 import { VerifiedRecordSchema, type VerifiedRecord } from './record';
 import { CORRUPT_NOTE, MemoryStore, NOT_KEPT_NOTE, STALE_NOTE, entryKey, type KeyValueStore } from './storage';
 import { committedFaxes, committedIndex, json, stubSite } from './test-site';
+import { SLOW_TEST_TIMEOUT } from './test-timeout';
+
+// T1: this file renders the whole app or runs axe, which is slow on a busy machine. One shared limit: ./test-timeout.
+vi.setConfig({ testTimeout: SLOW_TEST_TIMEOUT });
 
 type UserApi = ReturnType<typeof userEvent.setup>;
 
