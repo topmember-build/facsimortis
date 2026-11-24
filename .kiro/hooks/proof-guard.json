@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Proof guard",
+      "trigger": "PostFileSave",
+      "description": "After saving extractor, OCR, validator or fax generator code, runs the recorded-reader proof and reports the hard gate.",
+      "matcher": "(^|[\\\\/])src[\\\\/](extract|ocr|validators|generator)[\\\\/]",
+      "action": {
+        "type": "agent",
+        "prompt": "Proof guard. A file in the extractor, OCR adapter, validators or fax generator was saved. Run `npm run proof -- --reader recorded`. Show the \"Measured\" block and the \"Hard gate\" result, not the whole output. If the gate says PASS and the exit code is 0, say so in one line. If it fails or exits non-zero, explain in plain words which hard-gate check failed (the FAIL and GATE lines name the fax and field) and which saved file most likely caused it. Read-only: do not edit, create, format or save any file, and do not try to fix the failure."
+      }
+    }
+  ]
+}
