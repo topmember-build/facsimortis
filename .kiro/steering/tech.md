@@ -6,7 +6,8 @@ inclusion: always
 
 ## Stack (proposed; confirm in the first hour, then keep it)
 - TypeScript everywhere (strict mode).
-- React web app, small API server, SQLite for storage.
+- React web app, built with Vite as a static site. There is no API server and no database: the OCR, reading and checking code runs as scripts (`npm run precompute`) before the site is built and saves JSON files, and review progress and verified records are kept in the browser's local storage.
+  - Original text: React web app, small API server, SQLite for storage.
 - Zod (or equivalent) for every schema.
 - fast-check for property-based tests.
 
