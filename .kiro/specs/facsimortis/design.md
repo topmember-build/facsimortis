@@ -54,13 +54,15 @@ Considered and not chosen: the model returns word IDs only and our code builds t
 
 | Component | Responsibility | Notes |
 |---|---|---|
-| Ingest | Accept file, deskew, normalise to PNG | Reject over 10 MB |
+| Ingest | No upload step. The generator writes synthetic PNG faxes, and `npm run precompute` reads them ahead of time and saves the sample data the site loads | No upload, no deskew and no size check in this version (see R1.1, R1.3 and R2.2) |
 | OCR adapter | Return `{id, text, box}[]` | One interface, two implementations (cloud OCR, local fallback) so the demo never depends on one service |
 | Extraction adapter | Return `Field[]` with word IDs | Strict JSON schema, retry once on invalid JSON |
 | Validators | NPI check digit, DOB range, phone format | Pure functions, property-tested |
 | Audit trail | Original value, edits, verifier, timestamps | Append-only |
 | Generator | Build synthetic faxes with controlled degradation | Seeded, so tests are repeatable |
 | Mock records service | Receives verified records | Exposed as an MCP server so Kiro can test the write path |
+
+- Original text of the Ingest row: responsibility "Accept file, deskew, normalise to PNG"; notes "Reject over 10 MB".
 
 ## Data model
 

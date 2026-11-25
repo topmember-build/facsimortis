@@ -6,7 +6,8 @@ All data in this project is synthetic. No real patient data is stored, processed
 
 ## Glossary
 
-- **Fax**: an image (TIFF/PNG/PDF) of a referral form, degraded to look like a real fax.
+- **Fax**: a synthetic PNG image of a referral form, made by the seeded generator and degraded to look like a real fax. The sample faxes are read ahead of time by `npm run precompute`. There is no upload, no deskew and no size check in this version (see R1.1, R1.3 and R2.2).
+  - Original text: an image (TIFF/PNG/PDF) of a referral form, degraded to look like a real fax.
 - **Field**: one extracted value (patient name, DOB, referring provider, provider NPI, reason for referral, urgency, callback phone).
 - **Source ghost**: the highlight drawn over the fax image showing where a field's value was read from.
 - **Confidence**: a 0 to 1 score per field, shown on each card. In this version it does not raise a flag (see R5.1).
