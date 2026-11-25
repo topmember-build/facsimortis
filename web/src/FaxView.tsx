@@ -8,7 +8,7 @@ import type { OpenedBy } from './input-modality';
 import { FIELD_LABELS, NOT_FOUND_TEXT } from './field-labels';
 import { READER_LABEL, type ReaderName } from './flags';
 import { ghostRects } from './ghost';
-import { faxScreenArea, scrollGhostIntoView } from './ghost-scroll';
+import { faxScreenArea, isWideLayout, scrollGhostIntoView } from './ghost-scroll';
 import { NO_CHANGE_TEXT, ReviewPanel, SummaryBar } from './ReviewPanel';
 import { SourceStringOverlay } from './SourceStringOverlay';
 import { liveSummary, type VerifiedRecord } from './record';
@@ -266,10 +266,11 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
   const box = viewerBox(crop, fax, ghostRects(selectedField, fax.ocr.words), showFullPage);
 
   // R6.1: a new selection brings the field's first cited ghost into view when it is not fully visible
-  // (ghost-scroll.ts). It follows the same rule as the pulse: choosing a field scrolls, acting on the selected
-  // field does not, because keepSelected keeps the same selection object.
+  // (ghost-scroll.ts), on the wide layout only; on the stacked layout the page does not move (S1b). It follows the
+  // same rule as the pulse: choosing a field scrolls, acting on the selected field does not, because keepSelected
+  // keeps the same selection object.
   useEffect(() => {
-    if (!selection) return;
+    if (!selection || !isWideLayout()) return;
     const first = ghostRects(selectedField, fax.ocr.words)[0];
     if (!first) return;
     const group = faxSvg.current?.querySelector(`.ghost[data-field="${selection.name}"]`);

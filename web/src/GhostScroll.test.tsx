@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SampleFaxSchema } from '../../src/samples/schema.js';
@@ -34,9 +34,9 @@ function stubLayout() {
   });
 }
 
-function stubMedia(reduce: boolean) {
+function stubMedia({ wide, reduce }: { wide: boolean; reduce: boolean }) {
   vi.stubGlobal('matchMedia', (query: string) => ({
-    matches: query.includes('prefers-reduced-motion') ? reduce : false,
+    matches: query.includes('prefers-reduced-motion') ? reduce : query.includes('min-width') ? wide : false,
     media: query,
     addEventListener: () => {},
     removeEventListener: () => {},
@@ -62,7 +62,7 @@ function firstWordId(faxFile: string, field: string): string {
 
 beforeEach(() => {
   stubSite();
-  stubMedia(false);
+  stubMedia({ wide: true, reduce: false });
   stubLayout();
   scrollIntoView = vi.fn();
   Object.defineProperty(Element.prototype, 'scrollIntoView', { value: scrollIntoView, configurable: true, writable: true });
@@ -75,7 +75,39 @@ afterEach(() => {
   else delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
 });
 
-describe('selecting a field scrolls its first ghost into view (R6.1)', () => {
+describe('on the stacked layout the page does not move (S1b)', () => {
+  it('does not scroll for any field, off screen or not, with or without reduced motion', async () => {
+    for (const reduce of [false, true]) {
+      stubMedia({ wide: false, reduce });
+      const user = userEvent.setup();
+      await openFax(user, 'fax-0003');
+      ghostTop = -400;
+      for (const field of ['patientName', 'dob', 'referringProvider', 'npi', 'reason', 'urgency', 'callbackPhone']) {
+        await user.click(fieldButton(field));
+      }
+      ghostTop = WINDOW_HEIGHT + 300;
+      await user.click(fieldButton('npi'));
+      expect(scrollIntoView, `reduced motion ${reduce}`).not.toHaveBeenCalled();
+      // The selection itself still works: the ghost is chosen and pulses (or is static).
+      expect(document.querySelector('.ghost[data-field="npi"]')).toHaveAttribute('data-selected', 'true');
+      cleanup();
+    }
+  });
+
+  it('scrolls again as soon as the layout is wide', async () => {
+    const user = userEvent.setup();
+    stubMedia({ wide: false, reduce: false });
+    await openFax(user, 'fax-0003');
+    ghostTop = -400;
+    await user.click(fieldButton('npi'));
+    expect(scrollIntoView).not.toHaveBeenCalled();
+    stubMedia({ wide: true, reduce: false });
+    await user.click(fieldButton('dob'));
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('selecting a field scrolls its first ghost into view on the wide layout (R6.1)', () => {
   it('scrolls the first cited ghost, nearest edge and smooth, when it is off screen', async () => {
     const user = userEvent.setup();
     await openFax(user, 'fax-0003');
@@ -109,7 +141,7 @@ describe('selecting a field scrolls its first ghost into view (R6.1)', () => {
   });
 
   it('scrolls instantly under prefers-reduced-motion, and the ghost still does not pulse', async () => {
-    stubMedia(true);
+    stubMedia({ wide: true, reduce: true });
     const user = userEvent.setup();
     await openFax(user, 'fax-0003');
     ghostTop = 1200;

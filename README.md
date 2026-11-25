@@ -8,13 +8,13 @@ Live demo: https://topmember-build.github.io/facsimortis/ (synthetic data only)
 
 ## Scope as built
 
-| Status | Requirements |
+| Status (of 30 requirements) | Requirements |
 |---|---|
-| Built | Demo inbox (R1.2), fields with their sources (R3), checks (R4), flag counts and the verify gate (R5.2, R5.3), review and verify, with the selected ghost brought into view (R6), the verified record and its history (R7.1, R7.3), the synthetic data notice (R8.2), delivery (R9), look and access (R10) |
-| Built differently | OCR runs ahead of time in `npm run precompute`, and the site reads the saved words and boxes (R2.1, R2.3) |
-| Built partly | The fax generator has noise, skew and a stamp, but no low-resolution step and no handwriting-style font (R8.1) |
-| Deferred | Upload: synthetic faxes only, by design (R1.1, R1.3). Deskew (R2.2). A flag from low confidence (R5.1, see Known limits) |
-| Cut | FHIR-style export; the record is exported as JSON (R7.2) |
+| Built (21) | Demo inbox (R1.2), fields with their sources (R3), checks (R4), flag counts and the verify gate (R5.2, R5.3), review and verify (R6.2, R6.3), the verified record and its history (R7.1, R7.3), the synthetic data notice (R8.2), delivery (R9), look and access (R10) |
+| Built differently (2) | OCR runs ahead of time in `npm run precompute`, and the site reads the saved words and boxes (R2.1, R2.3) |
+| Built partly (2) | Selecting a field scrolls its ghost into view on the wide layout only; on the stacked layout the page does not move, so the selected card stays in view (R6.1). The fax generator has noise, skew and a stamp, but no low-resolution step and no handwriting-style font (R8.1) |
+| Deferred (4) | Upload: synthetic faxes only, by design (R1.1, R1.3). Deskew (R2.2). A flag from low confidence (R5.1, see Known limits) |
+| Cut (1) | FHIR-style export; the record is exported as JSON (R7.2) |
 
 Each requirement's status, and its original text, is in `.kiro/specs/facsimortis/requirements.md`.
 

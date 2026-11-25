@@ -13,7 +13,7 @@ flowchart LR
   end
 
   subgraph Server["API (TypeScript)"]
-    Ingest["Ingest + deskew"]
+    Ingest["Ingest: precomputed synthetic PNGs (no upload, no deskew)"]
     OCR["OCR adapter"]
     Extract["Extraction adapter (LLM)"]
     Validate["Validators (NPI, DOB, phone)"]
@@ -37,6 +37,8 @@ flowchart LR
   Audit --> DB
   Review -->|"verified record"| Mock
 ```
+
+- Original text of the diagram's Ingest box: "Ingest + deskew". The Ingest component row below says what is built.
 
 ## Key design decision: sources come from OCR, not from the model
 
@@ -121,6 +123,7 @@ Record real before/after observations for each row as you build. Judges reward s
 
 ## Risks
 
-- OCR quality on heavy noise. Mitigation: generator levels, deskew, local fallback.
+- OCR quality on heavy noise. Mitigation: generator levels and the local OCR adapter. There is no deskew step in this version (R2.2 and task 1.3 are deferred); the readers allow for a few degrees of skew, and the sample faxes are skewed by at most 3 degrees.
+  - Original text: OCR quality on heavy noise. Mitigation: generator levels, deskew, local fallback.
 - Model cites wrong words. Mitigation: citation validation (see key decision).
 - Scope creep. Mitigation: anything not in the demo script is cut.

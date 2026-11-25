@@ -1,6 +1,7 @@
 import fc from 'fast-check';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { faxScreenArea, ghostScrollOptions, isFullyVisible, scrollGhostIntoView, type VisibleArea } from './ghost-scroll';
+import { faxScreenArea, ghostScrollOptions, isFullyVisible, isWideLayout, scrollGhostIntoView, type VisibleArea } from './ghost-scroll';
+import { WIDE_LAYOUT_QUERY } from './source-string';
 
 const AREA: VisibleArea = { top: 100, left: 0, bottom: 800, right: 1360 };
 
@@ -79,6 +80,31 @@ describe('scrollGhostIntoView', () => {
     expect(scrollGhostIntoView(undefined, AREA, false)).toBe(false);
     const bare = { getBoundingClientRect: () => rectOf(0, -500, 10, 10) } as unknown as Element;
     expect(scrollGhostIntoView(bare, AREA, false)).toBe(false);
+  });
+});
+
+describe('isWideLayout', () => {
+  it('asks the same query as the source string, which is the stylesheet\'s 60rem breakpoint', () => {
+    const asked: string[] = [];
+    vi.stubGlobal('matchMedia', (query: string) => {
+      asked.push(query);
+      return { matches: true, media: query };
+    });
+    expect(isWideLayout()).toBe(true);
+    expect(asked).toEqual([WIDE_LAYOUT_QUERY]);
+    expect(WIDE_LAYOUT_QUERY).toBe('(min-width: 60rem)');
+  });
+
+  it('follows the answer: wide when it matches, stacked when it does not', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query }));
+    expect(isWideLayout()).toBe(false);
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: true, media: query }));
+    expect(isWideLayout()).toBe(true);
+  });
+
+  it('counts as wide without matchMedia, like the source string', () => {
+    vi.stubGlobal('matchMedia', undefined);
+    expect(isWideLayout()).toBe(true);
   });
 });
 
