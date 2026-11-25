@@ -378,8 +378,9 @@ describe('stale saved progress is reported once, then removed', () => {
     const second = session(store);
     await screen.findByRole('heading', { level: 2, name: 'Inbox' });
     expect(screen.getAllByText(STALE_NOTE)).toHaveLength(1);
-    expect(store.data.has(V1)).toBe(false);
-    expect(store.data.has(V2)).toBe(false);
+    // The stale entries are removed by an effect that runs after the note is on screen, so these two wait for it.
+    await waitFor(() => expect(store.data.has(V1)).toBe(false));
+    await waitFor(() => expect(store.data.has(V2)).toBe(false));
     expect(store.data.get(entryKey('fax-0003', 'model'))).toBe(valid);
     expect(store.data.get(OTHER)).toBe('keep');
     second.view.unmount();
@@ -419,7 +420,8 @@ describe('stale saved progress is reported once, then removed', () => {
     const second = session(store);
     await screen.findByRole('heading', { level: 2, name: 'Inbox' });
     expect(screen.getAllByText(CORRUPT_NOTE)).toHaveLength(1);
-    expect(store.data.size).toBe(0);
+    // Same effect as above: the unreadable entries are removed after the note is on screen.
+    await waitFor(() => expect(store.data.size).toBe(0));
     second.view.unmount();
 
     session(store);
