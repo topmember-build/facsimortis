@@ -80,7 +80,7 @@ Each requirement starts with its status in this version. The original text is ke
 ### R6. Human review in one click
 **User story:** As Maria, I want to fix a flagged field quickly.
 
-1. **Built partly.** Selecting a field pulses its source ghost. The page is not scrolled to the ghost. In Chrome every ghost was on screen at 1360x900 and 1366x768. At 1366x657 one ghost (fax-0003, callback phone) stayed below the window. At phone width (390x844) the fax sits above the field list, and most ghosts stayed off screen.
+1. **Built.** Selecting a field pulses its source ghost. If the first cited word is not fully visible, the page scrolls it into view at the nearest edge: smoothly, or at once under reduced motion. In Chrome no first ghost word stayed off screen at 1360x900, 1366x768, 1366x657 or 390x844 (task S1).
    - Original text: WHEN Maria selects a flagged field, THE SYSTEM SHALL scroll to and pulse its source ghost.
 2. **Built.**
    - Original text: WHEN Maria accepts or edits a value, THE SYSTEM SHALL clear the flag and record the change with a timestamp.

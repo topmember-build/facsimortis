@@ -8,6 +8,7 @@ import type { OpenedBy } from './input-modality';
 import { FIELD_LABELS, NOT_FOUND_TEXT } from './field-labels';
 import { READER_LABEL, type ReaderName } from './flags';
 import { ghostRects } from './ghost';
+import { faxScreenArea, scrollGhostIntoView } from './ghost-scroll';
 import { NO_CHANGE_TEXT, ReviewPanel, SummaryBar } from './ReviewPanel';
 import { SourceStringOverlay } from './SourceStringOverlay';
 import { liveSummary, type VerifiedRecord } from './record';
@@ -263,6 +264,18 @@ export function FaxView({ item, fax, reader, openedBy, referenceDate, review, on
   const crop = cropBox(fax.ocr.words, fax);
   const selectedField = fields.find((f) => f.name === selection?.name);
   const box = viewerBox(crop, fax, ghostRects(selectedField, fax.ocr.words), showFullPage);
+
+  // R6.1: a new selection brings the field's first cited ghost into view when it is not fully visible
+  // (ghost-scroll.ts). It follows the same rule as the pulse: choosing a field scrolls, acting on the selected
+  // field does not, because keepSelected keeps the same selection object.
+  useEffect(() => {
+    if (!selection) return;
+    const first = ghostRects(selectedField, fax.ocr.words)[0];
+    if (!first) return;
+    const group = faxSvg.current?.querySelector(`.ghost[data-field="${selection.name}"]`);
+    const target = Array.from(group?.querySelectorAll('rect') ?? []).find((rect) => rect.getAttribute('data-word-id') === first.id);
+    scrollGhostIntoView(target, faxScreenArea(bar.current), reducedMotion);
+  }, [selection]);
 
   return (
     // data-state: the stylesheet fades the coral emphasis into the quiet state when it becomes "laid-to-rest".

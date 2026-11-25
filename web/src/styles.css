@@ -726,6 +726,14 @@ button.row-button:hover {
   scroll-margin-bottom: 0.75rem;
 }
 
+/* R6.1: a selected field's first ghost is scrolled into view (ghost-scroll.ts). The same margins keep it clear
+   of the sticky bar. Scroll margins change no layout. The ghost rectangles are picked by their word ID, so this
+   rule's selector does not read like the ".ghost rect" rule that draws them. */
+.fax-view rect[data-word-id] {
+  scroll-margin-top: calc(var(--bar-h) + 0.75rem);
+  scroll-margin-bottom: 0.75rem;
+}
+
 /* Review screen header (R4a): Back to inbox, the title, the reader line and the toggle, in that DOM order
    (so the tab order is unchanged), wrapping into two lines. Line 1 is the window's title bar: the title
    row, filled --amber across the whole line, with Back to inbox placed over its right end (see above).
