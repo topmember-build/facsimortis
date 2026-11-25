@@ -121,9 +121,10 @@ The 0.85 confidence threshold was an initial guess and is not used. The Phase 0 
 | Hooks | Re-run evaluation on extraction changes; check that `.kiro` is not in `.gitignore`; lint fixtures |
 | MCP | A read-only records server over the sample files (`tools/mcp-records`); docs lookup for OCR and schema libraries |
 | Property-based testing | Validators and citation integrity |
-| Custom agent | A "fax-qa" agent that generates hard faxes and reports misses |
+| Custom agent | A read-only "fax-qa" agent (`.kiro/agents/fax-qa.md`): given a sample id it uses only the five records MCP tools to compare the model and rules readers and write a short QA note. It never edits files, reads files or uses the network, and it never invents or corrects a value |
 
 - Original text of the MCP row: "Mock records service for the write path; docs lookup for OCR and schema libraries".
+- Original text of the Custom agent row: "A "fax-qa" agent that generates hard faxes and reports misses".
 
 Record real before/after observations for each row as you build. Judges reward specifics, not claims.
 

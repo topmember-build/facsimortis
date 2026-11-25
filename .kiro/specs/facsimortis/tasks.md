@@ -105,7 +105,8 @@ The site is static: it loads precomputed sample data and needs no server. Each s
 - [ ] 3.2 One-command local start, README with run steps. (R9.2)
 - [x] 3.3 Replaced by Phase 3a (Reading Desk design pass), tasks D1 to D7. (R10)
 - [x] 3.4 Replaced by Phase 3a: the Synthetic data banner (2.17) is on every screen, and D2 keeps it there. (R8.2)
-- [ ] 3.5 Mock records MCP server and custom "fax-qa" agent, documented. (Kiro write-up)
+- [ ] 3.5 Two Kiro features for the write-up, as built: the records MCP server (read-only, five tools over the sample files, built as M1; record in docs/mcp-live-check.md) and the custom "fax-qa" agent (a read-only QA reviewer that uses only those five tools, built as A1; its record, docs/fax-qa-agent-check.md, is task A1b). (Kiro write-up)
+  - Original text of 3.5: Mock records MCP server and custom "fax-qa" agent, documented. The mock was to receive verified records and the agent was to generate hard faxes and report misses; neither is what was built.
 
 ## Phase 3a: Reading Desk design pass
 
