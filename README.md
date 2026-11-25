@@ -144,6 +144,10 @@ The first load in a browser tab opens on a short boot screen. It continues to th
 - A verified record is shown as "Laid to rest" and is read-only. "Download JSON" saves it as a file such as `facsimortis-fax-0003-model-verified.json`.
 - This is a demo built on synthetic data. It makes no compliance claims.
 
+## Known limits
+
+- **A low confidence does not raise a flag.** On fax-0002 the model reader saves the referring provider with a confidence of 0.39 and no flag, and it raises no flags on that fax at all. The rules reader flags three fields on the same fax: the referring provider, the provider number and the reason for referral. Confidence is shown, but it never raises a flag. Requirement R5.1 in the spec says a field below the review threshold is flagged; the design notes that the threshold is not used yet (task 1.2 is open). The decision for this demo is to leave the flag logic as it is. Which reader is right on fax-0002 was not checked, because the answer keys were not used in this check. The full record is in `docs/mcp-live-check.md`.
+
 ## Spec
 
 The spec in `.kiro/specs/facsimortis/` is the source of truth. Steering docs are in `.kiro/steering/`.

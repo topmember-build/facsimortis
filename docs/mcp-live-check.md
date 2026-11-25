@@ -18,9 +18,9 @@ folder were not the workspace root, the server would fail to start and list no t
 and listed its five tools, so Kiro started it from the workspace root. That conclusion comes from how the paths are
 found. Kiro's MCP log lines were not part of this record, so the server's startup line on stderr
 (`facsimortis-records: ready (read-only, synthetic data)`) was not seen in Kiro.
-## Record of the check by hand in Kiro IDE
-Made on 2026-11-25, after `.kiro/settings/mcp.json` was saved at 10:04:45 local time. There are five screenshots of it,
-which are not in the repository. What they show:
+## Record of Paul's check by hand in Kiro IDE
+Made by Paul on 2026-11-25, after `.kiro/settings/mcp.json` was saved at 10:04:45 local time. There are five
+screenshots of it, which are not in the repository. What they show:
 | What was checked | Result |
 |---|---|
 | Server status in Kiro's MCP panel | connected, with a green tick |
@@ -28,9 +28,9 @@ which are not in the repository. What they show:
 | `list_samples` run through the server | ran |
 | `explain_flag` on fax-0003 run through the server | ran: saved value `6720988041`, expected check digit 0 |
 | `check_npi` on `1234567890` run through the server | ran: not valid, expected check digit 3 |
-| `autoApprove` (whether Kiro ran the tools without asking first) | **not recorded yet.** This record does not claim that `autoApprove` works. |
+| `autoApprove` (whether Kiro ran the tools without asking first) | **untested.** This record does not claim that `autoApprove` works. |
 ## Calls made by the agent through Kiro
-These are separate from the check by hand. The agent called the tools through the same connection in its own Kiro
+These are separate from Paul's check. The agent called the tools through the same connection in its own Kiro
 session. An approval prompt would be shown to the person at the keyboard, not to the agent, so these calls say
 nothing about `autoApprove` either way.
 | Time (2026-11-25) | Call | Result |
@@ -40,8 +40,7 @@ nothing about `autoApprove` either way.
 | about 10:27 | `explain_flag` with `sample: "fax-0003"`, `field: "npi"` (reader left out) | the output below |
 | about 10:27 | `check_npi` with `npi: "1234567890"` | the output below |
 | about 10:27 | `get_result` on fax-0002, once for each reader | the values in the finding below |
-The two outputs below are the full text Kiro returned. They match the values the check by hand reported for the same
-tools.
+The two outputs below are the full text Kiro returned. They match the values Paul's check reported for the same tools.
 `explain_flag` on fax-0003, field `npi`. The reader defaulted to `model`:
 ```json
 {
@@ -93,10 +92,9 @@ Why it matters for Maria:
   `-headaches`). The values come from the page and are not invented. A clean result here means the checks found
   nothing. It does not mean a person or a second reader agreed.
 Which reader is right is not known from this check. Neither the server nor the agent reads the answer-key files.
-Nothing was changed because of this finding. Whether a low confidence should raise a flag is a product decision for
-later.
+Decision: no change to the flag logic. The finding is listed under "Known limits" in the main `README.md`.
 ## Not covered by this check
-- Whether `autoApprove` let the tools run without a prompt (see above).
+- `autoApprove`: untested (see above).
 - Kiro's MCP log lines, and which protocol era Kiro used to connect. The server answers both, and
   `test/mcp-records-server.test.ts` covers both.
 - Opening a folder other than the repository root as the workspace.
