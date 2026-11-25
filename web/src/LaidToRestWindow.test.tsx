@@ -1,15 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import axe from 'axe-core';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { App } from './App';
 import { WINDOW_TITLE_KIND, WINDOW_TITLE_KIND_VERIFIED } from './FaxView';
 import { MemoryStore } from './storage';
 import { stubSite } from './test-site';
-import { SLOW_TEST_TIMEOUT } from './test-timeout';
-
-// T1: this file renders the whole app or runs axe, which is slow on a busy machine. One shared limit: ./test-timeout.
-vi.setConfig({ testTimeout: SLOW_TEST_TIMEOUT });
 
 // R5a: when the record is laid to rest, the window's title bar reads "<id> — laid to rest", the window says so
 // in data-state (the stylesheet fades the coral emphasis on it), and the heading, the status and the

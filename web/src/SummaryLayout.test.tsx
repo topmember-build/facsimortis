@@ -1,14 +1,10 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import axe from 'axe-core';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { App } from './App';
 import { MemoryStore } from './storage';
 import { stubSite } from './test-site';
-import { SLOW_TEST_TIMEOUT } from './test-timeout';
-
-// T1: this file renders the whole app or runs axe, which is slow on a busy machine. One shared limit: ./test-timeout.
-vi.setConfig({ testTimeout: SLOW_TEST_TIMEOUT });
 
 async function openFax3(user: ReturnType<typeof userEvent.setup>) {
   const view = render(<App storage={new MemoryStore()} />);
