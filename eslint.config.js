@@ -166,4 +166,8 @@ export default tseslint.config(
     files: ['tools/mcp-records/data.ts'],
     rules: recordsServerRules({ allowedBuiltins: ['path', 'url'] }),
   },
+  {
+    files: ['tools/mcp-records/server.ts'],
+    rules: recordsServerRules({ allowProtocolLayer: true }),
+  },
 )
