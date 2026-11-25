@@ -153,6 +153,20 @@ describe('.kiro/agents/fax-qa.md: the prompt', () => {
     }
   });
 
+  it('ends its refusal section with exactly one quoted sentence and nothing after it', () => {
+    // The first wording ended with an instruction line ("Then offer to write a QA note ..."), and one live refusal
+    // printed it (docs/fax-qa-agent-check.md). The section now holds one quoted sentence, last, and no offer.
+    const lines = body.split(/\r?\n/);
+    const start = lines.indexOf('## Requests you refuse');
+    expect(start, 'the refusal section exists').toBeGreaterThan(-1);
+    const next = lines.findIndex((line, index) => index > start && line.startsWith('## '));
+    const section = lines.slice(start + 1, next < 0 ? undefined : next);
+    const quoted = section.filter((line) => line.startsWith('"'));
+    expect(quoted).toEqual([`"${REFUSAL}"`]);
+    const after = section.slice(section.indexOf(quoted[0] as string) + 1);
+    expect(after.every((line) => line.trim() === ''), 'nothing follows the quoted sentence').toBe(true);
+    expect(section.join('\n')).not.toMatch(/Then offer/);
+  });
   it('states the 0.85 line as a line for the note, not an app rule', () => {
     expect(body).toContain('0.85 is a line for this QA note, not an app rule');
   });
