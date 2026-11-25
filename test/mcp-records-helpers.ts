@@ -1,13 +1,14 @@
 /**
  * Shared helpers for the records server tests. Not a test file (no ".test" in the name).
  */
-import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join, relative, resolve } from 'node:path';
 import { createSampleStore, DEFAULT_SAMPLES_DIR, type SampleStore } from '../tools/mcp-records/data.js';
 import { TOOLS, type ToolResult } from '../tools/mcp-records/tools.js';
 import { readInput } from '../src/scripts/read-guard.js';
+import { afterAll } from 'vitest';
 
 export const REAL_IDS = ['fax-0001', 'fax-0002', 'fax-0003'] as const;
 export const FIELD_NAMES = ['patientName', 'dob', 'referringProvider', 'npi', 'reason', 'urgency', 'callbackPhone'] as const;
@@ -95,10 +96,27 @@ export function realStore(read?: (path: string) => Buffer): SampleStore {
   return createSampleStore(read ? { read } : {});
 }
 
-/** A temporary folder under the system temp folder. The name never contains the answer-key word. */
+// The folders makeTempRoot created during this test file's run. Vitest gives each test file its own copy of this
+// module, so the afterAll below runs once per file and deletes only the folders that file created.
+const createdRoots: string[] = [];
+
+/** A temporary folder under the system temp folder. The name never contains the answer-key word. Deleted after the file's tests. */
 export function makeTempRoot(prefix = 'fx-mcp-'): string {
-  return mkdtempSync(join(tmpdir(), prefix));
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  createdRoots.push(dir);
+  return dir;
 }
+
+afterAll(() => {
+  for (const dir of createdRoots.splice(0)) {
+    try {
+      rmSync(dir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    } catch (error) {
+      // A folder that cannot be removed is reported, not counted as a test failure.
+      console.error(`Could not remove the temporary folder ${dir}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+});
 
 /** Copies index.json and the fax JSON files (not the images) of the real samples into `dir`. */
 export function copySampleData(dir: string): void {
