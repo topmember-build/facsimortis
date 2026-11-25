@@ -89,7 +89,7 @@ type FaxRecord = {
 
 A field is flagged when its value is null, when any validator fails, or when its cited word IDs do not exist or do not contain the value.
 
-The 0.85 confidence threshold was an initial guess and is not used yet. The Phase 0 measurements showed that OCR confidence alone cannot separate misreads from correct words. The threshold, and any other flagging signals, are chosen in task 1.2 on the evaluation set, using hold-out seeds. The source highlight plus human review is the final safeguard.
+The 0.85 confidence threshold was an initial guess and is not used. The Phase 0 measurements showed that OCR confidence alone cannot separate misreads from correct words. Task 1.2, which was to choose the threshold and any other flagging signals on the evaluation set using hold-out seeds, is deferred: confidence is shown on each card but does not raise a flag (see R5.1 and README Known limits). The source highlight plus human review is the final safeguard.
 
 ## UI
 

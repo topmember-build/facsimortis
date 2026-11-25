@@ -46,7 +46,8 @@ All data in this project is synthetic. No real patient data is stored, processed
 ### R5. Flag uncertainty
 **User story:** As Maria, I want to look only at what needs a human.
 
-1. IF a field's confidence is below the review threshold, THEN THE SYSTEM SHALL flag it and sort flagged fields first.
+1. **Deferred: not implemented in this version.** Confidence is shown on each card but does not raise a flag; see README Known limits. Flagged fields are still sorted first.
+   - Original text, kept for history: IF a field's confidence is below the review threshold, THEN THE SYSTEM SHALL flag it and sort flagged fields first.
 2. THE SYSTEM SHALL show a count of flagged fields for each fax in the inbox.
 3. THE SYSTEM SHALL NOT allow a record to be verified while any field is flagged and unreviewed.
 
