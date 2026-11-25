@@ -29,6 +29,8 @@ function ok<T>(result: ToolResult<T>): T {
 
 // web/src/record.ts and review-state.ts use extensionless imports (the site is built with a bundler), which the
 // root TypeScript project cannot resolve. They are loaded at run time instead, through a path the compiler does not follow.
+// So this one import is not type-checked: WebRecord below is written by hand. That is kept on purpose, because the
+// alternative is changing site code for a test. The parity assertion still compares the real values at run time.
 interface WebRecord {
   summarise(fields: readonly unknown[]): unknown;
   verifiedFields(fields: readonly unknown[], state: unknown): unknown[];

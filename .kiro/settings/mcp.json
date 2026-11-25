@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "facsimortis-records": {
+      "command": "node",
+      "args": ["--import", "tsx", "tools/mcp-records/server.ts"],
+      "env": {},
+      "autoApprove": ["list_samples", "get_result", "explain_flag", "check_npi", "export_summary"]
+    }
+  }
+}
