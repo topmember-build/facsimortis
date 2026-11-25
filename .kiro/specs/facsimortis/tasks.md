@@ -63,7 +63,7 @@ Do not tune thresholds or add repairs to reach zero on the three Phase 0 faxes.
 
 - [x] 1.1 Validators: NPI, DOB, phone, with property-based tests. (R4)
 - 1.2 Flagging rules and confidence threshold. (R5) **Deferred: not implemented in this version.** Confidence is shown on each card but does not raise a flag; see README Known limits.
-- [ ] 1.3 Deskew and normalisation. (R2.2)
+- 1.3 Deskew and normalisation. (R2.2) **Deferred: not implemented in this version.** There is no deskew step; the readers allow for a few degrees of skew, and the sample faxes are skewed by at most 3 degrees.
 - [ ] 1.4 Audit trail and data model. (R7.3)
 - [ ] 1.5 Evaluation set across degradation levels, with accuracy report. (R8)
 - [ ] 1.6 Varied-geometry property: fast-check pages with label-to-value gaps from tight to wide, varied columns, spacing, wrapping and skew; clean pages give no wrong unflagged value, and pages with one label removed give no unflagged value from that label's area. One run with modest case counts; fix only real counterexamples. (R3.1, R3.4)
