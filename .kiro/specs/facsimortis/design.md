@@ -12,18 +12,18 @@ flowchart LR
     Review["Review panel"]
   end
 
-  subgraph Server["API (TypeScript)"]
-    Ingest["Ingest + deskew"]
+  subgraph Server["Offline scripts (TypeScript), run by npm run precompute; no API server"]
+    Ingest["Ingest: precomputed synthetic PNGs (no upload, no deskew)"]
     OCR["OCR adapter"]
     Extract["Extraction adapter (LLM)"]
     Validate["Validators (NPI, DOB, phone)"]
     Audit["Audit trail"]
   end
 
-  DB[("SQLite / Postgres")]
+  DB[("Saved JSON files in web/public/samples and the browser's local storage; no database")]
   Store[("Image storage")]
   Gen["Synthetic fax generator"]
-  Mock["Mock records service (MCP server)"]
+  Mock["Records MCP server (read-only): reads the sample files, receives nothing"]
 
   Inbox --> Ingest
   Gen --> Store
@@ -35,8 +35,13 @@ flowchart LR
   Viewer --> DB
   Review --> Audit
   Audit --> DB
-  Review -->|"verified record"| Mock
+  DB -->|"sample files, read only"| Mock
 ```
+
+- Original text of the diagram's Ingest box: "Ingest + deskew". The Ingest component row below says what is built.
+- Original text of the diagram's Server box: "API (TypeScript)". There is no API server. The OCR, extraction and validation code runs as scripts before the site is built, and the site is static. The Audit trail box above sits in this group, but in this version the audit trail lives in the browser's local storage (R7.3).
+- Original text of the diagram's database box: "SQLite / Postgres". There is no database. The scripts write JSON files, the site reads them, and review progress and verified records are kept in the browser's local storage.
+- Original text of the diagram's mock box: "Mock records service (MCP server)", with the edge `Review -->|"verified record"| Mock`. Nothing is sent to the server: the records MCP server is read-only, so the edge now shows it reading the sample files.
 
 ## Key design decision: sources come from OCR, not from the model
 
@@ -54,13 +59,16 @@ Considered and not chosen: the model returns word IDs only and our code builds t
 
 | Component | Responsibility | Notes |
 |---|---|---|
-| Ingest | Accept file, deskew, normalise to PNG | Reject over 10 MB |
+| Ingest | No upload step. The generator writes synthetic PNG faxes, and `npm run precompute` reads them ahead of time and saves the sample data the site loads | No upload, no deskew and no size check in this version (see R1.1, R1.3 and R2.2) |
 | OCR adapter | Return `{id, text, box}[]` | One interface, two implementations (cloud OCR, local fallback) so the demo never depends on one service |
 | Extraction adapter | Return `Field[]` with word IDs | Strict JSON schema, retry once on invalid JSON |
 | Validators | NPI check digit, DOB range, phone format | Pure functions, property-tested |
 | Audit trail | Original value, edits, verifier, timestamps | Append-only |
 | Generator | Build synthetic faxes with controlled degradation | Seeded, so tests are repeatable |
-| Mock records service | Receives verified records | Exposed as an MCP server so Kiro can test the write path |
+| Records MCP server | Read-only: five tools over the sample files (list_samples, get_result, explain_flag, check_npi, export_summary). It receives nothing | Runs over stdio from `tools/mcp-records`, registered in `.kiro/settings/mcp.json` (see `docs/mcp-live-check.md`) |
+
+- Original text of the Ingest row: responsibility "Accept file, deskew, normalise to PNG"; notes "Reject over 10 MB".
+- Original text of the mock records row: "Mock records service"; responsibility "Receives verified records"; notes "Exposed as an MCP server so Kiro can test the write path".
 
 ## Data model
 
@@ -89,7 +97,7 @@ type FaxRecord = {
 
 A field is flagged when its value is null, when any validator fails, or when its cited word IDs do not exist or do not contain the value.
 
-The 0.85 confidence threshold was an initial guess and is not used yet. The Phase 0 measurements showed that OCR confidence alone cannot separate misreads from correct words. The threshold, and any other flagging signals, are chosen in task 1.2 on the evaluation set, using hold-out seeds. The source highlight plus human review is the final safeguard.
+The 0.85 confidence threshold was an initial guess and is not used. The Phase 0 measurements showed that OCR confidence alone cannot separate misreads from correct words. Task 1.2, which was to choose the threshold and any other flagging signals on the evaluation set using hold-out seeds, is deferred: confidence is shown on each card but does not raise a flag (see R5.1 and README Known limits). The source highlight plus human review is the final safeguard.
 
 ## UI
 
@@ -111,14 +119,17 @@ The 0.85 confidence threshold was an initial guess and is not used yet. The Phas
 | Specs | These requirements drive the build; tasks trace back to R1 to R10 |
 | Steering | `product.md` (persona, synthetic-only rule), `tech.md` (adapter pattern, strict schemas), `design.md` (ghost language rules) |
 | Hooks | Re-run evaluation on extraction changes; check that `.kiro` is not in `.gitignore`; lint fixtures |
-| MCP | Mock records service for the write path; docs lookup for OCR and schema libraries |
+| MCP | A read-only records server over the sample files (`tools/mcp-records`); docs lookup for OCR and schema libraries |
 | Property-based testing | Validators and citation integrity |
 | Custom agent | A "fax-qa" agent that generates hard faxes and reports misses |
+
+- Original text of the MCP row: "Mock records service for the write path; docs lookup for OCR and schema libraries".
 
 Record real before/after observations for each row as you build. Judges reward specifics, not claims.
 
 ## Risks
 
-- OCR quality on heavy noise. Mitigation: generator levels, deskew, local fallback.
+- OCR quality on heavy noise. Mitigation: generator levels and the local OCR adapter. There is no deskew step in this version (R2.2 and task 1.3 are deferred); the readers allow for a few degrees of skew, and the sample faxes are skewed by at most 3 degrees.
+  - Original text: OCR quality on heavy noise. Mitigation: generator levels, deskew, local fallback.
 - Model cites wrong words. Mitigation: citation validation (see key decision).
 - Scope creep. Mitigation: anything not in the demo script is cut.

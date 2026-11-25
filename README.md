@@ -6,7 +6,17 @@ This is a demo built on synthetic data only. It makes no compliance or certifica
 
 Live demo: https://topmember-build.github.io/facsimortis/ (synthetic data only)
 
-> Status: scaffold only (task 0.1). Nothing is implemented yet.
+## Scope as built
+
+| Status (of 30 requirements) | Requirements |
+|---|---|
+| Built (21) | Demo inbox (R1.2), fields with their sources (R3), checks (R4), flag counts and the verify gate (R5.2, R5.3), review and verify (R6.2, R6.3), the verified record and its history (R7.1, R7.3), the synthetic data notice (R8.2), delivery (R9), look and access (R10) |
+| Built differently (2) | OCR runs ahead of time in `npm run precompute`, and the site reads the saved words and boxes (R2.1, R2.3) |
+| Built partly (2) | Selecting a field scrolls its ghost into view on the wide layout only; on the stacked layout the page does not move, so the selected card stays in view (R6.1). The fax generator has noise, skew and a stamp, but no low-resolution step and no handwriting-style font (R8.1) |
+| Deferred (4) | Upload: synthetic faxes only, by design (R1.1, R1.3). Deskew (R2.2). A flag from low confidence (R5.1, see Known limits) |
+| Cut (1) | FHIR-style export; the record is exported as JSON (R7.2) |
+
+Each requirement's status, and its original text, is in `.kiro/specs/facsimortis/requirements.md`.
 
 ## Requirements
 
@@ -143,6 +153,10 @@ The first load in a browser tab opens on a short boot screen. It continues to th
 - There are no accounts. The verifier in every record is the fixed label "Demo reviewer".
 - A verified record is shown as "Laid to rest" and is read-only. "Download JSON" saves it as a file such as `facsimortis-fax-0003-model-verified.json`.
 - This is a demo built on synthetic data. It makes no compliance claims.
+
+## Known limits
+
+- **A low confidence does not raise a flag.** On fax-0002 the model reader saves the referring provider with a confidence of 0.39 and no flag, and it raises no flags on that fax at all. The rules reader flags three fields on the same fax: the referring provider, the provider number and the reason for referral. Confidence is shown, but it never raises a flag. Requirement R5.1 in the spec, which said a field below the review threshold is flagged, is marked deferred, and so is task 1.2, which was to set that threshold. The decision for this demo is to leave the flag logic as it is. Which reader is right on fax-0002 was not checked, because the answer keys were not used in this check. The full record is in `docs/mcp-live-check.md`.
 
 ## Spec
 
