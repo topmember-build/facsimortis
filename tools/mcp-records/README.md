@@ -34,6 +34,10 @@ It can name an argument that is not allowed, for example `Unrecognized key: "ext
 Kiro starts it from `.kiro/settings/mcp.json`: command `node`, arguments `--import tsx tools/mcp-records/server.ts`,
 no environment variables. All five tools are in `autoApprove`, because none of them can change anything.
 
+Kiro starts the server from the workspace root. Both paths in the entry are relative: Node looks up `tsx` and
+`tools/mcp-records/server.ts` from the folder it is started in. In the live check in Kiro IDE the server connected
+and listed its five tools, so those paths were found from the root. The record is in `docs/mcp-live-check.md`.
+
 To try it by hand, run `npm ci` once, then from the repository root:
 
 ```sh
