@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Design token guard",
+      "trigger": "PostFileSave",
+      "description": "After saving theme.css or styles.css, runs the stylesheet and contrast tests and reports which colour pair or rule broke.",
+      "matcher": "(^|[\\\\/])web[\\\\/]src[\\\\/](theme|styles)\\.css$",
+      "action": {
+        "type": "agent",
+        "prompt": "Design token guard. theme.css or styles.css was saved. Run `npm test -- web-theme-css web-ghost-css web-field-column-css web-d4c-css` and report the totals. If everything passes, say so in one line. If any test fails, name each failing test and say in plain words which token, rule or colour pair broke (for example which two colours fell below 4.5:1, with the ratio the test printed) and which part of the saved stylesheet most likely caused it. Read-only: do not edit, create or save any file, do not update snapshots and do not loosen a test."
+      }
+    }
+  ]
+}

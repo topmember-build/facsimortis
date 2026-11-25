@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import axe from 'axe-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -401,7 +401,9 @@ describe('stale saved progress is reported once, then removed', () => {
     const second = session(store);
     await screen.findByRole('heading', { level: 2, name: 'Inbox' });
     expect(screen.getAllByText(STALE_NOTE)).toHaveLength(1);
-    expect(store.data.has(entryKey('fax-0003', 'model'))).toBe(false);
+    // The stale entry is removed by an effect that can run just after the Inbox heading shows, so the same
+    // check waits for it (as BootFlow.test.tsx does for its stale entry).
+    await waitFor(() => expect(store.data.has(entryKey('fax-0003', 'model'))).toBe(false));
     second.view.unmount();
 
     session(store);

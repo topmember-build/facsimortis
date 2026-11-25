@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- The page of the taskbar's Inbox glyph (web/src/PixelIcons.tsx) on a 16 x 16 grid, in the amber of theme.css (#f6a93b). Transparent background; every edge is on a whole grid unit. -->
+  <path fill="#f6a93b" d="M0 0h9v1H0z M0 0h1v16H0z M0 15h12v1H0z M11 3h1v13h-1z M8 0h1v4H8z M8 3h4v1H8z M9 1h1v1H9z M10 2h1v1h-1z M3 6h6v1H3z M3 8h6v1H3z M3 10h4v1H3z M3 12h6v1H3z"/>
+</svg>

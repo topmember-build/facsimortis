@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Repo safety guard",
+      "trigger": "PostFileSave",
+      "description": "After saving .gitignore or any .env file, checks that .kiro is not ignored and that no real .env file is tracked.",
+      "matcher": "(^|[\\\\/])(\\.gitignore|\\.env[^\\\\/]*)$",
+      "action": {
+        "type": "agent",
+        "prompt": "Repo safety guard. .gitignore or an .env file was saved. Run two read-only checks and report each as OK or WARNING. (1) `git check-ignore .kiro` must print nothing. If it prints a path, warn loudly that .kiro is ignored, which breaks the rule that .kiro is always committed. (2) `git ls-files '.env*'` must list only .env.example. If any other .env file is tracked, warn loudly that a real key may be committed, that it must be removed from git with `git rm --cached` and that the key must be rotated. Never open, print or quote the contents of a real .env file. Read-only: do not edit, create or save any file, and do not run git add, git rm or git commit."
+      }
+    }
+  ]
+}
