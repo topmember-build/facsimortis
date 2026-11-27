@@ -64,7 +64,7 @@ function recordsServerRules({ allowedBuiltins = [], allowProtocolLayer = false }
 }
 
 export default tseslint.config(
-  { ignores: ['node_modules', 'dist', 'coverage'] },
+  { ignores: ['node_modules', 'dist', 'coverage', 'demo-out'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

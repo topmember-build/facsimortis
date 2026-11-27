@@ -6,8 +6,26 @@
 /** CSS pixels. At device scale 1.25 this is 1920x1080 device pixels. */
 export const VIEWPORT = { width: 1536, height: 864 } as const;
 export const DEVICE_SCALE_FACTOR = 1.25;
+/** The size of the MP4 copy (and of the final-frame PNG). */
 export const VIDEO_SIZE = { width: 1920, height: 1080 } as const;
 export const VIDEO_FPS = 30;
+
+/**
+ * A browser set-up for recording. Chrome's screencast sends frames in CSS pixels, whatever the device scale
+ * (measured in V1b: 1536x864 frames at device scale 1.25), so `frame` is the size the WebM is recorded at, and
+ * the MP4 copy is scaled to VIDEO_SIZE when the two differ. The final-frame PNG is a screenshot at device scale.
+ */
+export interface View {
+  name: string;
+  viewport: { width: number; height: number };
+  deviceScaleFactor: number;
+  frame: { width: number; height: number };
+}
+
+/** The chosen set-up: the 125% layout. Its frames are 1536x864, and the MP4 copy is scaled up to 1920x1080. */
+export const VIEW_125: View = { name: '125', viewport: VIEWPORT, deviceScaleFactor: DEVICE_SCALE_FACTOR, frame: VIEWPORT };
+/** The alternative measured in V1b: the 100% layout at 1920x1080, recorded at its own size. */
+export const VIEW_100: View = { name: '100', viewport: VIDEO_SIZE, deviceScaleFactor: 1, frame: VIDEO_SIZE };
 
 /** The site path of the production build (SITE_BASE). */
 export const SITE_BASE = '/facsimortis/';
