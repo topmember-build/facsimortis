@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { bootWanted, browserSession, rememberBooted, type SessionStore } from './boot';
 import { BootScreen } from './BootScreen';
 import { loadInbox, type InboxItem } from './data';
@@ -177,8 +177,39 @@ export function App({
     setAttempt((n) => n + 1);
   }
 
+  // B1: on the review screen the banner stays at the top while the page scrolls, so every view of a fax shows
+  // the notice. It wraps on narrow screens, so its real height is handed to the stylesheet as --banner-h on
+  // <html> (as the taskbar does with --taskbar-h); the fax screen adds it to --bar-h, so the summary bar sticks
+  // just under the banner and every scroll margin that keeps things clear of the bar also clears the banner.
+  // Removed again when the review screen closes, so the other screens are unchanged.
+  // The same test as `reviewing` below (an open fax that loaded), worked out here because hooks come first.
+  const openItem =
+    load.state === 'ready' && openId !== null
+      ? load.items.slice(0, Math.min(visible ?? 0, load.items.length)).find((item) => item.entry.id === openId)
+      : undefined;
+  const reviewingNow = openItem !== undefined && openItem.fax.ok;
+  const bannerRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const bannerEl = bannerRef.current;
+    if (!reviewingNow || !bannerEl) return;
+    const rootEl = document.documentElement;
+    const apply = () => rootEl.style.setProperty('--banner-h', `${bannerEl.offsetHeight}px`);
+    apply();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(apply);
+    observer?.observe(bannerEl);
+    return () => {
+      observer?.disconnect();
+      rootEl.style.removeProperty('--banner-h');
+    };
+  }, [reviewingNow]);
+
   const banner = (
-    <div className="synthetic-banner" role="region" aria-label="Synthetic data notice">
+    <div
+      ref={bannerRef}
+      className={reviewingNow ? 'synthetic-banner synthetic-banner-sticky' : 'synthetic-banner'}
+      role="region"
+      aria-label="Synthetic data notice"
+    >
       {SYNTHETIC_BANNER_TEXT}
     </div>
   );

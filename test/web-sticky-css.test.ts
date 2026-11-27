@@ -44,11 +44,36 @@ describe('sticky layout rules in styles.css', () => {
     expect(css.replace(wide, '')).not.toMatch(/\.viewer-side\s*\{/);
   });
 
-  it('makes the summary bar sticky at the top of the fax screen and shows it above the viewer', () => {
+  it('makes the summary bar sticky at the top of the fax screen, just under the sticky banner, and shows it above the viewer', () => {
     const bar = block(css, '.summary-bar');
     expect(bar).toMatch(/position:\s*sticky/);
-    expect(bar).toMatch(/top:\s*0/);
+    // B1: was `top: 0`. Now just under the sticky Synthetic data banner; 0 when the banner is not sticky.
+    expect(bar).toMatch(/top:\s*var\(--banner-h,\s*0px\)/);
     expect(bar).toMatch(/order:\s*1/);
     expect(block(css, '.viewer')).toMatch(/order:\s*2/);
+  });
+});
+
+describe('sticky Synthetic data banner on the review screen (B1)', () => {
+  const sticky = block(css, '.synthetic-banner-sticky');
+  const zIndex = (rule: string) => Number(/z-index:\s*(\d+)/.exec(rule)?.[1]);
+
+  it('sticks at the very top, above the summary bar and the source string, in neutral colours', () => {
+    expect(sticky).toMatch(/position:\s*sticky/);
+    expect(sticky).toMatch(/top:\s*0/);
+    expect(sticky).not.toMatch(/--ghost|--flag/);
+    expect(zIndex(sticky)).toBeGreaterThan(zIndex(block(css, '.summary-bar')));
+    expect(zIndex(block(css, '.summary-bar'))).toBeGreaterThan(zIndex(block(css, '.source-string-overlay')));
+  });
+
+  it('counts the banner in --bar-h, the offset the field column and every scroll margin on the fax screen use', () => {
+    expect(block(css, '.fax-view')).toMatch(/--bar-h:\s*calc\(var\(--summary-bar-h,\s*5rem\)\s*\+\s*var\(--banner-h,\s*0px\)\)/);
+    // S1's margins: buttons, inputs and the ghost rectangles keep clear of the banner and the bar together.
+    for (const prelude of ['.fax-view button,\n.fax-view input', '.fax-view rect[data-word-id]']) {
+      expect(block(css, prelude)).toMatch(/scroll-margin-top:\s*calc\(var\(--bar-h\)\s*\+\s*0\.75rem\)/);
+    }
+    const side = block(block(css, '@media (min-width: 60rem)'), '.viewer-side');
+    expect(side).toMatch(/top:\s*calc\(var\(--bar-h\)\s*\+\s*0\.5rem\)/);
+    expect(side).toMatch(/max-height:\s*calc\(100dvh - var\(--bar-h\) - 1rem\)/);
   });
 });

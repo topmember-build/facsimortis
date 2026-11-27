@@ -153,7 +153,8 @@ html {
   border-style: dashed;
 }
 
-/* One slim (32px) notice at the very top. Not sticky: it scrolls away so the review summary bar keeps the top.
+/* One slim (32px) notice at the very top. Not sticky on the inbox, boot and other screens. On the review screen
+   it is sticky (.synthetic-banner-sticky, B1), above the summary bar, which then sticks just under it.
    --amber-dim on --panel is 6.19:1. Never the ghost or flag colours. Inter Tight, not the pixel font: the
    text is under 16px. */
 .synthetic-banner {
@@ -168,6 +169,13 @@ html {
   font-size: 0.875rem;
   line-height: 1.25;
   text-align: center;
+}
+/* B1: the review screen keeps the notice at the top. Above the summary bar (z-index 10) and the source string
+   (z-index 5), so neither draws over it. Its height is --banner-h (set by App), which .fax-view adds to --bar-h. */
+.synthetic-banner-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 
 h2 {
@@ -533,7 +541,10 @@ button.row-button:hover {
    It is also the review window (R4a): a 2px amber border (9.35:1 against --ground) with no fill, so the
    desk-lamp glow behind the fax stage still shows. Positioned, so the two buttons can sit in the title bar. */
 .fax-view {
-  --bar-h: var(--summary-bar-h, 5rem);
+  /* Everything pinned at the top while the page scrolls: the summary bar and, above it, the sticky Synthetic
+     data banner (B1; --banner-h is set by App, 0 when unset). The field column's top, its height and every
+     scroll margin on the fax screen use this, so they clear both. */
+  --bar-h: calc(var(--summary-bar-h, 5rem) + var(--banner-h, 0px));
   position: relative;
   display: flex;
   flex-direction: column;
@@ -606,7 +617,8 @@ button.row-button:hover {
 .summary-bar {
   order: 1;
   position: sticky;
-  top: 0;
+  /* Just under the sticky Synthetic data banner (B1); 0 when it is not sticky. */
+  top: var(--banner-h, 0px);
   z-index: 10;
   display: grid;
   /* Two rows: the fax facts on top; below them the reminder (left) and the reason with Verify (right).
