@@ -55,6 +55,7 @@ Rules:
 - Dark ground with a very soft amber radial glow.
 - Faxes shown as pixel-art document icons in a grid at the top left, each a real button or link with the label `./fax-0003` in the pixel font, a second line with status text (for example "2 flagged · urgent"), and a coral badge with a "!" shape on faxes that have flags. Keep the existing accessible names, including the received time.
 - A floppy-disk icon `./export` for the audit export where it fits the current flow; do not change export behaviour.
+  - Note (V1): as built, the inbox has no `./export` icon and the taskbar has no Export button; export is only the Download JSON button on the Laid to rest panel. The line above is the original text, kept.
 - A large "Facsimortis" wordmark in the pixel font at the bottom right with one short description line above it.
 - The Synthetic data banner stays at the top, restyled with amber-dim text.
 - Bottom taskbar: dark navy, 2px amber top border, small icon buttons (Inbox, Export) with `aria-label`s, a status text ("Now: 3 faxes in the tray · 2 flagged on fax-0003"), reader mode text, a clock showing the demo clock (labelled as the demo clock in its accessible name, not UTC).
