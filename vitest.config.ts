@@ -21,7 +21,9 @@ export default defineConfig({
         plugins: [react()],
         test: {
           name: 'web',
-          include: ['web/src/**/*.test.{ts,tsx}'],
+          // test/site: site tests that sit outside web/ because they use tools/demo-capture (nothing under web/
+          // may refer to tools/).
+          include: ['web/src/**/*.test.{ts,tsx}', 'test/site/**/*.test.tsx'],
           environment: 'jsdom',
           setupFiles: ['web/src/test-setup.ts'],
         },

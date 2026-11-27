@@ -170,4 +170,43 @@ export default tseslint.config(
     files: ['tools/mcp-records/server.ts'],
     rules: recordsServerRules({ allowProtocolLayer: true }),
   },
+  {
+    // The demo capture script (tools/demo-capture) drives the served site and writes only into demo-out/.
+    // It never reads answer-key or fixture files, never uses evaluation or proof code, and imports nothing
+    // from the site or the pipeline. Only paths.ts touches the file system; everything else goes through it.
+    files: ['tools/demo-capture/**/*.ts'],
+    rules: demoCaptureRules(),
+  },
+  {
+    files: ['tools/demo-capture/paths.ts'],
+    rules: demoCaptureRules({ allowFileSystem: true }),
+  },
 )
+
+function demoCaptureRules({ allowFileSystem = false } = {}) {
+  return {
+    'no-restricted-imports': [
+      'error',
+      {
+        paths: allowFileSystem
+          ? []
+          : ['fs', 'fs/promises', 'node:fs', 'node:fs/promises'].map((name) => ({
+              name,
+              message: 'Only tools/demo-capture/paths.ts touches files, so every read and write stays inside demo-out/.',
+            })),
+        patterns: [
+          { group: ['**/eval', '**/eval/*', '**/eval/**'], message: 'src/eval is evaluation code. The capture script must not import it.' },
+          { group: ['**/proof*'], message: 'The proof is the only script that reads answer-key files. Do not import it here.' },
+          { regex: '(^|/)(src|web|fixtures)/', message: 'The capture script drives the served site; it imports nothing from src, web or fixtures.' },
+        ],
+      },
+    ],
+    'no-restricted-syntax': [
+      'error',
+      { selector: 'Literal[value=/truth|fixtures/i]', message: 'The capture script must not mention answer-key or fixture files.' },
+      { selector: 'TemplateElement[value.raw=/truth|fixtures/i]', message: 'The capture script must not mention answer-key or fixture files.' },
+      { selector: 'Identifier[name=/truth/i]', message: 'The capture script must not use answer-key data.' },
+      { selector: 'ImportExpression', message: 'No dynamic imports: every import is static and checked.' },
+    ],
+  };
+}
