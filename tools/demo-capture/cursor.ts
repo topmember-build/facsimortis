@@ -39,6 +39,8 @@ export class Pointer {
   constructor(
     private readonly page: Page,
     start: Point,
+    /** demo:check: moves straight to the target with no glide. */
+    private readonly instant = false,
   ) {
     this.position = start;
   }
@@ -54,6 +56,11 @@ export class Pointer {
   }
 
   async glideTo(to: Point, durationMs: number = glideMs(this.position, to)): Promise<void> {
+    if (this.instant) {
+      await this.page.mouse.move(to.x, to.y);
+      this.position = to;
+      return;
+    }
     for (const point of glidePoints(this.position, to, durationMs)) {
       await this.page.mouse.move(point.x, point.y);
       await sleep(GLIDE_STEP_MS);

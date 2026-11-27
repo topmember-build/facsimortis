@@ -23,7 +23,12 @@ function importsOf(source: string): string[] {
 
 const ALLOWED_IMPORTS: Record<string, readonly string[]> = {
   'browser.ts': ['playwright-core', './labels.js', './overlay.js', './paths.js', './plan.js', './steps.js'],
+  'capture.ts': ['./browser.js', './media.js', './paths.js', './play.js', './plan.js', './report.js', './scenes.js', './serve.js'],
+  'check.ts': ['./browser.js', './paths.js', './play.js', './report.js', './scenes.js', './serve.js'],
   'cursor.ts': ['playwright-core'],
+  'play.ts': ['playwright-core', './browser.js', './cursor.js', './labels.js', './paths.js', './plan.js', './report.js', './scenes.js', './steps.js'],
+  'report.ts': [],
+  'scenes.ts': ['playwright-core', './cursor.js', './export-card.js', './labels.js', './overlay.js', './paths.js', './plan.js', './report.js', './steps.js'],
   'export-card.ts': ['zod'],
   'labels.ts': [],
   'media.ts': ['node:child_process', 'pngjs', './plan.js'],

@@ -21,7 +21,9 @@
     "dev": "vite --config web/vite.config.ts",
     "build": "vite build --config web/vite.config.ts",
     "preview": "vite preview --config web/vite.config.ts",
-    "demo:probe": "tsx tools/demo-capture/probe.ts"
+    "demo:probe": "tsx tools/demo-capture/probe.ts",
+    "demo:check": "tsx tools/demo-capture/check.ts",
+    "demo:capture": "tsx tools/demo-capture/capture.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

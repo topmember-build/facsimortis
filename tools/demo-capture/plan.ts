@@ -1,9 +1,9 @@
 /**
  * The demo capture plan as data: the six scenes, their target lengths, the fixed holds, the browser
- * settings and the fixed clock. No I/O. The steps of each scene are written in V1c on top of this.
+ * settings and the fixed clock. No I/O. The steps of each scene are in scenes.ts.
  */
 
-/** CSS pixels. At device scale 1.25 this is 1920x1080 device pixels. */
+/** The 125% layout's viewport, in CSS pixels (1920x1080 device pixels at device scale 1.25). Used by the probe. */
 export const VIEWPORT = { width: 1536, height: 864 } as const;
 export const DEVICE_SCALE_FACTOR = 1.25;
 /** The size of the MP4 copy (and of the final-frame PNG). */
@@ -22,10 +22,13 @@ export interface View {
   frame: { width: number; height: number };
 }
 
-/** The chosen set-up: the 125% layout. Its frames are 1536x864, and the MP4 copy is scaled up to 1920x1080. */
+/** The 125% layout, measured in V1b. Its frames are 1536x864, and the MP4 copy is scaled up to 1920x1080. */
 export const VIEW_125: View = { name: '125', viewport: VIEWPORT, deviceScaleFactor: DEVICE_SCALE_FACTOR, frame: VIEWPORT };
-/** The alternative measured in V1b: the 100% layout at 1920x1080, recorded at its own size. */
+/** The 100% layout at 1920x1080, recorded at its own size. */
 export const VIEW_100: View = { name: '100', viewport: VIDEO_SIZE, deviceScaleFactor: 1, frame: VIDEO_SIZE };
+
+/** The scenes use the 100% layout (the user's choice after Paul's Clipchamp check of both probe clips in V1b). */
+export const SCENE_VIEW: View = VIEW_100;
 
 /** The site path of the production build (SITE_BASE). */
 export const SITE_BASE = '/facsimortis/';

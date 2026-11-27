@@ -1,13 +1,13 @@
 import { chromium, errors, type Browser, type BrowserContext, type Locator, type Page } from 'playwright-core';
-import { nameMatcher, type Target } from './labels.js';
+import { describeTarget, nameMatcher, type Target } from './labels.js';
 import { OVERLAY_SCRIPT } from './overlay.js';
 import type { OutDir } from './paths.js';
-import { DEMO_NOW_UTC, VIDEO_FPS, VIEW_125, type View } from './plan.js';
+import { DEMO_NOW_UTC, SCENE_VIEW, VIDEO_FPS, type View } from './plan.js';
 import type { Driver } from './steps.js';
 
 /**
  * The installed Google Chrome, headless, driven by playwright-core (no browser download). Each scene gets a
- * fresh context: the view's viewport and device scale (VIEW_125 unless told otherwise), motion on, the clock
+ * fresh context: the view's viewport and device scale (SCENE_VIEW unless told otherwise), motion on, the clock
  * fixed at DEMO_NOW_UTC, and the cursor overlay on every page.
  */
 
@@ -15,7 +15,7 @@ export function launchChrome(): Promise<Browser> {
   return chromium.launch({ channel: 'chrome', headless: true });
 }
 
-export async function newCaptureContext(browser: Browser, view: View = VIEW_125): Promise<BrowserContext> {
+export async function newCaptureContext(browser: Browser, view: View = SCENE_VIEW): Promise<BrowserContext> {
   const context = await browser.newContext({
     viewport: { ...view.viewport },
     deviceScaleFactor: view.deviceScaleFactor,
@@ -29,9 +29,19 @@ export async function newCaptureContext(browser: Browser, view: View = VIEW_125)
   return context;
 }
 
+export interface PageDriverOptions {
+  /** demo:check: holds and pauses take no time. */
+  skipWaits?: boolean;
+  /** Told how long each find took, for the report of waits longer than 3 s. */
+  onFind?: (what: string, ms: number) => void;
+}
+
 /** The step runner's Driver over a Playwright page: role queries, exact names unless the target says prefix. */
 export class PageDriver implements Driver<Locator> {
-  constructor(private readonly page: Page) {}
+  constructor(
+    private readonly page: Page,
+    private readonly options: PageDriverOptions = {},
+  ) {}
 
   locator(target: Target): Locator {
     return this.page.getByRole(target.role, { name: nameMatcher(target), exact: target.match !== 'prefix' });
@@ -39,9 +49,11 @@ export class PageDriver implements Driver<Locator> {
 
   async find(target: Target, timeoutMs: number): Promise<Locator | null> {
     const locator = this.locator(target);
+    const start = performance.now();
     try {
       // Strict: two matches throw (not a timeout), so an ambiguous label stops the run as well.
       await locator.waitFor({ state: 'visible', timeout: timeoutMs });
+      this.options.onFind?.(describeTarget(target), performance.now() - start);
       return locator;
     } catch (error) {
       if (error instanceof errors.TimeoutError) return null;
@@ -50,6 +62,7 @@ export class PageDriver implements Driver<Locator> {
   }
 
   wait(ms: number): Promise<void> {
+    if (this.options.skipWaits) return Promise.resolve();
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
@@ -68,7 +81,7 @@ export interface Clip {
  * and waits for the first frame, so nothing before the call is in the clip. The final frame goes to
  * `<name>/final.png`, a screenshot at device scale.
  */
-export async function startClip(page: Page, out: OutDir, name: string, view: View = VIEW_125): Promise<Clip> {
+export async function startClip(page: Page, out: OutDir, name: string, view: View = SCENE_VIEW): Promise<Clip> {
   let firstFrame: () => void = () => {};
   const gotFrame = new Promise<void>((resolve) => (firstFrame = resolve));
   let frames = 0;

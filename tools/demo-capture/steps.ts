@@ -90,6 +90,8 @@ export interface RunOptions {
   /** How long `need` waits for a label. */
   findTimeoutMs?: number;
   minPauseMs?: number;
+  /** Called as each step starts, with its number (from 1) and name. */
+  onStep?: (stepNumber: number, stepName: string) => void;
 }
 
 export interface SceneRun {
@@ -119,6 +121,7 @@ export async function runScene<H>(
 
   for (const [index, step] of steps.entries()) {
     const stepNumber = index + 1;
+    options.onStep?.(stepNumber, step.name);
     const context: StepContext<H> = {
       async need(target) {
         const found = await driver.find(target, findTimeoutMs);

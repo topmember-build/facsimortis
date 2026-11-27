@@ -7,6 +7,9 @@ import { z } from 'zod';
  * accepted anyway, the verifier, and the file's Synthetic data notice. Every value is escaped.
  */
 
+/** The card's heading. Scene 5 waits for it after the card is shown. */
+export const EXPORT_CARD_TITLE = 'Exported record';
+
 /** Only the parts of the exported record the card shows. The site's own schema (web/src/record.ts) is stricter. */
 const ExportFieldSchema = z.object({
   name: z.string().min(1),
@@ -168,7 +171,7 @@ h2 { margin: 18px 0 6px; font-size: 20px; font-weight: 600; }
 <body>
 <div class="notice" role="region" aria-label="Synthetic data notice">${escapeHtml(record.notice)}</div>
 <main class="card">
-<h1>Exported record</h1>
+<h1>${EXPORT_CARD_TITLE}</h1>
 <p class="file">${escapeHtml(options.fileName)}</p>
 <section class="meta">${meta.map((m) => line(m.caption, m.key, m.value, false)).join('')}</section>
 ${fields}
